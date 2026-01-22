@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"  CodeFile="BpmnEditor.aspx.cs" Inherits="BpmnEditor" %>
+<%@ Page Language="C#" AutoEventWireup="true"  CodeFile="BpmnEditor.aspx.cs" Inherits="BpmnEditor" %>
 <!DOCTYPE html>
 <html>
 <head runat="server">
@@ -12,8 +12,8 @@
   <asp:ScriptManager ID="sm" runat="server" EnablePageMethods="true" />
 
   <script>
-    // Id vem do QueryString
-    window.__BPMN_MODEL_ID__ = <%= ModelId %>;
+      // Id vem do QueryString
+      window.__BPMN_MODEL_ID__ = <%= ModelId %>;
   </script>
 
   <div id="bpmnApp" class="page">
@@ -40,10 +40,10 @@
       <aside class="sidebar card">
         <h3>Paleta</h3>
         <div class="palette">
-          <button type="button" class="pill" @click="beginAdd('startEvent')">Start</button>
-          <button type="button" class="pill" @click="beginAdd('task')">Task</button>
-          <button type="button" class="pill" @click="beginAdd('exclusiveGateway')">Gateway</button>
-          <button type="button" class="pill" @click="beginAdd('endEvent')">End</button>
+          <button type="button" class="pill" @click="beginAdd('startEvent')">Início</button>
+          <button type="button" class="pill" @click="beginAdd('task')">Tarefa</button>
+          <button type="button" class="pill" @click="beginAdd('exclusiveGateway')">Decisão</button>
+          <button type="button" class="pill" @click="beginAdd('endEvent')">Fim</button>
         </div>
 
         <h3 style="margin-top:16px;">Modelo</h3>
