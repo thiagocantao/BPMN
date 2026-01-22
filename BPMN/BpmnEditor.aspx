@@ -104,13 +104,13 @@
                   <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="18">🔗</text>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="15">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="38">🗑</text>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="35">🗑</text>
                   </g>
                 </g>
               </g>
@@ -129,13 +129,13 @@
                   <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="18">🔗</text>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="15">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="38">🗑</text>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="35">🗑</text>
                   </g>
                 </g>
               </g>
@@ -154,13 +154,13 @@
                   <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="18">🔗</text>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="15">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="38">🗑</text>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="35">🗑</text>
                   </g>
                 </g>
               </g>

@@ -285,7 +285,7 @@ body {
 .nodes .node.selected circle,
 .nodes .node.selected polygon {
     stroke: rgba(47,128,237,1);
-    stroke-width: 3;
+    stroke-width: 1;
 }
 
 .nodes .node .connector {
@@ -313,7 +313,7 @@ body {
 
 .node-menu .menu-shell {
     fill: #ffffff;
-    stroke: #d8dde4;
+    stroke: #d1d6de;
     stroke-width: 1;
 }
 
@@ -322,7 +322,9 @@ body {
 }
 
 .node-menu .menu-item-bg {
-    fill: #f2f4f7;
+    fill: #f7f8fa;
+    stroke: #d1d6de;
+    stroke-width: 1;
 }
 
 .node-menu .menu-item:hover .menu-item-bg {
