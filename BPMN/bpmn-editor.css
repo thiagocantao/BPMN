@@ -224,6 +224,43 @@ body {
         background: #f2f6fc;
     }
 
+.palette-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.palette-shape {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #6c7a89;
+    background: #fff;
+    flex: 0 0 auto;
+}
+
+.palette-shape--start,
+.palette-shape--end {
+    border-radius: 50%;
+}
+
+.palette-shape--end {
+    border-width: 3px;
+}
+
+.palette-shape--task {
+    width: 22px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.palette-shape--gateway {
+    width: 16px;
+    height: 16px;
+    transform: rotate(45deg);
+    margin: 1px 3px;
+}
+
 .field {
     display: flex;
     flex-direction: column;
@@ -384,7 +421,7 @@ body {
 
 .node-title {
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 400;
     fill: #0b1b3f;
     user-select: none;
     cursor: text;
@@ -407,7 +444,7 @@ body {
     border-radius: 8px;
     padding: 2px 6px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 400;
     color: #0b1b3f;
     outline: none;
 }
