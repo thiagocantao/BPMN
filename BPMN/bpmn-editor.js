@@ -196,6 +196,22 @@
                 return `${a.x},${a.y} ${b.x},${b.y}`;
             };
 
+            const edgeMidpoint = (e) => {
+                const from = findNode(e.from);
+                const to = findNode(e.to);
+                if (!from || !to) {
+                    return { x: 0, y: 0, valid: false };
+                }
+
+                const a = centerOf(from);
+                const b = centerOf(to);
+                return {
+                    x: (a.x + b.x) / 2,
+                    y: (a.y + b.y) / 2,
+                    valid: true
+                };
+            };
+
             const diamondPoints = (w, h) => {
                 const cx = w / 2, cy = h / 2;
                 return `${cx},0 ${w},${cy} ${cx},${h} 0,${cy}`;
@@ -542,6 +558,7 @@
                 connectPreview,
 
                 edgePoints,
+                edgeMidpoint,
                 diamondPoints,
                 connectorPoint,
                 connectorOffset: CONNECTOR_OFFSET,
