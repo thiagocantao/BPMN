@@ -38,7 +38,9 @@
                 active: false,
                 nodeId: null,
                 startMouse: { x: 0, y: 0 },
-                startNode: { x: 0, y: 0 }
+                startNode: { x: 0, y: 0 },
+                moved: false,
+                justDragged: false
             });
 
             // connect
@@ -166,7 +168,7 @@
 
             const findNode = (id) => nodes.value.find(n => n.id === id);
 
-            const CONNECTOR_OFFSET = 12;
+            const CONNECTOR_OFFSET = 4;
 
             const connectorPoint = (n) => ({
                 x: n.x + n.w + CONNECTOR_OFFSET,
@@ -237,8 +239,8 @@
                 drag.nodeId = node.id;
                 drag.startMouse = { x: p.x, y: p.y };
                 drag.startNode = { x: node.x, y: node.y };
-
-                selectedId.value = node.id;
+                drag.moved = false;
+                drag.justDragged = false;
 
                 window.addEventListener("mousemove", onMouseMove);
                 window.addEventListener("mouseup", onMouseUp);
@@ -253,6 +255,10 @@
                 const n = findNode(drag.nodeId);
                 if (!n) return;
 
+                if (dx !== 0 || dy !== 0) {
+                    drag.moved = true;
+                }
+
                 n.x = Math.round(drag.startNode.x + dx);
                 n.y = Math.round(drag.startNode.y + dy);
             };
@@ -260,15 +266,26 @@
             const onMouseUp = () => {
                 drag.active = false;
                 drag.nodeId = null;
+                drag.justDragged = drag.moved;
+                drag.moved = false;
 
                 window.removeEventListener("mousemove", onMouseMove);
                 window.removeEventListener("mouseup", onMouseUp);
             };
 
             const onNodeClick = (node) => {
-                selectedId.value = node.id;
+                if (drag.justDragged) {
+                    drag.justDragged = false;
+                    return;
+                }
 
-                if (mode.value !== "connect") return;
+                const isSelected = selectedId.value === node.id;
+                if (mode.value !== "connect") {
+                    selectedId.value = isSelected ? null : node.id;
+                    return;
+                }
+
+                selectedId.value = node.id;
 
                 // Connect flow
                 if (!connect.fromId) {
@@ -413,6 +430,7 @@
                 edgePoints,
                 diamondPoints,
                 connectorPoint,
+                connectorOffset: CONNECTOR_OFFSET,
 
 
                 onCanvasMouseDown,
