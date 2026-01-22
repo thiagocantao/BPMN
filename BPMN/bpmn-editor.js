@@ -248,6 +248,10 @@
 
             const onMouseMove = (evt) => {
                 if (!drag.active) return;
+                if (evt.buttons === 0) {
+                    onMouseUp();
+                    return;
+                }
                 const p = getSvgPoint(evt);
                 const dx = p.x - drag.startMouse.x;
                 const dy = p.y - drag.startMouse.y;
