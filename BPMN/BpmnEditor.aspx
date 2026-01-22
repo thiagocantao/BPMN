@@ -90,14 +90,30 @@
 
           <!-- edges -->
           <g class="edges">
-            <polyline
-              v-for="e in edges"
-              :key="e.id"
-              :points="edgePoints(e)"
-              class="edge"
-              marker-end="url(#arrow)"
-              @mousedown.stop="selectEdge(e.id)"
-            />
+            <g v-for="e in edges" :key="e.id" class="edge-group">
+              <polyline
+                :points="edgePoints(e)"
+                class="edge"
+                :class="{ selected: selectedId===e.id }"
+                marker-end="url(#arrow)"
+                @mousedown.stop="selectEdge(e.id)"
+              />
+              <g
+                v-if="selectedId===e.id && edgeMidpoint(e).valid"
+                class="edge-delete"
+                :transform="`translate(${edgeMidpoint(e).x},${edgeMidpoint(e).y})`"
+                @mousedown.stop
+                @click.stop="deleteSelected"
+              >
+                <title>Excluir conector</title>
+                <rect class="edge-delete-bg" x="-12" y="-12" width="24" height="24" rx="8" ry="8" />
+                <foreignObject class="edge-delete-icon" x="-12" y="-12" width="24" height="24">
+                  <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </div>
+                </foreignObject>
+              </g>
+            </g>
           </g>
 
           <!-- nodes -->

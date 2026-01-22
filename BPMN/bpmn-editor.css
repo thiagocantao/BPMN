@@ -319,10 +319,34 @@ body {
     cursor: pointer;
 }
 
+    .edge.selected {
+        stroke: rgba(47,128,237,1);
+        stroke-width: 2.5;
+    }
+
     .edge.preview {
         stroke-dasharray: 6 6;
         opacity: .8;
     }
+
+.edge-delete {
+    cursor: pointer;
+}
+
+.edge-delete-bg {
+    fill: #f7f8fa;
+    stroke: #d1d6de;
+    stroke-width: 1;
+}
+
+.edge-delete:hover .edge-delete-bg {
+    fill: #e4e8ee;
+}
+
+.edge-delete .menu-icon {
+    font-size: 12px;
+    color: #3b4a5a;
+}
 
 .nodes .node rect {
     fill: #ffffff;
