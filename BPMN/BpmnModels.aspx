@@ -42,7 +42,7 @@
             <div class="muted">{{ formatDate(m.UpdatedAt) }}</div>
             <div class="row-actions">
               <button type="button" class="icon-button" @click="edit(m.Id)" aria-label="Editar">
-                <i class="fa-solid fa-link"></i>
+                <i class="fa-solid fa-pencil"></i>
               </button>
               <button type="button" class="icon-button icon-button--danger" @click="remove(m.Id)" aria-label="Excluir">
                 <i class="fa-regular fa-trash-can"></i>
