@@ -94,27 +94,69 @@
               <g v-if="n.type==='task'" class="node" :class="{ selected: selectedId===n.id }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
+                 @mouseup.stop="onNodeConnectDrop(n)"
                  @click.stop="onNodeClick(n)">
                 <rect :width="n.w" :height="n.h" rx="10" ry="10" />
                 <text class="node-title" x="10" y="24">{{ n.name }}</text>
+                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                        @mousedown.stop.prevent="startConnectorDrag(n)" />
+                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
+                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="20">Conectar</text>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
+                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="42">Excluir</text>
+                  </g>
+                </g>
               </g>
 
               <!-- start/end -->
               <g v-else-if="n.type==='startEvent' || n.type==='endEvent'" class="node" :class="{ selected: selectedId===n.id }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
+                 @mouseup.stop="onNodeConnectDrop(n)"
                  @click.stop="onNodeClick(n)">
                 <circle :cx="n.w/2" :cy="n.h/2" :r="n.w/2 - 2" :class="n.type" />
                 <text class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle">{{ n.name }}</text>
+                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                        @mousedown.stop.prevent="startConnectorDrag(n)" />
+                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
+                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="20">Conectar</text>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
+                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="42">Excluir</text>
+                  </g>
+                </g>
               </g>
 
               <!-- gateway -->
               <g v-else-if="n.type==='exclusiveGateway'" class="node" :class="{ selected: selectedId===n.id }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
+                 @mouseup.stop="onNodeConnectDrop(n)"
                  @click.stop="onNodeClick(n)">
                 <polygon :points="diamondPoints(n.w, n.h)" />
                 <text class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle">{{ n.name }}</text>
+                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                        @mousedown.stop.prevent="startConnectorDrag(n)" />
+                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
+                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="20">Conectar</text>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
+                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
+                    <text x="12" y="42">Excluir</text>
+                  </g>
+                </g>
               </g>
             </template>
           </g>
