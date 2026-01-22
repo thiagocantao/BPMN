@@ -107,7 +107,7 @@
               >
                 <title>Excluir conector</title>
                 <rect class="edge-delete-bg" x="-12" y="-12" width="34" height="30" rx="8" ry="8" />
-                <foreignObject class="edge-delete-icon" x="-3" y="-12" width="9" height="24">
+                <foreignObject class="edge-delete-icon" x="-3" y="-9" width="24" height="24">
                   <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                     <i class="fa-regular fa-trash-can"></i>
                   </div>
