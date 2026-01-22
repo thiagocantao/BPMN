@@ -98,17 +98,19 @@
                  @click.stop="onNodeClick(n)">
                 <rect :width="n.w" :height="n.h" rx="10" ry="10" />
                 <text class="node-title" x="10" y="24">{{ n.name }}</text>
-                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
-                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
+                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="20">Conectar</text>
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="18">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="42">Excluir</text>
+                    <title>Excluir</title>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="38">🗑</text>
                   </g>
                 </g>
               </g>
@@ -121,17 +123,19 @@
                  @click.stop="onNodeClick(n)">
                 <circle :cx="n.w/2" :cy="n.h/2" :r="n.w/2 - 2" :class="n.type" />
                 <text class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle">{{ n.name }}</text>
-                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
-                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
+                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="20">Conectar</text>
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="18">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="42">Excluir</text>
+                    <title>Excluir</title>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="38">🗑</text>
                   </g>
                 </g>
               </g>
@@ -144,17 +148,19 @@
                  @click.stop="onNodeClick(n)">
                 <polygon :points="diamondPoints(n.w, n.h)" />
                 <text class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle">{{ n.name }}</text>
-                <circle class="connector" :cx="n.w + 12" :cy="n.h / 2" r="6"
+                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 20},${-10})`">
-                  <rect class="menu-shell" width="110" height="52" rx="8" ry="8" />
+                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
+                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <rect class="menu-item-bg" x="4" y="4" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="20">Conectar</text>
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="6" y="6" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="18">🔗</text>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <rect class="menu-item-bg" x="4" y="26" width="102" height="22" rx="6" ry="6" />
-                    <text x="12" y="42">Excluir</text>
+                    <title>Excluir</title>
+                    <rect class="menu-item-bg" x="6" y="26" width="52" height="16" rx="6" ry="6" />
+                    <text class="menu-icon" x="32" y="38">🗑</text>
                   </g>
                 </g>
               </g>
