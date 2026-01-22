@@ -153,9 +153,41 @@ body {
 
 .row-actions {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     justify-content: flex-end;
+    flex-wrap: wrap;
+    max-width: 106px;
 }
+
+.icon-button {
+    border: 1px solid #d9e1eb;
+    background: #fff;
+    color: #2f80ed;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+    .icon-button:hover {
+        background: #eef2f7;
+        border-color: #cdd7e5;
+    }
+
+    .icon-button--danger {
+        color: #b40000;
+        background: #ffeded;
+        border-color: #ffd8d8;
+    }
+
+    .icon-button--danger:hover {
+        background: #ffd8d8;
+        border-color: #f5bcbc;
+    }
 
 .muted {
     color: #6c7a89;
