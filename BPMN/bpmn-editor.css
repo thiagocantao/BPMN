@@ -288,6 +288,54 @@ body {
     stroke-width: 3;
 }
 
+.nodes .node .connector {
+    fill: #2f80ed;
+    stroke: #ffffff;
+    stroke-width: 2;
+    opacity: 0;
+    cursor: crosshair;
+}
+
+.nodes .node:hover .connector,
+.nodes .node.selected .connector {
+    opacity: 1;
+}
+
+.node-menu {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nodes .node.selected .node-menu {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.node-menu .menu-shell {
+    fill: #ffffff;
+    stroke: #d5dee9;
+    stroke-width: 1;
+}
+
+.node-menu .menu-item {
+    cursor: pointer;
+}
+
+.node-menu .menu-item-bg {
+    fill: #f1f5fb;
+}
+
+.node-menu .menu-item:hover .menu-item-bg {
+    fill: #e1ebf8;
+}
+
+.node-menu text {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #1b1f2a;
+    pointer-events: none;
+}
+
 .node-title {
     font-size: 12px;
     font-weight: 800;

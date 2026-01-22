@@ -4,10 +4,10 @@
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
 
     const DEFAULT_SIZES = {
-        startEvent: { w: 36, h: 36, name: "Início" },
+        startEvent: { w: 36, h: 36, name: "InÃ­cio" },
         endEvent: { w: 36, h: 36, name: "Fim" },
         task: { w: 160, h: 70, name: "Tarefa" },
-        exclusiveGateway: { w: 56, h: 56, name: "Decisão" },
+        exclusiveGateway: { w: 56, h: 56, name: "DecisÃ£o" },
     };
 
     const centerOf = (n) => ({ x: n.x + n.w / 2, y: n.y + n.h / 2 });
@@ -43,7 +43,8 @@
 
             // connect
             const connect = reactive({
-                fromId: null
+                fromId: null,
+                dragging: false
             });
 
             const connectPreview = reactive({
@@ -54,15 +55,13 @@
             const setMode = (m) => {
                 mode.value = m;
                 addType.value = null;
-                connect.fromId = null;
-                connectPreview.show = false;
+                resetConnect();
             };
 
             const beginAdd = (t) => {
                 addType.value = t;
                 mode.value = "select";
-                connect.fromId = null;
-                connectPreview.show = false;
+                resetConnect();
             };
 
             const getSvgPoint = (evt) => {
@@ -89,7 +88,7 @@
                         }
 
                         if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
-                            alert("JSON inválido no banco. Carregando vazio.");
+                            alert("JSON invÃ¡lido no banco. Carregando vazio.");
                             nodes.value = [];
                             edges.value = [];
                             return;
@@ -124,7 +123,7 @@
             };
 
             const buildJsonToSave = () => {
-                // MVP: recalcula waypoints “automáticos” (reta entre centros)
+                // MVP: recalcula waypoints Â“automÃ¡ticosÂ” (reta entre centros)
                 const nodeById = Object.fromEntries(nodes.value.map(n => [n.id, n]));
                 const normalizedEdges = edges.value.map(e => {
                     const a = nodeById[e.from];
@@ -167,6 +166,21 @@
 
             const findNode = (id) => nodes.value.find(n => n.id === id);
 
+            const CONNECTOR_OFFSET = 12;
+
+            const connectorPoint = (n) => ({
+                x: n.x + n.w + CONNECTOR_OFFSET,
+                y: n.y + n.h / 2
+            });
+
+            const resetConnect = () => {
+                connect.fromId = null;
+                connect.dragging = false;
+                connectPreview.show = false;
+                window.removeEventListener("mousemove", onConnectMove);
+                window.removeEventListener("mouseup", onConnectCancel);
+            };
+
             const edgePoints = (e) => {
                 const from = findNode(e.from);
                 const to = findNode(e.to);
@@ -184,11 +198,11 @@
             };
 
             const onCanvasMouseDown = (evt) => {
-                // Inserir nó
+                // Inserir nÃ³
                 if (addType.value) {
                     const p = getSvgPoint(evt);
                     const t = addType.value;
-                    const def = DEFAULT_SIZES[t] || { w: 100, h: 60, name: "Nó" };
+                    const def = DEFAULT_SIZES[t] || { w: 100, h: 60, name: "NÃ³" };
 
                     const id = uid("N");
                     const node = {
@@ -214,7 +228,7 @@
 
             const onNodeDown = (evt, node) => {
                 if (mode.value === "connect") {
-                    // em connect, não inicia drag
+                    // em connect, nÃ£o inicia drag
                     return;
                 }
 
@@ -268,6 +282,7 @@
                     connectPreview.y2 = c.y;
 
                     window.addEventListener("mousemove", onConnectMove);
+                    window.addEventListener("mouseup", onConnectCancel);
                     return;
                 }
 
@@ -284,10 +299,62 @@
 
                 edges.value.push(newEdge);
 
-                // reset connect
-                connect.fromId = null;
-                connectPreview.show = false;
-                window.removeEventListener("mousemove", onConnectMove);
+                resetConnect();
+            };
+
+            const startConnectFromMenu = (node) => {
+                mode.value = "connect";
+                selectedId.value = node.id;
+                connect.fromId = node.id;
+                connect.dragging = false;
+                connectPreview.show = true;
+
+                const c = centerOf(node);
+                connectPreview.x1 = c.x;
+                connectPreview.y1 = c.y;
+                connectPreview.x2 = c.x;
+                connectPreview.y2 = c.y;
+
+                window.addEventListener("mousemove", onConnectMove);
+                window.addEventListener("mouseup", onConnectCancel);
+            };
+
+            const startConnectorDrag = (node) => {
+                selectedId.value = node.id;
+                connect.fromId = node.id;
+                connect.dragging = true;
+                connectPreview.show = true;
+
+                const p = connectorPoint(node);
+                connectPreview.x1 = p.x;
+                connectPreview.y1 = p.y;
+                connectPreview.x2 = p.x;
+                connectPreview.y2 = p.y;
+
+                window.addEventListener("mousemove", onConnectMove);
+                window.addEventListener("mouseup", onConnectCancel);
+            };
+
+            const onConnectCancel = () => {
+                if (!connectPreview.show) return;
+                resetConnect();
+            };
+
+            const onNodeConnectDrop = (node) => {
+                if (!connect.dragging || !connect.fromId) return;
+                if (connect.fromId === node.id) return;
+
+                const newEdge = {
+                    id: uid("E"),
+                    type: "sequenceFlow",
+                    from: connect.fromId,
+                    to: node.id,
+                    waypoints: [],
+                    meta: {}
+                };
+
+                edges.value.push(newEdge);
+                resetConnect();
             };
 
             const onConnectMove = (evt) => {
@@ -345,10 +412,15 @@
 
                 edgePoints,
                 diamondPoints,
+                connectorPoint,
+
 
                 onCanvasMouseDown,
                 onNodeDown,
                 onNodeClick,
+                onNodeConnectDrop,
+                startConnectFromMenu,
+                startConnectorDrag,
                 selectEdge,
 
                 save,
