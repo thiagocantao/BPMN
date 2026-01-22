@@ -40,10 +40,22 @@
       <aside class="sidebar card">
         <h3>Paleta</h3>
         <div class="palette">
-          <button type="button" class="pill" @click="beginAdd('startEvent')">Início</button>
-          <button type="button" class="pill" @click="beginAdd('task')">Tarefa</button>
-          <button type="button" class="pill" @click="beginAdd('exclusiveGateway')">Decisão</button>
-          <button type="button" class="pill" @click="beginAdd('endEvent')">Fim</button>
+          <button type="button" class="pill palette-item" @click="beginAdd('startEvent')">
+            <span class="palette-shape palette-shape--start"></span>
+            Início
+          </button>
+          <button type="button" class="pill palette-item" @click="beginAdd('task')">
+            <span class="palette-shape palette-shape--task"></span>
+            Tarefa
+          </button>
+          <button type="button" class="pill palette-item" @click="beginAdd('exclusiveGateway')">
+            <span class="palette-shape palette-shape--gateway"></span>
+            Decisão
+          </button>
+          <button type="button" class="pill palette-item" @click="beginAdd('endEvent')">
+            <span class="palette-shape palette-shape--end"></span>
+            Fim
+          </button>
         </div>
 
         <h3 style="margin-top:16px;">Modelo</h3>
