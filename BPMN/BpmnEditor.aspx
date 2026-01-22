@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <title>BPMN - Editor</title>
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
 <form id="form1" runat="server">
@@ -101,16 +102,24 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
+                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>
@@ -126,16 +135,24 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
+                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>
@@ -151,16 +168,24 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="64" height="46" rx="8" ry="8" />
+                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
-                    <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>

@@ -320,6 +320,11 @@ body {
     stroke-width: 1;
 }
 
+.nodes .node.selected .node-menu .menu-shell,
+.nodes .node.selected .node-menu .menu-item-bg {
+    stroke: #d1d6de;
+}
+
 .nodes .node .connector {
     fill: #2f80ed;
     stroke: #ffffff;
@@ -363,13 +368,18 @@ body {
     fill: #e4e8ee;
 }
 
-.node-menu .menu-icon {
-    font-size: 13px;
-    font-weight: 700;
-    fill: #3b4a5a;
+.node-menu .menu-icon-wrapper {
     pointer-events: none;
-    text-anchor: middle;
-    dominant-baseline: middle;
+}
+
+.node-menu .menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+    color: #3b4a5a;
 }
 
 .node-title {
