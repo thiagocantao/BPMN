@@ -387,8 +387,34 @@ body {
     font-weight: 800;
     fill: #0b1b3f;
     user-select: none;
-    pointer-events: none;
+    cursor: text;
 }
+
+.node-name-input-wrap {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+    .node-name-input-wrap.centered {
+        justify-content: center;
+    }
+
+.node-name-input {
+    width: 100%;
+    border: 1px solid #cdd7e5;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0b1b3f;
+    outline: none;
+}
+
+    .node-name-input.centered {
+        text-align: center;
+    }
 
 .modal {
     position: fixed;
@@ -439,6 +465,43 @@ body {
 .modal-body {
     padding: 16px 20px 20px;
     overflow: auto;
+}
+
+.rich-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    background: #f7f9fc;
+    margin-bottom: 12px;
+}
+
+.toolbar-btn {
+    border: none;
+    background: #ffffff;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #3b4a5a;
+    box-shadow: inset 0 0 0 1px #d9e1eb;
+}
+
+    .toolbar-btn:hover {
+        background: #eef2f7;
+    }
+
+.toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: #d9e1eb;
+    margin: 0 2px;
 }
 
 .rich-editor {

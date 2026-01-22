@@ -33,6 +33,7 @@
 
             const svgRef = ref(null);
             const infoEditorRef = ref(null);
+            const nameInputRef = ref(null);
 
             // drag
             const drag = reactive({
@@ -390,6 +391,39 @@
                 selectedId.value = edgeId;
             };
 
+            const nameEditor = reactive({
+                nodeId: null,
+                value: ""
+            });
+
+            const isEditingName = (node) => nameEditor.nodeId === node.id;
+
+            const beginNameEdit = (node) => {
+                nameEditor.nodeId = node.id;
+                nameEditor.value = node.name ?? "";
+                nextTick(() => {
+                    if (nameInputRef.value) {
+                        nameInputRef.value.focus();
+                        nameInputRef.value.select();
+                    }
+                });
+            };
+
+            const saveNameEdit = () => {
+                if (!nameEditor.nodeId) return;
+                const node = findNode(nameEditor.nodeId);
+                if (node) {
+                    node.name = nameEditor.value;
+                }
+                nameEditor.nodeId = null;
+                nameEditor.value = "";
+            };
+
+            const cancelNameEdit = () => {
+                nameEditor.nodeId = null;
+                nameEditor.value = "";
+            };
+
             const infoEditor = reactive({
                 show: false,
                 nodeId: null,
@@ -424,6 +458,19 @@
 
             const onEditorInput = () => {
                 infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
+            };
+
+            const formatInfoEditor = (command) => {
+                if (!infoEditorRef.value) return;
+                infoEditorRef.value.focus();
+                if (command === "createLink") {
+                    const url = window.prompt("Informe o link:");
+                    if (url) {
+                        document.execCommand(command, false, url);
+                    }
+                    return;
+                }
+                document.execCommand(command, false, null);
             };
 
             const saveInfoEditor = () => {
@@ -499,6 +546,10 @@
                 connectorPoint,
                 connectorOffset: CONNECTOR_OFFSET,
 
+                nameEditor,
+                nameInputRef,
+                isEditingName,
+
                 infoEditor,
                 infoViewer,
                 infoEditorRef,
@@ -511,9 +562,13 @@
                 startConnectFromMenu,
                 startConnectorDrag,
                 selectEdge,
+                beginNameEdit,
+                saveNameEdit,
+                cancelNameEdit,
                 openInfoEditor,
                 closeInfoEditor,
                 onEditorInput,
+                formatInfoEditor,
                 saveInfoEditor,
                 openInfoViewer,
                 closeInfoViewer,
