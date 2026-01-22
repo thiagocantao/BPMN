@@ -102,11 +102,29 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
+                  <rect class="menu-shell" width="96" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
+                    <title>Editar informações</title>
                     <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
                     <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-pencil"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
+                    <title>Visualizar informações</title>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="8" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-solid fa-link"></i>
                       </div>
@@ -114,8 +132,8 @@
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                    <rect class="menu-item-bg" x="40" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-regular fa-trash-can"></i>
                       </div>
@@ -135,11 +153,29 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
+                  <rect class="menu-shell" width="96" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
+                    <title>Editar informações</title>
                     <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
                     <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-pencil"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
+                    <title>Visualizar informações</title>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="8" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-solid fa-link"></i>
                       </div>
@@ -147,8 +183,8 @@
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                    <rect class="menu-item-bg" x="40" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-regular fa-trash-can"></i>
                       </div>
@@ -168,11 +204,29 @@
                 <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
                         @mousedown.stop.prevent="startConnectorDrag(n)" />
                 <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="96" height="28" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
+                  <rect class="menu-shell" width="96" height="52" rx="8" ry="8" />
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
+                    <title>Editar informações</title>
                     <rect class="menu-item-bg" x="8" y="5" width="24" height="18" rx="6" ry="6" />
                     <foreignObject class="menu-icon-wrapper" x="8" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-pencil"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
+                    <title>Visualizar informações</title>
+                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                      </div>
+                    </foreignObject>
+                  </g>
+                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
+                    <title>Conectar</title>
+                    <rect class="menu-item-bg" x="8" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="8" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-solid fa-link"></i>
                       </div>
@@ -180,8 +234,8 @@
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
-                    <rect class="menu-item-bg" x="40" y="5" width="24" height="18" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="40" y="5" width="24" height="18">
+                    <rect class="menu-item-bg" x="40" y="29" width="24" height="18" rx="6" ry="6" />
+                    <foreignObject class="menu-icon-wrapper" x="40" y="29" width="24" height="18">
                       <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
                         <i class="fa-regular fa-trash-can"></i>
                       </div>
@@ -200,6 +254,38 @@
         </svg>
       </main>
     </section>
+
+    <div v-if="infoEditor.show" class="modal">
+      <div class="modal-backdrop" @click="closeInfoEditor"></div>
+      <div class="modal-card">
+        <header class="modal-header">
+          <h3>Editar informações</h3>
+          <div class="modal-actions">
+            <button type="button" class="btn btn--ghost" @click="closeInfoEditor">Cancelar</button>
+            <button type="button" class="btn btn--primary" @click="saveInfoEditor">Salvar</button>
+          </div>
+        </header>
+        <div class="modal-body">
+          <div class="rich-editor" contenteditable="true" ref="infoEditorRef" @input="onEditorInput"></div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="infoViewer.show" class="modal">
+      <div class="modal-backdrop" @click="closeInfoViewer"></div>
+      <div class="modal-card">
+        <header class="modal-header">
+          <h3>Visualizar informações</h3>
+          <div class="modal-actions">
+            <button type="button" class="btn btn--ghost" @click="closeInfoViewer">Fechar</button>
+          </div>
+        </header>
+        <div class="modal-body">
+          <div v-if="infoViewer.content" class="rich-viewer" v-html="infoViewer.content"></div>
+          <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>

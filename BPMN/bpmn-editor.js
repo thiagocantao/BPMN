@@ -1,5 +1,5 @@
 (() => {
-    const { createApp, ref, reactive, computed, onMounted } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
 
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
 
@@ -32,6 +32,7 @@
             const viewBox = computed(() => `${view.x} ${view.y} ${view.w} ${view.h}`);
 
             const svgRef = ref(null);
+            const infoEditorRef = ref(null);
 
             // drag
             const drag = reactive({
@@ -389,6 +390,68 @@
                 selectedId.value = edgeId;
             };
 
+            const infoEditor = reactive({
+                show: false,
+                nodeId: null,
+                content: ""
+            });
+
+            const infoViewer = reactive({
+                show: false,
+                nodeId: null,
+                content: ""
+            });
+
+            const openInfoEditor = (node) => {
+                selectedId.value = node.id;
+                infoViewer.show = false;
+                infoEditor.nodeId = node.id;
+                infoEditor.content = node.meta?.infoHtml ?? "";
+                infoEditor.show = true;
+                nextTick(() => {
+                    if (infoEditorRef.value) {
+                        infoEditorRef.value.innerHTML = infoEditor.content;
+                        infoEditorRef.value.focus();
+                    }
+                });
+            };
+
+            const closeInfoEditor = () => {
+                infoEditor.show = false;
+                infoEditor.nodeId = null;
+                infoEditor.content = "";
+            };
+
+            const onEditorInput = () => {
+                infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
+            };
+
+            const saveInfoEditor = () => {
+                if (!infoEditor.nodeId) return;
+                const node = findNode(infoEditor.nodeId);
+                if (!node) return;
+                const html = infoEditorRef.value ? infoEditorRef.value.innerHTML : infoEditor.content;
+                node.meta = {
+                    ...(node.meta ?? {}),
+                    infoHtml: html
+                };
+                closeInfoEditor();
+            };
+
+            const openInfoViewer = (node) => {
+                selectedId.value = node.id;
+                infoEditor.show = false;
+                infoViewer.nodeId = node.id;
+                infoViewer.content = node.meta?.infoHtml ?? "";
+                infoViewer.show = true;
+            };
+
+            const closeInfoViewer = () => {
+                infoViewer.show = false;
+                infoViewer.nodeId = null;
+                infoViewer.content = "";
+            };
+
             const deleteSelected = () => {
                 if (!selectedId.value) return;
 
@@ -436,6 +499,10 @@
                 connectorPoint,
                 connectorOffset: CONNECTOR_OFFSET,
 
+                infoEditor,
+                infoViewer,
+                infoEditorRef,
+
 
                 onCanvasMouseDown,
                 onNodeDown,
@@ -444,6 +511,12 @@
                 startConnectFromMenu,
                 startConnectorDrag,
                 selectEdge,
+                openInfoEditor,
+                closeInfoEditor,
+                onEditorInput,
+                saveInfoEditor,
+                openInfoViewer,
+                closeInfoViewer,
 
                 save,
                 deleteSelected
