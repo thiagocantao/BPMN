@@ -166,7 +166,7 @@
 
             const findNode = (id) => nodes.value.find(n => n.id === id);
 
-            const CONNECTOR_OFFSET = 12;
+            const CONNECTOR_OFFSET = 4;
 
             const connectorPoint = (n) => ({
                 x: n.x + n.w + CONNECTOR_OFFSET,
@@ -266,9 +266,13 @@
             };
 
             const onNodeClick = (node) => {
-                selectedId.value = node.id;
+                const isSelected = selectedId.value === node.id;
+                if (mode.value !== "connect") {
+                    selectedId.value = isSelected ? null : node.id;
+                    return;
+                }
 
-                if (mode.value !== "connect") return;
+                selectedId.value = node.id;
 
                 // Connect flow
                 if (!connect.fromId) {
@@ -413,6 +417,7 @@
                 edgePoints,
                 diamondPoints,
                 connectorPoint,
+                connectorOffset: CONNECTOR_OFFSET,
 
 
                 onCanvasMouseDown,
