@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <title>BPMN - Editor</title>
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
 <form id="form1" runat="server">
@@ -105,12 +106,20 @@
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
                     <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="6" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
                     <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="26" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>
@@ -130,12 +139,20 @@
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
                     <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="6" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
                     <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="26" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>
@@ -155,12 +172,20 @@
                   <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
                     <title>Conectar</title>
                     <rect class="menu-item-bg" x="6" y="6" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="15">🔗</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="6" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-solid fa-link"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                   <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
                     <title>Excluir</title>
                     <rect class="menu-item-bg" x="6" y="26" width="52" height="18" rx="6" ry="6" />
-                    <text class="menu-icon" x="32" y="35">🗑</text>
+                    <foreignObject class="menu-icon-wrapper" x="6" y="26" width="52" height="18">
+                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </div>
+                    </foreignObject>
                   </g>
                 </g>
               </g>
