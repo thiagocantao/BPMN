@@ -178,11 +178,11 @@ body {
         border-color: #cdd7e5;
     }
 
-    .icon-button--danger {
-        color: #b40000;
-        background: #ffeded;
-        border-color: #ffd8d8;
-    }
+.icon-button--danger {
+    color: #b40000;
+    background: #ffeded;
+    border-color: #ffd8d8;
+}
 
     .icon-button--danger:hover {
         background: #ffd8d8;
@@ -344,7 +344,7 @@ body {
 }
 
 .edge-delete .menu-icon {
-    font-size: 12px;
+    font-size: 16px;
     color: #3b4a5a;
 }
 
