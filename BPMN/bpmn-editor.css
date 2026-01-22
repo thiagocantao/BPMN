@@ -320,6 +320,11 @@ body {
     stroke-width: 1;
 }
 
+.nodes .node.selected .node-menu .menu-shell,
+.nodes .node.selected .node-menu .menu-item-bg {
+    stroke: #d1d6de;
+}
+
 .nodes .node .connector {
     fill: #2f80ed;
     stroke: #ffffff;
@@ -373,7 +378,7 @@ body {
     justify-content: center;
     width: 100%;
     height: 100%;
-    font-size: 12px;
+    font-size: 14px;
     color: #3b4a5a;
 }
 
