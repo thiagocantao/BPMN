@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <title>BPMN - Modelos</title>
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
   <form id="form1" runat="server">
@@ -28,7 +29,7 @@
             <div>ID</div>
             <div>Nome</div>
             <div>Atualizado</div>
-            <div>Ações</div>
+            <div>AÃ§Ãµes</div>
           </div>
 
           <div v-if="loading" class="tr">
@@ -40,8 +41,12 @@
             <div>{{ m.Name }}</div>
             <div class="muted">{{ formatDate(m.UpdatedAt) }}</div>
             <div class="row-actions">
-              <button type="button" class="btn btn--ghost" @click="edit(m.Id)">Editar</button>
-              <button type="button" class="btn btn--danger" @click="remove(m.Id)">Excluir</button>
+              <button type="button" class="icon-button" @click="edit(m.Id)" aria-label="Editar">
+                <i class="fa-solid fa-link"></i>
+              </button>
+              <button type="button" class="icon-button icon-button--danger" @click="remove(m.Id)" aria-label="Excluir">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
             </div>
           </div>
 
