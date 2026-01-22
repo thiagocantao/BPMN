@@ -285,7 +285,7 @@ body {
 .nodes .node.selected circle,
 .nodes .node.selected polygon {
     stroke: rgba(47,128,237,1);
-    stroke-width: 3;
+    stroke-width: 1;
 }
 
 .nodes .node .connector {
@@ -313,7 +313,7 @@ body {
 
 .node-menu .menu-shell {
     fill: #ffffff;
-    stroke: #d5dee9;
+    stroke: #d1d6de;
     stroke-width: 1;
 }
 
@@ -322,18 +322,22 @@ body {
 }
 
 .node-menu .menu-item-bg {
-    fill: #f1f5fb;
+    fill: #f7f8fa;
+    stroke: #d1d6de;
+    stroke-width: 1;
 }
 
 .node-menu .menu-item:hover .menu-item-bg {
-    fill: #e1ebf8;
+    fill: #e4e8ee;
 }
 
-.node-menu text {
-    font-size: 11px;
+.node-menu .menu-icon {
+    font-size: 13px;
     font-weight: 700;
-    fill: #1b1f2a;
+    fill: #3b4a5a;
     pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
 }
 
 .node-title {
