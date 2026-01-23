@@ -64,10 +64,72 @@
                 resetConnect();
             };
 
+
+            const aiGenerating = ref(false);
+
             const sendAiPrompt = () => {
-                if (!aiPrompt.value.trim()) return;
-                aiPrompt.value = "";
+                const prompt = (aiPrompt.value || "").trim();
+                if (!prompt) return;
+
+                aiGenerating.value = true;
+
+                // envia também o JSON atual para permitir ajustes incrementais
+                const current = JSON.stringify(buildJsonToSave());
+
+                PageMethods.GenerateFromAi(
+                    prompt,
+                    current,
+                    (res) => {
+                        aiGenerating.value = false;
+
+                        let parsed;
+                        try {
+                            parsed = JSON.parse(res.ModelJson);
+                        } catch (e) {
+                            console.error("AI returned invalid JSON:", res);
+                            alert("A IA retornou um JSON inválido. Veja o console.");
+                            return;
+                        }
+
+                        if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
+                            alert("A IA retornou um JSON sem nodes/edges.");
+                            return;
+                        }
+
+                        nodes.value = parsed.nodes.map(n => ({
+                            id: String(n.id),
+                            type: n.type,
+                            name: n.name ?? "",
+                            x: Number(n.x ?? 0),
+                            y: Number(n.y ?? 0),
+                            w: Number(n.w ?? 80),
+                            h: Number(n.h ?? 50),
+                            meta: n.meta ?? {}
+                        }));
+
+                        edges.value = parsed.edges.map(e => ({
+                            id: String(e.id),
+                            type: e.type || "sequenceFlow",
+                            from: String(e.from),
+                            to: String(e.to),
+                            waypoints: Array.isArray(e.waypoints) ? e.waypoints : [],
+                            meta: e.meta ?? {}
+                        }));
+
+                        // opcional: centraliza a view
+                        view.x = 0; view.y = 0;
+                        // limpa campo
+                        aiPrompt.value = "";
+                        sidebarMode.value = "edit";
+                    },
+                    (err) => {
+                        aiGenerating.value = false;
+                        console.error(err);
+                        alert((err && err.get_message) ? err.get_message() : "Erro ao chamar IA.");
+                    }
+                );
             };
+
 
             const beginAdd = (t) => {
                 addType.value = t;
