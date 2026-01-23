@@ -38,40 +38,57 @@
 
     <section class="layout">
       <aside class="sidebar card">
-        <h3>Paleta</h3>
-        <div class="palette">
-          <button type="button" class="pill palette-item" @click="beginAdd('startEvent')">
-            <span class="palette-shape palette-shape--start"></span>
-            Início
-          </button>
-          <button type="button" class="pill palette-item" @click="beginAdd('task')">
-            <span class="palette-shape palette-shape--task"></span>
-            Tarefa
-          </button>
-          <button type="button" class="pill palette-item" @click="beginAdd('exclusiveGateway')">
-            <span class="palette-shape palette-shape--gateway"></span>
-            Decisão
-          </button>
-          <button type="button" class="pill palette-item" @click="beginAdd('endEvent')">
-            <span class="palette-shape palette-shape--end"></span>
-            Fim
-          </button>
+        <div class="sidebar-toggle" role="group" aria-label="Modo do painel">
+          <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">Editar</button>
+          <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">IA</button>
         </div>
 
-        <h3 style="margin-top:16px;">Modelo</h3>
-        <label class="field">
-          <span>Nome</span>
-          <input class="input" v-model="modelName" />
-        </label>
+        <div v-if="sidebarMode === 'edit'" class="sidebar-edit">
+          <h3>Paleta</h3>
+          <div class="palette">
+            <button type="button" class="pill palette-item" @click="beginAdd('startEvent')">
+              <span class="palette-shape palette-shape--start"></span>
+              Início
+            </button>
+            <button type="button" class="pill palette-item" @click="beginAdd('task')">
+              <span class="palette-shape palette-shape--task"></span>
+              Tarefa
+            </button>
+            <button type="button" class="pill palette-item" @click="beginAdd('exclusiveGateway')">
+              <span class="palette-shape palette-shape--gateway"></span>
+              Decisão
+            </button>
+            <button type="button" class="pill palette-item" @click="beginAdd('endEvent')">
+              <span class="palette-shape palette-shape--end"></span>
+              Fim
+            </button>
+          </div>
 
-        <div class="toolbar">
-          <button type="button" class="btn btn--danger" @click="deleteSelected" :disabled="!selectedId">Excluir selecionado</button>
+          <h3 style="margin-top:16px;">Modelo</h3>
+          <label class="field">
+            <span>Nome</span>
+            <input class="input" v-model="modelName" />
+          </label>
+
+          <div class="toolbar">
+            <button type="button" class="btn btn--danger" @click="deleteSelected" :disabled="!selectedId">Excluir selecionado</button>
+          </div>
+
+          <div class="hint">
+            <div><strong>Modo adicionar:</strong> clique no canvas para inserir.</div>
+            <div><strong>Conectar:</strong> clique no nó origem e depois no destino.</div>
+            <div><strong>Mover:</strong> arraste o nó.</div>
+          </div>
         </div>
 
-        <div class="hint">
-          <div><strong>Modo adicionar:</strong> clique no canvas para inserir.</div>
-          <div><strong>Conectar:</strong> clique no nó origem e depois no destino.</div>
-          <div><strong>Mover:</strong> arraste o nó.</div>
+        <div v-else class="sidebar-ai">
+          <div class="sidebar-ai-spacer"></div>
+          <div class="sidebar-ai-input">
+            <input class="input" v-model="aiPrompt" placeholder="Descreva o que deseja automatizar" />
+            <button type="button" class="icon-button" @click="sendAiPrompt" aria-label="Enviar prompt de IA">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
         </div>
       </aside>
 

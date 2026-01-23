@@ -21,6 +21,8 @@
             const addType = ref(null);        // quando estiver adicionando
 
             const modelName = ref("");
+            const sidebarMode = ref("edit");
+            const aiPrompt = ref("");
 
             const nodes = ref([]);
             const edges = ref([]);
@@ -60,6 +62,11 @@
                 mode.value = m;
                 addType.value = null;
                 resetConnect();
+            };
+
+            const sendAiPrompt = () => {
+                if (!aiPrompt.value.trim()) return;
+                aiPrompt.value = "";
             };
 
             const beginAdd = (t) => {
@@ -561,6 +568,8 @@
                 beginAdd,
                 addType,
                 modelName,
+                sidebarMode,
+                aiPrompt,
 
                 nodes,
                 edges,
@@ -604,7 +613,8 @@
                 closeInfoViewer,
 
                 save,
-                deleteSelected
+                deleteSelected,
+                sendAiPrompt
             };
         }
     }).mount("#bpmnApp");

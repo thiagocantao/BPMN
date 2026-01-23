@@ -200,6 +200,67 @@ body {
     min-height: calc(100vh - 140px);
 }
 
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 4px;
+    border: 1px solid #d4dbe6;
+    background: #f1f4f9;
+    width: fit-content;
+}
+
+    .sidebar-toggle button {
+        border: none;
+        background: transparent;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #6c7a89;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+    .sidebar-toggle button.active {
+        background: #ffffff;
+        color: #2f80ed;
+        box-shadow: 0 6px 14px rgba(31, 43, 55, 0.12);
+    }
+
+.sidebar-edit {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-ai {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.sidebar-ai-spacer {
+    flex: 1;
+}
+
+.sidebar-ai-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+}
+
+    .sidebar-ai-input .input {
+        flex: 1;
+    }
+
 .sidebar h3 {
     margin: 0 0 10px;
     font-size: 16px;
