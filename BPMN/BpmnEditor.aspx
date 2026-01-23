@@ -4,6 +4,7 @@
 <head runat="server">
   <meta charset="utf-8" />
   <title>BPMN - Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
 </head>
 <body>
@@ -83,8 +84,17 @@
         <div v-else class="sidebar-ai">
           <div class="sidebar-ai-spacer"></div>
           <div class="sidebar-ai-input">
-            <input class="input" v-model="aiPrompt" placeholder="Descreva o que deseja automatizar" />
-            <button type="button" class="icon-button" @click="sendAiPrompt" :disabled="aiGenerating" aria-label="Enviar prompt de IA">{{ aiGenerating ? "..." : "Enviar" }}</button>
+            <textarea
+              ref="aiPromptRef"
+              class="input"
+              v-model="aiPrompt"
+              placeholder="Descreva o que deseja automatizar"
+              rows="1"
+              @input="resizeAiPrompt"
+            ></textarea>
+            <button type="button" class="icon-button" @click="sendAiPrompt" :disabled="aiGenerating" aria-label="Enviar prompt de IA">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
           </div>
         </div>
       </aside>
@@ -387,6 +397,12 @@
           <div v-if="infoViewer.content" class="rich-viewer" v-html="infoViewer.content"></div>
           <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
         </div>
+      </div>
+    </div>
+
+    <div v-if="aiGenerating" class="ai-modal" role="dialog" aria-live="polite" aria-label="Processando instrução da IA">
+      <div class="ai-modal-card">
+        <div class="ai-modal-title">{{ aiStepMessage }}</div>
       </div>
     </div>
   </div>

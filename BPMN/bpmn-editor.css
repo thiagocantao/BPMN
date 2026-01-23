@@ -252,14 +252,45 @@ body {
 
 .sidebar-ai-input {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
     margin-top: auto;
 }
 
     .sidebar-ai-input .input {
         flex: 1;
+        min-height: 40px;
+        max-height: 300px;
+        resize: none;
+        overflow-y: hidden;
+        line-height: 1.4;
     }
+
+.ai-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    backdrop-filter: blur(2px);
+}
+
+.ai-modal-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    min-width: 260px;
+    text-align: center;
+}
+
+.ai-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1b1f2a;
+}
 
 .sidebar h3 {
     margin: 0 0 10px;
