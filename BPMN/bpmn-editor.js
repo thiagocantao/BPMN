@@ -169,6 +169,12 @@
             };
 
             const findNode = (id) => nodes.value.find(n => n.id === id);
+            const bringNodeToFront = (id) => {
+                const index = nodes.value.findIndex(n => n.id === id);
+                if (index === -1 || index === nodes.value.length - 1) return;
+                const [node] = nodes.value.splice(index, 1);
+                nodes.value.push(node);
+            };
 
             const CONNECTOR_OFFSET = 4;
 
@@ -238,6 +244,7 @@
 
                     nodes.value.push(node);
                     selectedId.value = id;
+                    bringNodeToFront(id);
                     addType.value = null;
                     return;
                 }
@@ -304,10 +311,14 @@
                 const isSelected = selectedId.value === node.id;
                 if (mode.value !== "connect") {
                     selectedId.value = isSelected ? null : node.id;
+                    if (!isSelected) {
+                        bringNodeToFront(node.id);
+                    }
                     return;
                 }
 
                 selectedId.value = node.id;
+                bringNodeToFront(node.id);
 
                 // Connect flow
                 if (!connect.fromId) {
@@ -344,6 +355,7 @@
             const startConnectFromMenu = (node) => {
                 mode.value = "connect";
                 selectedId.value = node.id;
+                bringNodeToFront(node.id);
                 connect.fromId = node.id;
                 connect.dragging = false;
                 connectPreview.show = true;
@@ -360,6 +372,7 @@
 
             const startConnectorDrag = (node) => {
                 selectedId.value = node.id;
+                bringNodeToFront(node.id);
                 connect.fromId = node.id;
                 connect.dragging = true;
                 connectPreview.show = true;
