@@ -1,5 +1,5 @@
 (() => {
-    const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
 
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
 
@@ -23,6 +23,7 @@
             const modelName = ref("");
             const sidebarMode = ref("edit");
             const aiPrompt = ref("");
+            const aiPromptRef = ref(null);
 
             const nodes = ref([]);
             const edges = ref([]);
@@ -66,6 +67,25 @@
 
 
             const aiGenerating = ref(false);
+            const aiSteps = [
+                "Pensando...",
+                "Carregando informações...",
+                "Processando os dados...",
+                "Gerando o gráfico..."
+            ];
+            const aiStepIndex = ref(0);
+            const aiStepMessage = computed(() => aiSteps[aiStepIndex.value]);
+            let aiStepTimer = null;
+
+            const resizeAiPrompt = () => {
+                const el = aiPromptRef.value;
+                if (!el) return;
+                const maxHeight = 300;
+                el.style.height = "auto";
+                const nextHeight = Math.min(el.scrollHeight, maxHeight);
+                el.style.height = `${nextHeight}px`;
+                el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+            };
 
             const sendAiPrompt = () => {
                 const prompt = (aiPrompt.value || "").trim();
@@ -120,6 +140,7 @@
                         view.x = 0; view.y = 0;
                         // limpa campo
                         aiPrompt.value = "";
+                        nextTick(resizeAiPrompt);
                         sidebarMode.value = "edit";
                     },
                     (err) => {
@@ -129,6 +150,20 @@
                     }
                 );
             };
+
+            watch(aiGenerating, (active) => {
+                if (active) {
+                    aiStepIndex.value = 0;
+                    if (aiStepTimer) clearInterval(aiStepTimer);
+                    aiStepTimer = setInterval(() => {
+                        aiStepIndex.value = (aiStepIndex.value + 1) % aiSteps.length;
+                    }, 1400);
+                    nextTick(resizeAiPrompt);
+                } else if (aiStepTimer) {
+                    clearInterval(aiStepTimer);
+                    aiStepTimer = null;
+                }
+            });
 
 
             const beginAdd = (t) => {
@@ -621,6 +656,7 @@
 
             onMounted(() => {
                 load();
+                nextTick(resizeAiPrompt);
             });
 
             return {
@@ -632,6 +668,9 @@
                 modelName,
                 sidebarMode,
                 aiPrompt,
+                aiPromptRef,
+                aiGenerating,
+                aiStepMessage,
 
                 nodes,
                 edges,
@@ -676,7 +715,8 @@
 
                 save,
                 deleteSelected,
-                sendAiPrompt
+                sendAiPrompt,
+                resizeAiPrompt
             };
         }
     }).mount("#bpmnApp");
