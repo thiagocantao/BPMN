@@ -5,7 +5,6 @@
   <meta charset="utf-8" />
   <title>BPMN - Editor</title>
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 <body>
 <form id="form1" runat="server">
@@ -85,9 +84,7 @@
           <div class="sidebar-ai-spacer"></div>
           <div class="sidebar-ai-input">
             <input class="input" v-model="aiPrompt" placeholder="Descreva o que deseja automatizar" />
-            <button type="button" class="icon-button" @click="sendAiPrompt" aria-label="Enviar prompt de IA">
-              <i class="fa-solid fa-paper-plane"></i>
-            </button>
+            <button type="button" class="icon-button" @click="sendAiPrompt" :disabled="aiGenerating" aria-label="Enviar prompt de IA">{{ aiGenerating ? "..." : "Enviar" }}</button>
           </div>
         </div>
       </aside>
