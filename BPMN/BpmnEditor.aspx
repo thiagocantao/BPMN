@@ -394,7 +394,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="./vue.global.prod.js"></script>
   <script src="/Bpmn/bpmn-editor.js"></script>
 </form>
 </body>
