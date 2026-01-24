@@ -774,8 +774,8 @@
                 }
                 const dx = evt.clientX - pan.startMouse.x;
                 const dy = evt.clientY - pan.startMouse.y;
-                view.x = Math.round(pan.startView.x - dx * pan.scale.x);
-                view.y = Math.round(pan.startView.y - dy * pan.scale.y);
+                view.x = Math.round(pan.startView.x + dx * pan.scale.x);
+                view.y = Math.round(pan.startView.y + dy * pan.scale.y);
             };
 
             const onPanEnd = () => {
