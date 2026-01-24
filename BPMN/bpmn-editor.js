@@ -43,7 +43,8 @@
             const pan = reactive({
                 active: false,
                 startMouse: { x: 0, y: 0 },
-                startView: { x: 0, y: 0 }
+                startView: { x: 0, y: 0 },
+                scale: { x: 1, y: 1 }
             });
 
             const selection = reactive({
@@ -411,10 +412,18 @@
                     return;
                 }
 
-                const p = getSvgPoint(evt);
+                const svg = svgRef.value;
                 pan.active = true;
-                pan.startMouse = { x: p.x, y: p.y };
+                pan.startMouse = { x: evt.clientX, y: evt.clientY };
                 pan.startView = { x: view.x, y: view.y };
+                if (svg) {
+                    pan.scale = {
+                        x: view.w / svg.clientWidth,
+                        y: view.h / svg.clientHeight
+                    };
+                } else {
+                    pan.scale = { x: 1, y: 1 };
+                }
                 window.addEventListener("mousemove", onPanMove);
                 window.addEventListener("mouseup", onPanEnd);
 
@@ -763,11 +772,10 @@
                     onPanEnd();
                     return;
                 }
-                const p = getSvgPoint(evt);
-                const dx = p.x - pan.startMouse.x;
-                const dy = p.y - pan.startMouse.y;
-                view.x = Math.round(pan.startView.x - dx);
-                view.y = Math.round(pan.startView.y - dy);
+                const dx = evt.clientX - pan.startMouse.x;
+                const dy = evt.clientY - pan.startMouse.y;
+                view.x = Math.round(pan.startView.x - dx * pan.scale.x);
+                view.y = Math.round(pan.startView.y - dy * pan.scale.y);
             };
 
             const onPanEnd = () => {
