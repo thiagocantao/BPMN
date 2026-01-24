@@ -29,14 +29,28 @@
             const edges = ref([]);
 
             const selectedId = ref(null);
+            const selectedIds = ref([]);
 
             // pan/zoom simples via viewBox (MVP)
             const view = reactive({ x: 0, y: 0, w: 1200, h: 700 });
             const viewBox = computed(() => `${view.x} ${view.y} ${view.w} ${view.h}`);
+            const isShiftPressed = ref(false);
 
             const svgRef = ref(null);
             const infoEditorRef = ref(null);
             const nameInputRef = ref(null);
+
+            const pan = reactive({
+                active: false,
+                startMouse: { x: 0, y: 0 },
+                startView: { x: 0, y: 0 }
+            });
+
+            const selection = reactive({
+                active: false,
+                start: { x: 0, y: 0 },
+                end: { x: 0, y: 0 }
+            });
 
             // drag
             const drag = reactive({
@@ -295,6 +309,35 @@
                 window.removeEventListener("mouseup", onConnectCancel);
             };
 
+            const resetSelection = () => {
+                selection.active = false;
+                window.removeEventListener("mousemove", onSelectionMove);
+                window.removeEventListener("mouseup", onSelectionEnd);
+            };
+
+            const resetPan = () => {
+                pan.active = false;
+                window.removeEventListener("mousemove", onPanMove);
+                window.removeEventListener("mouseup", onPanEnd);
+            };
+
+            const normalizeRect = (a, b) => {
+                const x = Math.min(a.x, b.x);
+                const y = Math.min(a.y, b.y);
+                return {
+                    x,
+                    y,
+                    w: Math.abs(a.x - b.x),
+                    h: Math.abs(a.y - b.y)
+                };
+            };
+
+            const selectionRect = computed(() => normalizeRect(selection.start, selection.end));
+
+            const isNodeSelected = (nodeId) => {
+                return selectedId.value === nodeId || selectedIds.value.includes(nodeId);
+            };
+
             const edgePoints = (e) => {
                 const from = findNode(e.from);
                 const to = findNode(e.to);
@@ -328,6 +371,11 @@
             };
 
             const onCanvasMouseDown = (evt) => {
+                if (connectPreview.show) {
+                    resetConnect();
+                    return;
+                }
+
                 // Inserir nó
                 if (addType.value) {
                     const p = getSvgPoint(evt);
@@ -353,11 +401,33 @@
                     return;
                 }
 
+                if (isShiftPressed.value) {
+                    const p = getSvgPoint(evt);
+                    selection.active = true;
+                    selection.start = { x: p.x, y: p.y };
+                    selection.end = { x: p.x, y: p.y };
+                    window.addEventListener("mousemove", onSelectionMove);
+                    window.addEventListener("mouseup", onSelectionEnd);
+                    return;
+                }
+
+                const p = getSvgPoint(evt);
+                pan.active = true;
+                pan.startMouse = { x: p.x, y: p.y };
+                pan.startView = { x: view.x, y: view.y };
+                window.addEventListener("mousemove", onPanMove);
+                window.addEventListener("mouseup", onPanEnd);
+
                 // Clique no vazio: deseleciona
                 selectedId.value = null;
+                selectedIds.value = [];
             };
 
             const onNodeDown = (evt, node) => {
+                if (isShiftPressed.value) {
+                    return;
+                }
+
                 if (mode.value === "connect") {
                     // em connect, não inicia drag
                     return;
@@ -412,9 +482,20 @@
                     return;
                 }
 
-                const isSelected = selectedId.value === node.id;
+                if (isShiftPressed.value) {
+                    if (selectedIds.value.includes(node.id)) {
+                        selectedIds.value = selectedIds.value.filter(id => id !== node.id);
+                    } else {
+                        selectedIds.value = [...selectedIds.value, node.id];
+                    }
+                    selectedId.value = null;
+                    return;
+                }
+
+                const isSelected = isNodeSelected(node.id);
                 if (mode.value !== "connect") {
                     selectedId.value = isSelected ? null : node.id;
+                    selectedIds.value = isSelected ? [] : [node.id];
                     if (!isSelected) {
                         bringNodeToFront(node.id);
                     }
@@ -422,6 +503,7 @@
                 }
 
                 selectedId.value = node.id;
+                selectedIds.value = [node.id];
                 bringNodeToFront(node.id);
 
                 // Connect flow
@@ -522,6 +604,7 @@
 
             const selectEdge = (edgeId) => {
                 selectedId.value = edgeId;
+                selectedIds.value = [];
             };
 
             const nameEditor = reactive({
@@ -633,6 +716,15 @@
             };
 
             const deleteSelected = () => {
+                if (selectedIds.value.length > 0) {
+                    const ids = new Set(selectedIds.value);
+                    edges.value = edges.value.filter(e => !ids.has(e.from) && !ids.has(e.to));
+                    nodes.value = nodes.value.filter(n => !ids.has(n.id));
+                    selectedId.value = null;
+                    selectedIds.value = [];
+                    return;
+                }
+
                 if (!selectedId.value) return;
 
                 const id = selectedId.value;
@@ -643,6 +735,7 @@
                     edges.value = edges.value.filter(e => e.from !== id && e.to !== id);
                     nodes.value = nodes.value.filter(n => n.id !== id);
                     selectedId.value = null;
+                    selectedIds.value = [];
                     return;
                 }
 
@@ -657,7 +750,49 @@
             onMounted(() => {
                 load();
                 nextTick(resizeAiPrompt);
+                const updateShiftState = (event) => {
+                    isShiftPressed.value = event.shiftKey;
+                };
+                window.addEventListener("keydown", updateShiftState);
+                window.addEventListener("keyup", updateShiftState);
             });
+
+            const onPanMove = (evt) => {
+                if (!pan.active) return;
+                if (evt.buttons === 0) {
+                    onPanEnd();
+                    return;
+                }
+                const p = getSvgPoint(evt);
+                const dx = p.x - pan.startMouse.x;
+                const dy = p.y - pan.startMouse.y;
+                view.x = Math.round(pan.startView.x - dx);
+                view.y = Math.round(pan.startView.y - dy);
+            };
+
+            const onPanEnd = () => {
+                if (!pan.active) return;
+                resetPan();
+            };
+
+            const onSelectionMove = (evt) => {
+                if (!selection.active) return;
+                const p = getSvgPoint(evt);
+                selection.end = { x: p.x, y: p.y };
+            };
+
+            const onSelectionEnd = () => {
+                if (!selection.active) return;
+                const { x, y, w, h } = selectionRect.value;
+                const x2 = x + w;
+                const y2 = y + h;
+                const selected = nodes.value
+                    .filter(n => n.x <= x2 && n.x + n.w >= x && n.y <= y2 && n.y + n.h >= y)
+                    .map(n => n.id);
+                selectedIds.value = selected;
+                selectedId.value = selected.length === 1 ? selected[0] : null;
+                resetSelection();
+            };
 
             return {
                 saving,
@@ -675,10 +810,16 @@
                 nodes,
                 edges,
                 selectedId,
+                selectedIds,
 
                 viewBox,
+                isShiftPressed,
                 svgRef,
                 connectPreview,
+                pan,
+                selection,
+                selectionRect,
+                isNodeSelected,
 
                 edgePoints,
                 edgeMidpoint,
