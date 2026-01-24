@@ -103,6 +103,7 @@
         <svg
           ref="svgRef"
           class="svg"
+          :class="{ 'is-panning': pan.active, 'is-shift-select': isShiftPressed }"
           :viewBox="viewBox"
           @mousedown="onCanvasMouseDown"
         >
@@ -144,7 +145,7 @@
           <g class="nodes">
             <template v-for="n in nodes" :key="n.id">
               <!-- task -->
-              <g v-if="n.type==='task'" class="node" :class="{ selected: selectedId===n.id }"
+              <g v-if="n.type==='task'" class="node" :class="{ selected: isNodeSelected(n.id) }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
                  @mouseup.stop="onNodeConnectDrop(n)"
@@ -207,7 +208,7 @@
               </g>
 
               <!-- start/end -->
-              <g v-else-if="n.type==='startEvent' || n.type==='endEvent'" class="node" :class="{ selected: selectedId===n.id }"
+              <g v-else-if="n.type==='startEvent' || n.type==='endEvent'" class="node" :class="{ selected: isNodeSelected(n.id) }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
                  @mouseup.stop="onNodeConnectDrop(n)"
@@ -270,7 +271,7 @@
               </g>
 
               <!-- gateway -->
-              <g v-else-if="n.type==='exclusiveGateway'" class="node" :class="{ selected: selectedId===n.id }"
+              <g v-else-if="n.type==='exclusiveGateway'" class="node" :class="{ selected: isNodeSelected(n.id) }"
                  :transform="`translate(${n.x},${n.y})`"
                  @mousedown.stop="onNodeDown($event, n)"
                  @mouseup.stop="onNodeConnectDrop(n)"
@@ -335,6 +336,14 @@
           </g>
 
           <!-- connection preview -->
+          <rect
+            v-if="selection.active"
+            class="selection-rect"
+            :x="selectionRect.x"
+            :y="selectionRect.y"
+            :width="selectionRect.w"
+            :height="selectionRect.h"
+          />
           <line v-if="connectPreview.show" class="edge preview"
                 :x1="connectPreview.x1" :y1="connectPreview.y1"
                 :x2="connectPreview.x2" :y2="connectPreview.y2"
