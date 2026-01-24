@@ -402,6 +402,25 @@ body {
     display: block;
     background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
     background-size: 24px 24px;
+    cursor: grab;
+}
+
+.svg.is-panning,
+.svg.is-panning * {
+    cursor: grabbing !important;
+}
+
+.svg.is-shift-select,
+.svg.is-shift-select * {
+    cursor: crosshair !important;
+}
+
+.selection-rect {
+    fill: rgba(47, 128, 237, 0.16);
+    stroke: rgba(47, 128, 237, 0.8);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    pointer-events: none;
 }
 
 .edge {
