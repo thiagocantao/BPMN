@@ -393,12 +393,13 @@ body {
 
 .canvas {
     padding: 0;
-    overflow: hidden;
+    overflow: auto;
+    height: calc(100vh - 210px);
 }
 
 .svg {
-    width: 100%;
-    height: calc(100vh - 210px);
+    min-width: 100%;
+    min-height: 100%;
     display: block;
     background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
     background-size: 24px 24px;
@@ -703,7 +704,7 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .svg {
+    .canvas {
         height: 70vh;
     }
 }
