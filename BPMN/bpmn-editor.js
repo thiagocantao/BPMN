@@ -32,9 +32,15 @@
             const selectedIds = ref([]);
 
             // pan/zoom simples via viewBox (MVP)
-            const view = reactive({ x: 0, y: 0, w: 1200, h: 700 });
+            const BASE_VIEW = { w: 1200, h: 700 };
+            const CANVAS_PADDING = 160;
+            const view = reactive({ x: 0, y: 0, w: BASE_VIEW.w, h: BASE_VIEW.h });
             const viewBox = computed(() => `${view.x} ${view.y} ${view.w} ${view.h}`);
             const isShiftPressed = ref(false);
+            const svgStyle = computed(() => ({
+                width: `${view.w}px`,
+                height: `${view.h}px`
+            }));
 
             const svgRef = ref(null);
             const infoEditorRef = ref(null);
@@ -369,6 +375,39 @@
             const diamondPoints = (w, h) => {
                 const cx = w / 2, cy = h / 2;
                 return `${cx},0 ${w},${cy} ${cx},${h} 0,${cy}`;
+            };
+
+            const updateCanvasBounds = () => {
+                if (!nodes.value.length) {
+                    view.w = BASE_VIEW.w;
+                    view.h = BASE_VIEW.h;
+                    view.x = 0;
+                    view.y = 0;
+                    return;
+                }
+
+                let minX = Infinity;
+                let minY = Infinity;
+                let maxX = -Infinity;
+                let maxY = -Infinity;
+
+                nodes.value.forEach((n) => {
+                    minX = Math.min(minX, n.x);
+                    minY = Math.min(minY, n.y);
+                    maxX = Math.max(maxX, n.x + n.w);
+                    maxY = Math.max(maxY, n.y + n.h);
+                });
+
+                const width = Math.max(BASE_VIEW.w, (maxX - minX) + CANVAS_PADDING * 2);
+                const height = Math.max(BASE_VIEW.h, (maxY - minY) + CANVAS_PADDING * 2);
+
+                view.w = Math.round(width);
+                view.h = Math.round(height);
+
+                const targetX = Math.round(Math.min(view.x, minX - CANVAS_PADDING));
+                const targetY = Math.round(Math.min(view.y, minY - CANVAS_PADDING));
+                view.x = targetX;
+                view.y = targetY;
             };
 
             const onCanvasMouseDown = (evt) => {
@@ -759,12 +798,17 @@
             onMounted(() => {
                 load();
                 nextTick(resizeAiPrompt);
+                updateCanvasBounds();
                 const updateShiftState = (event) => {
                     isShiftPressed.value = event.shiftKey;
                 };
                 window.addEventListener("keydown", updateShiftState);
                 window.addEventListener("keyup", updateShiftState);
             });
+
+            watch(nodes, () => {
+                updateCanvasBounds();
+            }, { deep: true, immediate: true });
 
             const onPanMove = (evt) => {
                 if (!pan.active) return;
@@ -821,6 +865,7 @@
                 selectedIds,
 
                 viewBox,
+                svgStyle,
                 isShiftPressed,
                 svgRef,
                 connectPreview,

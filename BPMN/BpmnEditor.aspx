@@ -105,6 +105,7 @@
           class="svg"
           :class="{ 'is-panning': pan.active, 'is-shift-select': isShiftPressed }"
           :viewBox="viewBox"
+          :style="svgStyle"
           @mousedown="onCanvasMouseDown"
         >
           <defs>
