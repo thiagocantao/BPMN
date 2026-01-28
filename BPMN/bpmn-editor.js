@@ -428,7 +428,8 @@
             onMounted(async () => {
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window }
+                    keyboard: { bindTo: window },
+                    additionalModules: [createInfoContextPadModule()]
                 });
                 modelerRef.value = modeler;
                 registerInfoContextPad(modeler);
