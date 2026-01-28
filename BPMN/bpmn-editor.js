@@ -219,6 +219,42 @@
                 openInfoViewer(selectedElement.value);
             };
 
+            const registerInfoContextPad = (modeler) => {
+                const contextPad = modeler.get("contextPad");
+                if (!contextPad) return;
+
+                const provider = {
+                    getContextPadEntries(element) {
+                        if (!element || element.waypoints || element.isRoot) return {};
+
+                        return {
+                            "edit-info": {
+                                group: "info",
+                                className: "context-pad-icon context-pad-icon--edit",
+                                title: "Editar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoEditor(target);
+                                    }
+                                }
+                            },
+                            "view-info": {
+                                group: "info",
+                                className: "context-pad-icon context-pad-icon--view",
+                                title: "Visualizar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoViewer(target);
+                                    }
+                                }
+                            }
+                        };
+                    }
+                };
+
+                contextPad.registerProvider(provider);
+            };
+
             const closeInfoViewer = () => {
                 infoViewer.show = false;
                 infoViewer.elementId = null;
@@ -395,6 +431,7 @@
                     keyboard: { bindTo: window }
                 });
                 modelerRef.value = modeler;
+                registerInfoContextPad(modeler);
 
                 modeler.on("selection.changed", (event) => {
                     const selection = event.newSelection || [];
