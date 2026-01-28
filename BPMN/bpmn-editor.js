@@ -221,35 +221,36 @@
 
             const createInfoContextPadModule = () => {
                 const InfoContextPadProvider = function (contextPad) {
-                    this.getContextPadEntries = (element) => {
-                        if (!element || element.waypoints || element.isRoot) return {};
-
-                        return {
-                            "edit-info": {
-                                group: "edit",
-                                className: "context-pad-icon context-pad-icon--edit",
-                                title: "Editar informações",
-                                action: {
-                                    click: (event, target) => {
-                                        openInfoEditor(target);
-                                    }
-                                }
-                            },
-                            "view-info": {
-                                group: "edit",
-                                className: "context-pad-icon context-pad-icon--view",
-                                title: "Visualizar informações",
-                                action: {
-                                    click: (event, target) => {
-                                        openInfoViewer(target);
-                                    }
-                                }
-                            }
-                        };
-                    };
+                    contextPad.registerProvider(this);
                 };
 
                 InfoContextPadProvider.$inject = ["contextPad"];
+                InfoContextPadProvider.prototype.getContextPadEntries = (element) => {
+                    if (!element || element.waypoints || element.isRoot) return {};
+
+                    return {
+                        "edit-info": {
+                            group: "edit",
+                            className: "context-pad-icon context-pad-icon--edit",
+                            title: "Editar informações",
+                            action: {
+                                click: (event, target) => {
+                                    openInfoEditor(target);
+                                }
+                            }
+                        },
+                        "view-info": {
+                            group: "edit",
+                            className: "context-pad-icon context-pad-icon--view",
+                            title: "Visualizar informações",
+                            action: {
+                                click: (event, target) => {
+                                    openInfoViewer(target);
+                                }
+                            }
+                        }
+                    };
+                };
 
                 return {
                     __init__: ["infoContextPadProvider"],
