@@ -20,25 +20,58 @@ using System.Web.Services;
             return (s ?? "").Replace("'", "''");
         }
 
-        private static string BuildDefaultJson(string name)
+        private static string EscapeXml(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("&", "&amp;")
+                    .Replace("<", "&lt;")
+                    .Replace(">", "&gt;")
+                    .Replace("\"", "&quot;")
+                    .Replace("'", "&apos;");
+        }
+
+        private static string BuildDefaultXml(string name)
         {
             // MVP: start -> task -> end
-            // Json ìcruî para teste (sem depender de libs)
-            name = EscapeSql(name);
+            // XML BPMN para teste (sem depender de libs)
+            var safeName = EscapeXml(name ?? "Processo");
 
-            return @"{
-  ""schemaVersion"": 1,
-  ""diagram"": { ""id"": ""D1"", ""name"": """ + name.Replace("\"", "\\\"") + @""" },
-  ""nodes"": [
-    { ""id"": ""N_START_1"", ""type"": ""startEvent"", ""name"": ""InÌcio"", ""x"": 120, ""y"": 120, ""w"": 36, ""h"": 36, ""meta"": {} },
-    { ""id"": ""N_TASK_1"",  ""type"": ""task"",       ""name"": ""Nova tarefa"", ""x"": 240, ""y"": 105, ""w"": 160, ""h"": 70, ""meta"": {} },
-    { ""id"": ""N_END_1"",   ""type"": ""endEvent"",   ""name"": ""Fim"", ""x"": 440, ""y"": 120, ""w"": 36, ""h"": 36, ""meta"": {} }
-  ],
-  ""edges"": [
-    { ""id"": ""E_1"", ""type"": ""sequenceFlow"", ""from"": ""N_START_1"", ""to"": ""N_TASK_1"", ""waypoints"": [], ""meta"": {} },
-    { ""id"": ""E_2"", ""type"": ""sequenceFlow"", ""from"": ""N_TASK_1"", ""to"": ""N_END_1"",  ""waypoints"": [], ""meta"": {} }
-  ]
-}";
+            return @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<bpmn:definitions xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
+  xmlns:bpmn=""http://www.omg.org/spec/BPMN/20100524/MODEL""
+  xmlns:bpmndi=""http://www.omg.org/spec/BPMN/20100524/DI""
+  xmlns:dc=""http://www.omg.org/spec/DD/20100524/DC""
+  xmlns:di=""http://www.omg.org/spec/DD/20100524/DI""
+  id=""Definitions_1"" targetNamespace=""http://bpmn.io/schema/bpmn"">
+  <bpmn:process id=""Process_1"" name=""" + safeName + @""" isExecutable=""false"">
+    <bpmn:startEvent id=""StartEvent_1"" name=""In√≠cio"" />
+    <bpmn:task id=""Task_1"" name=""Nova tarefa"" />
+    <bpmn:endEvent id=""EndEvent_1"" name=""Fim"" />
+    <bpmn:sequenceFlow id=""Flow_1"" sourceRef=""StartEvent_1"" targetRef=""Task_1"" />
+    <bpmn:sequenceFlow id=""Flow_2"" sourceRef=""Task_1"" targetRef=""EndEvent_1"" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id=""BPMNDiagram_1"">
+    <bpmndi:BPMNPlane id=""BPMNPlane_1"" bpmnElement=""Process_1"">
+      <bpmndi:BPMNShape id=""StartEvent_1_di"" bpmnElement=""StartEvent_1"">
+        <dc:Bounds x=""120"" y=""120"" width=""36"" height=""36"" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id=""Task_1_di"" bpmnElement=""Task_1"">
+        <dc:Bounds x=""240"" y=""105"" width=""160"" height=""70"" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id=""EndEvent_1_di"" bpmnElement=""EndEvent_1"">
+        <dc:Bounds x=""440"" y=""120"" width=""36"" height=""36"" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id=""Flow_1_di"" bpmnElement=""Flow_1"">
+        <di:waypoint x=""156"" y=""138"" />
+        <di:waypoint x=""240"" y=""138"" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id=""Flow_2_di"" bpmnElement=""Flow_2"">
+        <di:waypoint x=""400"" y=""140"" />
+        <di:waypoint x=""440"" y=""138"" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>";
         }
 
         [WebMethod(EnableSession = true)]
@@ -46,7 +79,7 @@ using System.Web.Services;
         {
             OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            // Corrigido: acessar Session via HttpContext.Current em mÈtodos est·ticos
+            // Corrigido: acessar Session via HttpContext.Current em m√©todos est√°ticos
             listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
             listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
             var cd = CdadosUtil.GetCdados(listaParametrosDados);
@@ -86,7 +119,7 @@ using System.Web.Services;
         {
             OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            // Corrigido: acessar Session via HttpContext.Current em mÈtodos est·ticos
+            // Corrigido: acessar Session via HttpContext.Current em m√©todos est√°ticos
             listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
             listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
             var cd = CdadosUtil.GetCdados(listaParametrosDados);
@@ -96,9 +129,9 @@ using System.Web.Services;
 
             name = (name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(name))
-                throw new Exception("Nome inv·lido.");
+                throw new Exception("Nome inv√°lido.");
 
-            string json = BuildDefaultJson(name);
+            string xml = BuildDefaultXml(name);
 
             string sql = string.Format(@"
                 SET NOCOUNT ON;
@@ -106,7 +139,7 @@ using System.Web.Services;
                 VALUES ('{2}', '{3}');
 
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
-            ", db, own, EscapeSql(name), EscapeSql(json));
+            ", db, own, EscapeSql(name), EscapeSql(xml));
 
             DataSet ds = cd.getDataSet(sql);
             if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
@@ -120,7 +153,7 @@ using System.Web.Services;
         {
             OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            // Corrigido: acessar Session via HttpContext.Current em mÈtodos est·ticos
+            // Corrigido: acessar Session via HttpContext.Current em m√©todos est√°ticos
             listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
             listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
             var cd = CdadosUtil.GetCdados(listaParametrosDados);
