@@ -5,6 +5,9 @@
   <meta charset="utf-8" />
   <title>BPMN - Editor</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-font/css/bpmn.css" />
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
 </head>
 <body>
@@ -71,13 +74,15 @@
           </label>
 
           <div class="toolbar">
-            <button type="button" class="btn btn--danger" @click="deleteSelected" :disabled="!selectedId">Excluir selecionado</button>
+            <button type="button" class="btn btn--danger" @click="deleteSelected" :disabled="selectedIds.length === 0">Excluir selecionado</button>
+            <button type="button" class="btn btn--ghost" @click="openInfoEditorFromSelection" :disabled="!canEditSelectedInfo">Editar informações</button>
+            <button type="button" class="btn btn--ghost" @click="openInfoViewerFromSelection" :disabled="!canEditSelectedInfo">Visualizar informações</button>
           </div>
 
           <div class="hint">
-            <div><strong>Modo adicionar:</strong> clique no canvas para inserir.</div>
-            <div><strong>Conectar:</strong> clique no nó origem e depois no destino.</div>
-            <div><strong>Mover:</strong> arraste o nó.</div>
+            <div><strong>Adicionar:</strong> use a paleta acima ou a paleta BPMN do canvas.</div>
+            <div><strong>Conectar:</strong> use o botão de conexão do BPMN.io ou a opção Conectar.</div>
+            <div><strong>Editar:</strong> dê duplo clique no nome do elemento.</div>
           </div>
         </div>
 
@@ -100,256 +105,7 @@
       </aside>
 
       <main class="canvas card">
-        <svg
-          ref="svgRef"
-          class="svg"
-          :class="{ 'is-panning': pan.active, 'is-shift-select': isShiftPressed }"
-          :viewBox="viewBox"
-          :style="svgStyle"
-          @mousedown="onCanvasMouseDown"
-        >
-          <defs>
-            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L10,3 L0,6 Z"></path>
-            </marker>
-          </defs>
-
-          <!-- edges -->
-          <g class="edges">
-            <g v-for="e in edges" :key="e.id" class="edge-group">
-              <polyline
-                :points="edgePoints(e)"
-                class="edge"
-                :class="{ selected: selectedId===e.id }"
-                marker-end="url(#arrow)"
-                @mousedown.stop="selectEdge(e.id)"
-              />
-              <g
-                v-if="selectedId===e.id && edgeMidpoint(e).valid"
-                class="edge-delete"
-                :transform="`translate(${edgeMidpoint(e).x},${edgeMidpoint(e).y})`"
-                @mousedown.stop
-                @click.stop="deleteSelected"
-              >
-                <title>Excluir conector</title>
-                <rect class="edge-delete-bg" x="-12" y="-12" width="34" height="30" rx="8" ry="8" />
-                <foreignObject class="edge-delete-icon" x="-3" y="-9" width="24" height="24">
-                  <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                    <i class="fa-regular fa-trash-can"></i>
-                  </div>
-                </foreignObject>
-              </g>
-            </g>
-          </g>
-
-          <!-- nodes -->
-          <g class="nodes">
-            <template v-for="n in nodes" :key="n.id">
-              <!-- task -->
-              <g v-if="n.type==='task'" class="node" :class="{ selected: isNodeSelected(n.id) }"
-                 :transform="`translate(${n.x},${n.y})`"
-                 @mousedown.stop="onNodeDown($event, n)"
-                 @mouseup.stop="onNodeConnectDrop(n)"
-                 @click.stop="onNodeClick(n)">
-                <rect :width="n.w" :height="n.h" rx="10" ry="10" />
-                <text v-if="!isEditingName(n)" class="node-title" x="10" y="24" @mousedown.stop @click.stop="beginNameEdit(n)">{{ n.name }}</text>
-                <foreignObject v-else x="6" y="6" :width="n.w - 12" height="24" @mousedown.stop @click.stop>
-                  <div class="node-name-input-wrap" xmlns="http://www.w3.org/1999/xhtml">
-                    <input
-                      ref="nameInputRef"
-                      v-model="nameEditor.value"
-                      class="node-name-input"
-                      @keydown.enter.prevent="saveNameEdit"
-                      @keydown.esc.prevent="cancelNameEdit"
-                      @blur="saveNameEdit"
-                    />
-                  </div>
-                </foreignObject>
-                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
-                        @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="80" height="68" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
-                    <title>Editar informações</title>
-                    <rect class="menu-item-bg" x="8" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-pencil"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
-                    <title>Visualizar informações</title>
-                    <rect class="menu-item-bg" x="44" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
-                    <rect class="menu-item-bg" x="8" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-link"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <title>Excluir</title>
-                    <rect class="menu-item-bg" x="44" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-regular fa-trash-can"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                </g>
-              </g>
-
-              <!-- start/end -->
-              <g v-else-if="n.type==='startEvent' || n.type==='endEvent'" class="node" :class="{ selected: isNodeSelected(n.id) }"
-                 :transform="`translate(${n.x},${n.y})`"
-                 @mousedown.stop="onNodeDown($event, n)"
-                 @mouseup.stop="onNodeConnectDrop(n)"
-                 @click.stop="onNodeClick(n)">
-                <circle :cx="n.w/2" :cy="n.h/2" :r="n.w/2 - 2" :class="n.type" />
-                <text v-if="!isEditingName(n)" class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle" @mousedown.stop @click.stop="beginNameEdit(n)">{{ n.name }}</text>
-                <foreignObject v-else :x="0" :y="n.h + 4" :width="n.w" height="24" @mousedown.stop @click.stop>
-                  <div class="node-name-input-wrap centered" xmlns="http://www.w3.org/1999/xhtml">
-                    <input
-                      ref="nameInputRef"
-                      v-model="nameEditor.value"
-                      class="node-name-input centered"
-                      @keydown.enter.prevent="saveNameEdit"
-                      @keydown.esc.prevent="cancelNameEdit"
-                      @blur="saveNameEdit"
-                    />
-                  </div>
-                </foreignObject>
-                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
-                        @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="80" height="68" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
-                    <title>Editar informações</title>
-                    <rect class="menu-item-bg" x="8" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-pencil"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
-                    <title>Visualizar informações</title>
-                    <rect class="menu-item-bg" x="44" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
-                    <rect class="menu-item-bg" x="8" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-link"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <title>Excluir</title>
-                    <rect class="menu-item-bg" x="44" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-regular fa-trash-can"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                </g>
-              </g>
-
-              <!-- gateway -->
-              <g v-else-if="n.type==='exclusiveGateway'" class="node" :class="{ selected: isNodeSelected(n.id) }"
-                 :transform="`translate(${n.x},${n.y})`"
-                 @mousedown.stop="onNodeDown($event, n)"
-                 @mouseup.stop="onNodeConnectDrop(n)"
-                 @click.stop="onNodeClick(n)">
-                <polygon :points="diamondPoints(n.w, n.h)" />
-                <text v-if="!isEditingName(n)" class="node-title" :x="n.w/2" :y="n.h + 16" text-anchor="middle" @mousedown.stop @click.stop="beginNameEdit(n)">{{ n.name }}</text>
-                <foreignObject v-else :x="0" :y="n.h + 4" :width="n.w" height="24" @mousedown.stop @click.stop>
-                  <div class="node-name-input-wrap centered" xmlns="http://www.w3.org/1999/xhtml">
-                    <input
-                      ref="nameInputRef"
-                      v-model="nameEditor.value"
-                      class="node-name-input centered"
-                      @keydown.enter.prevent="saveNameEdit"
-                      @keydown.esc.prevent="cancelNameEdit"
-                      @blur="saveNameEdit"
-                    />
-                  </div>
-                </foreignObject>
-                <circle class="connector" :cx="n.w + connectorOffset" :cy="n.h / 2" r="6"
-                        @mousedown.stop.prevent="startConnectorDrag(n)" />
-                <g class="node-menu" :transform="`translate(${n.w + 16},${-6})`">
-                  <rect class="menu-shell" width="80" height="68" rx="8" ry="8" />
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoEditor(n)">
-                    <title>Editar informações</title>
-                    <rect class="menu-item-bg" x="8" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-pencil"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="openInfoViewer(n)">
-                    <title>Visualizar informações</title>
-                    <rect class="menu-item-bg" x="44" y="8" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="8" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="startConnectFromMenu(n)">
-                    <title>Conectar</title>
-                    <rect class="menu-item-bg" x="8" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="8" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-solid fa-link"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                  <g class="menu-item" @mousedown.stop @click.stop="deleteSelected">
-                    <title>Excluir</title>
-                    <rect class="menu-item-bg" x="44" y="38" width="28" height="22" rx="6" ry="6" />
-                    <foreignObject class="menu-icon-wrapper" x="44" y="38" width="28" height="22">
-                      <div class="menu-icon" xmlns="http://www.w3.org/1999/xhtml">
-                        <i class="fa-regular fa-trash-can"></i>
-                      </div>
-                    </foreignObject>
-                  </g>
-                </g>
-              </g>
-            </template>
-          </g>
-
-          <!-- connection preview -->
-          <rect
-            v-if="selection.active"
-            class="selection-rect"
-            :x="selectionRect.x"
-            :y="selectionRect.y"
-            :width="selectionRect.w"
-            :height="selectionRect.h"
-          />
-          <line v-if="connectPreview.show" class="edge preview"
-                :x1="connectPreview.x1" :y1="connectPreview.y1"
-                :x2="connectPreview.x2" :y2="connectPreview.y2"
-                marker-end="url(#arrow)" />
-        </svg>
+        <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
       </main>
     </section>
 
@@ -417,6 +173,7 @@
     </div>
   </div>
 
+  <script src="https://unpkg.com/bpmn-js@17.0.2/dist/bpmn-modeler.production.min.js"></script>
   <script src="./vue.global.prod.js"></script>
   <script src="/Bpmn/bpmn-editor.js"></script>
 </form>
