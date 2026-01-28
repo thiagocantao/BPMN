@@ -71,55 +71,6 @@
         lane: "bpmn:Lane"
     };
 
-    const BPMN_TO_TYPE = {
-        "bpmn:StartEvent": "startEvent",
-        "bpmn:EndEvent": "endEvent",
-        "bpmn:IntermediateThrowEvent": "intermediateThrowEvent",
-        "bpmn:IntermediateCatchEvent": "intermediateCatchEvent",
-        "bpmn:BoundaryEvent": "boundaryEvent",
-        "bpmn:Task": "task",
-        "bpmn:UserTask": "userTask",
-        "bpmn:ServiceTask": "serviceTask",
-        "bpmn:ScriptTask": "scriptTask",
-        "bpmn:BusinessRuleTask": "businessRuleTask",
-        "bpmn:ManualTask": "manualTask",
-        "bpmn:SendTask": "sendTask",
-        "bpmn:ReceiveTask": "receiveTask",
-        "bpmn:CallActivity": "callActivity",
-        "bpmn:SubProcess": "subProcess",
-        "bpmn:Transaction": "transaction",
-        "bpmn:AdHocSubProcess": "adHocSubProcess",
-        "bpmn:ExclusiveGateway": "exclusiveGateway",
-        "bpmn:InclusiveGateway": "inclusiveGateway",
-        "bpmn:ParallelGateway": "parallelGateway",
-        "bpmn:EventBasedGateway": "eventBasedGateway",
-        "bpmn:ComplexGateway": "complexGateway",
-        "bpmn:DataObjectReference": "dataObjectReference",
-        "bpmn:DataStoreReference": "dataStoreReference",
-        "bpmn:DataInput": "dataInput",
-        "bpmn:DataOutput": "dataOutput",
-        "bpmn:TextAnnotation": "textAnnotation",
-        "bpmn:Group": "group",
-        "bpmn:Participant": "participant",
-        "bpmn:Lane": "lane"
-    };
-
-    const EDGE_TYPE_TO_BPMN = {
-        sequenceFlow: "bpmn:SequenceFlow",
-        messageFlow: "bpmn:MessageFlow",
-        association: "bpmn:Association",
-        dataInputAssociation: "bpmn:DataInputAssociation",
-        dataOutputAssociation: "bpmn:DataOutputAssociation"
-    };
-
-    const BPMN_TO_EDGE_TYPE = {
-        "bpmn:SequenceFlow": "sequenceFlow",
-        "bpmn:MessageFlow": "messageFlow",
-        "bpmn:Association": "association",
-        "bpmn:DataInputAssociation": "dataInputAssociation",
-        "bpmn:DataOutputAssociation": "dataOutputAssociation"
-    };
-
     const EMPTY_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -274,165 +225,16 @@
                 infoViewer.content = "";
             };
 
-            const resolveNodeType = (element) => {
-                if (!element?.businessObject) return null;
-                const bpmnType = element.businessObject.$type;
-                if (bpmnType === "bpmn:SubProcess" && element.businessObject.triggeredByEvent) {
-                    return "eventSubProcess";
-                }
-                return BPMN_TO_TYPE[bpmnType];
-            };
-
-            const buildJsonToSave = () => {
+            const getCurrentXml = async () => {
                 const modeler = modelerRef.value;
-                if (!modeler) {
-                    return {
-                        schemaVersion: 1,
-                        diagram: { id: "D1", name: modelName.value || "Processo" },
-                        nodes: [],
-                        edges: []
-                    };
+                if (!modeler) return EMPTY_BPMN_XML;
+                try {
+                    const result = await modeler.saveXML({ format: true });
+                    return result?.xml || EMPTY_BPMN_XML;
+                } catch (err) {
+                    console.error(err);
+                    return EMPTY_BPMN_XML;
                 }
-
-                const elementRegistry = modeler.get("elementRegistry");
-                const nodes = [];
-                const edges = [];
-
-                elementRegistry.forEach((element) => {
-                    if (element.type === "label" || element.isRoot) return;
-
-                    if (element.waypoints && element.businessObject?.$type) {
-                        const edgeType = BPMN_TO_EDGE_TYPE[element.businessObject.$type];
-                        if (!edgeType) return;
-                        edges.push({
-                            id: String(element.businessObject.id || element.id),
-                            type: edgeType,
-                            from: String(element.source?.id || ""),
-                            to: String(element.target?.id || ""),
-                            waypoints: element.waypoints.map((wp) => ({ x: Math.round(wp.x), y: Math.round(wp.y) })),
-                            meta: {}
-                        });
-                        return;
-                    }
-
-                    const elementType = resolveNodeType(element);
-                    if (!elementType) return;
-
-                    const parent = element.parent;
-                    const parentId = parent && !parent.isRoot ? String(parent.id) : null;
-
-                    nodes.push({
-                        id: String(element.businessObject.id || element.id),
-                        type: elementType,
-                        name: element.businessObject?.name ?? "",
-                        x: Math.round(element.x),
-                        y: Math.round(element.y),
-                        w: Math.round(element.width),
-                        h: Math.round(element.height),
-                        meta: {
-                            ...(element.businessObject?.$attrs?.infoHtml ? { infoHtml: element.businessObject.$attrs.infoHtml } : {}),
-                            ...(parentId ? { parentId } : {})
-                        }
-                    });
-                });
-
-                return {
-                    schemaVersion: 1,
-                    diagram: { id: "D1", name: modelName.value || "Processo" },
-                    nodes,
-                    edges
-                };
-            };
-
-            const createBusinessObject = (bpmnFactory, type, node) => {
-                const bpmnType = TYPE_TO_BPMN[type];
-                if (!bpmnType) return null;
-                const attributes = {
-                    id: String(node.id || uid("node")),
-                    name: node.name ?? ""
-                };
-                if (type === "eventSubProcess") {
-                    attributes.triggeredByEvent = true;
-                }
-                return bpmnFactory.create(bpmnType, attributes);
-            };
-
-            const renderFromJson = async (data) => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-
-                await modeler.importXML(EMPTY_BPMN_XML);
-
-                const modeling = modeler.get("modeling");
-                const bpmnFactory = modeler.get("bpmnFactory");
-                const canvas = modeler.get("canvas");
-                const selection = modeler.get("selection");
-
-                const root = canvas.getRootElement();
-                const created = new Map();
-
-                const pendingNodes = [...(data.nodes || [])];
-                const createNodeShape = (node, parent) => {
-                    const businessObject = createBusinessObject(bpmnFactory, node.type, node);
-                    if (!businessObject) return null;
-                    if (node.meta?.infoHtml) {
-                        const attrs = ensureAttrs(businessObject);
-                        attrs.infoHtml = node.meta.infoHtml;
-                    }
-                    const position = {
-                        x: Number(node.x ?? 0) + Number(node.w ?? DEFAULT_SIZES[node.type]?.w ?? 0) / 2,
-                        y: Number(node.y ?? 0) + Number(node.h ?? DEFAULT_SIZES[node.type]?.h ?? 0) / 2
-                    };
-                    const shape = modeling.createShape({ type: businessObject.$type, businessObject }, position, parent || root);
-                    return shape || null;
-                };
-
-                let guard = pendingNodes.length * 2;
-                while (pendingNodes.length && guard > 0) {
-                    let progressed = false;
-                    for (let i = pendingNodes.length - 1; i >= 0; i -= 1) {
-                        const node = pendingNodes[i];
-                        const parentId = node.meta?.parentId;
-                        if (parentId && !created.has(String(parentId))) {
-                            continue;
-                        }
-                        const parent = parentId ? created.get(String(parentId)) : root;
-                        const shape = createNodeShape(node, parent);
-                        if (shape) {
-                            created.set(String(node.id), shape);
-                        }
-                        pendingNodes.splice(i, 1);
-                        progressed = true;
-                    }
-                    if (!progressed) {
-                        break;
-                    }
-                    guard -= 1;
-                }
-
-                if (pendingNodes.length) {
-                    pendingNodes.forEach((node) => {
-                        const shape = createNodeShape(node, root);
-                        if (shape) {
-                            created.set(String(node.id), shape);
-                        }
-                    });
-                }
-
-                (data.edges || []).forEach((edge) => {
-                    const source = created.get(String(edge.from));
-                    const target = created.get(String(edge.to));
-                    if (!source || !target) return;
-                    const edgeBpmnType = EDGE_TYPE_TO_BPMN[edge.type] || "bpmn:SequenceFlow";
-                    const connection = modeling.connect(source, target, { type: edgeBpmnType });
-                    if (connection) {
-                        connection.id = String(edge.id || connection.id);
-                        connection.businessObject.id = String(edge.id || connection.businessObject.id);
-                    }
-                });
-
-                selection.select([]);
-                canvas.zoom("fit-viewport", "auto");
             };
 
             const load = () => {
@@ -441,20 +243,18 @@
                     (dto) => {
                         modelName.value = dto.Name;
 
-                        let parsed;
-                        try {
-                            parsed = JSON.parse(dto.ModelJson);
-                        } catch {
-                            parsed = null;
-                        }
-
-                        if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
-                            alert("JSON inválido no banco. Carregando vazio.");
-                            renderFromJson({ nodes: [], edges: [] });
-                            return;
-                        }
-
-                        renderFromJson(parsed);
+                        const xml = dto.ModelXml || EMPTY_BPMN_XML;
+                        modelerRef.value.importXML(xml)
+                            .then(() => {
+                                modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                alert("XML inválido no banco. Carregando vazio.");
+                                modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
+                                    modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                });
+                            });
                     },
                     (err) => {
                         console.error(err);
@@ -463,27 +263,26 @@
                 );
             };
 
-            const save = () => {
+            const save = async () => {
                 saving.value = true;
-                const payload = buildJsonToSave();
-                const json = JSON.stringify(payload);
+                const xml = await getCurrentXml();
 
                 PageMethods.SaveModel(
                     modelId,
                     modelName.value || "Processo",
-                    json,
+                    xml,
                     () => { saving.value = false; alert("Salvo com sucesso."); },
                     (err) => { console.error(err); saving.value = false; alert("Erro ao salvar."); }
                 );
             };
 
-            const sendAiPrompt = () => {
+            const sendAiPrompt = async () => {
                 const prompt = (aiPrompt.value || "").trim();
                 if (!prompt) return;
 
                 aiGenerating.value = true;
 
-                const current = JSON.stringify(buildJsonToSave());
+                const current = await getCurrentXml();
 
                 PageMethods.GenerateFromAi(
                     prompt,
@@ -491,21 +290,21 @@
                     (res) => {
                         aiGenerating.value = false;
 
-                        let parsed;
-                        try {
-                            parsed = JSON.parse(res.ModelJson);
-                        } catch (e) {
-                            console.error("AI returned invalid JSON:", res);
-                            alert("A IA retornou um JSON inválido. Veja o console.");
+                        const xml = res.ModelXml || "";
+                        if (!xml) {
+                            alert("A IA retornou um XML vazio.");
                             return;
                         }
 
-                        if (!parsed || !Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
-                            alert("A IA retornou um JSON sem nodes/edges.");
-                            return;
-                        }
-
-                        renderFromJson(parsed);
+                        modelerRef.value.importXML(xml)
+                            .then(() => {
+                                modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                            })
+                            .catch((e) => {
+                                console.error("AI returned invalid XML:", res);
+                                alert("A IA retornou um XML inválido. Veja o console.");
+                                console.error(e);
+                            });
 
                         aiPrompt.value = "";
                         nextTick(resizeAiPrompt);
