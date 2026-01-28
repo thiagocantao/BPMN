@@ -435,6 +435,7 @@
                     additionalModules: [createInfoContextPadModule()]
                 });
                 modelerRef.value = modeler;
+                registerInfoContextPad(modeler);
 
                 modeler.on("selection.changed", (event) => {
                     const selection = event.newSelection || [];
