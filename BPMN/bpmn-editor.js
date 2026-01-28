@@ -219,43 +219,40 @@
                 openInfoViewer(selectedElement.value);
             };
 
-            const createInfoContextPadModule = () => {
-                const InfoContextPadProvider = function (contextPad) {
-                    contextPad.registerProvider(this);
-                };
+            const registerInfoContextPad = (modeler) => {
+                const contextPad = modeler.get("contextPad");
+                if (!contextPad) return;
 
-                InfoContextPadProvider.$inject = ["contextPad"];
-                InfoContextPadProvider.prototype.getContextPadEntries = (element) => {
-                    if (!element || element.waypoints || element.isRoot) return {};
+                const provider = {
+                    getContextPadEntries(element) {
+                        if (!element || element.waypoints || element.isRoot) return {};
 
-                    return {
-                        "edit-info": {
-                            group: "edit",
-                            className: "context-pad-icon context-pad-icon--edit",
-                            title: "Editar informações",
-                            action: {
-                                click: (event, target) => {
-                                    openInfoEditor(target);
+                        return {
+                            "edit-info": {
+                                group: "edit",
+                                className: "context-pad-icon context-pad-icon--edit",
+                                title: "Editar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoEditor(target);
+                                    }
+                                }
+                            },
+                            "view-info": {
+                                group: "edit",
+                                className: "context-pad-icon context-pad-icon--view",
+                                title: "Visualizar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoViewer(target);
+                                    }
                                 }
                             }
-                        },
-                        "view-info": {
-                            group: "edit",
-                            className: "context-pad-icon context-pad-icon--view",
-                            title: "Visualizar informações",
-                            action: {
-                                click: (event, target) => {
-                                    openInfoViewer(target);
-                                }
-                            }
-                        }
-                    };
+                        };
+                    }
                 };
 
-                return {
-                    __init__: ["infoContextPadProvider"],
-                    infoContextPadProvider: ["type", InfoContextPadProvider]
-                };
+                contextPad.registerProvider(2000, provider);
             };
 
             const closeInfoViewer = () => {
