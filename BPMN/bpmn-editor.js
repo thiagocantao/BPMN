@@ -219,17 +219,14 @@
                 openInfoViewer(selectedElement.value);
             };
 
-            const registerInfoContextPad = (modeler) => {
-                const contextPad = modeler.get("contextPad");
-                if (!contextPad) return;
-
-                const provider = {
-                    getContextPadEntries(element) {
+            const createInfoContextPadModule = () => {
+                const InfoContextPadProvider = function (contextPad) {
+                    this.getContextPadEntries = (element) => {
                         if (!element || element.waypoints || element.isRoot) return {};
 
                         return {
                             "edit-info": {
-                                group: "info",
+                                group: "edit",
                                 className: "context-pad-icon context-pad-icon--edit",
                                 title: "Editar informações",
                                 action: {
@@ -239,7 +236,7 @@
                                 }
                             },
                             "view-info": {
-                                group: "info",
+                                group: "edit",
                                 className: "context-pad-icon context-pad-icon--view",
                                 title: "Visualizar informações",
                                 action: {
@@ -249,10 +246,15 @@
                                 }
                             }
                         };
-                    }
+                    };
                 };
 
-                contextPad.registerProvider(provider);
+                InfoContextPadProvider.$inject = ["contextPad"];
+
+                return {
+                    __init__: ["infoContextPadProvider"],
+                    infoContextPadProvider: ["type", InfoContextPadProvider]
+                };
             };
 
             const closeInfoViewer = () => {
@@ -428,7 +430,8 @@
             onMounted(async () => {
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window }
+                    keyboard: { bindTo: window },
+                    additionalModules: [createInfoContextPadModule()]
                 });
                 modelerRef.value = modeler;
                 registerInfoContextPad(modeler);
