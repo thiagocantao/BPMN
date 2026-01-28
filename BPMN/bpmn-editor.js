@@ -6,24 +6,118 @@
     const DEFAULT_SIZES = {
         startEvent: { w: 36, h: 36, name: "Início" },
         endEvent: { w: 36, h: 36, name: "Fim" },
+        intermediateThrowEvent: { w: 36, h: 36, name: "Evento intermediário" },
+        intermediateCatchEvent: { w: 36, h: 36, name: "Evento intermediário" },
+        boundaryEvent: { w: 36, h: 36, name: "Evento de borda" },
         task: { w: 160, h: 70, name: "Tarefa" },
+        userTask: { w: 160, h: 70, name: "Tarefa do usuário" },
+        serviceTask: { w: 160, h: 70, name: "Tarefa de serviço" },
+        scriptTask: { w: 160, h: 70, name: "Tarefa de script" },
+        businessRuleTask: { w: 160, h: 70, name: "Regra de negócio" },
+        manualTask: { w: 160, h: 70, name: "Tarefa manual" },
+        sendTask: { w: 160, h: 70, name: "Enviar" },
+        receiveTask: { w: 160, h: 70, name: "Receber" },
+        callActivity: { w: 180, h: 90, name: "Chamada" },
+        subProcess: { w: 200, h: 110, name: "Subprocesso" },
+        transaction: { w: 200, h: 110, name: "Transação" },
+        eventSubProcess: { w: 200, h: 110, name: "Subprocesso de evento" },
+        adHocSubProcess: { w: 200, h: 110, name: "Subprocesso ad hoc" },
         exclusiveGateway: { w: 56, h: 56, name: "Decisão" },
+        inclusiveGateway: { w: 56, h: 56, name: "Gateway inclusivo" },
+        parallelGateway: { w: 56, h: 56, name: "Gateway paralelo" },
+        eventBasedGateway: { w: 56, h: 56, name: "Gateway baseado em evento" },
+        complexGateway: { w: 56, h: 56, name: "Gateway complexo" },
+        dataObjectReference: { w: 36, h: 50, name: "Objeto de dados" },
+        dataStoreReference: { w: 50, h: 50, name: "Repositório de dados" },
+        dataInput: { w: 36, h: 50, name: "Entrada de dados" },
+        dataOutput: { w: 36, h: 50, name: "Saída de dados" },
+        textAnnotation: { w: 120, h: 60, name: "" },
+        group: { w: 240, h: 160, name: "" },
+        participant: { w: 600, h: 250, name: "Participante" },
+        lane: { w: 600, h: 120, name: "Raia" }
     };
 
     const TYPE_TO_BPMN = {
         startEvent: "bpmn:StartEvent",
         endEvent: "bpmn:EndEvent",
+        intermediateThrowEvent: "bpmn:IntermediateThrowEvent",
+        intermediateCatchEvent: "bpmn:IntermediateCatchEvent",
+        boundaryEvent: "bpmn:BoundaryEvent",
         task: "bpmn:Task",
+        userTask: "bpmn:UserTask",
+        serviceTask: "bpmn:ServiceTask",
+        scriptTask: "bpmn:ScriptTask",
+        businessRuleTask: "bpmn:BusinessRuleTask",
+        manualTask: "bpmn:ManualTask",
+        sendTask: "bpmn:SendTask",
+        receiveTask: "bpmn:ReceiveTask",
+        callActivity: "bpmn:CallActivity",
+        subProcess: "bpmn:SubProcess",
+        transaction: "bpmn:Transaction",
+        eventSubProcess: "bpmn:SubProcess",
+        adHocSubProcess: "bpmn:AdHocSubProcess",
         exclusiveGateway: "bpmn:ExclusiveGateway",
+        inclusiveGateway: "bpmn:InclusiveGateway",
+        parallelGateway: "bpmn:ParallelGateway",
+        eventBasedGateway: "bpmn:EventBasedGateway",
+        complexGateway: "bpmn:ComplexGateway",
+        dataObjectReference: "bpmn:DataObjectReference",
+        dataStoreReference: "bpmn:DataStoreReference",
+        dataInput: "bpmn:DataInput",
+        dataOutput: "bpmn:DataOutput",
+        textAnnotation: "bpmn:TextAnnotation",
+        group: "bpmn:Group",
+        participant: "bpmn:Participant",
+        lane: "bpmn:Lane"
     };
 
     const BPMN_TO_TYPE = {
         "bpmn:StartEvent": "startEvent",
         "bpmn:EndEvent": "endEvent",
+        "bpmn:IntermediateThrowEvent": "intermediateThrowEvent",
+        "bpmn:IntermediateCatchEvent": "intermediateCatchEvent",
+        "bpmn:BoundaryEvent": "boundaryEvent",
         "bpmn:Task": "task",
-        "bpmn:UserTask": "task",
-        "bpmn:ServiceTask": "task",
+        "bpmn:UserTask": "userTask",
+        "bpmn:ServiceTask": "serviceTask",
+        "bpmn:ScriptTask": "scriptTask",
+        "bpmn:BusinessRuleTask": "businessRuleTask",
+        "bpmn:ManualTask": "manualTask",
+        "bpmn:SendTask": "sendTask",
+        "bpmn:ReceiveTask": "receiveTask",
+        "bpmn:CallActivity": "callActivity",
+        "bpmn:SubProcess": "subProcess",
+        "bpmn:Transaction": "transaction",
+        "bpmn:AdHocSubProcess": "adHocSubProcess",
         "bpmn:ExclusiveGateway": "exclusiveGateway",
+        "bpmn:InclusiveGateway": "inclusiveGateway",
+        "bpmn:ParallelGateway": "parallelGateway",
+        "bpmn:EventBasedGateway": "eventBasedGateway",
+        "bpmn:ComplexGateway": "complexGateway",
+        "bpmn:DataObjectReference": "dataObjectReference",
+        "bpmn:DataStoreReference": "dataStoreReference",
+        "bpmn:DataInput": "dataInput",
+        "bpmn:DataOutput": "dataOutput",
+        "bpmn:TextAnnotation": "textAnnotation",
+        "bpmn:Group": "group",
+        "bpmn:Participant": "participant",
+        "bpmn:Lane": "lane"
+    };
+
+    const EDGE_TYPE_TO_BPMN = {
+        sequenceFlow: "bpmn:SequenceFlow",
+        messageFlow: "bpmn:MessageFlow",
+        association: "bpmn:Association",
+        dataInputAssociation: "bpmn:DataInputAssociation",
+        dataOutputAssociation: "bpmn:DataOutputAssociation"
+    };
+
+    const BPMN_TO_EDGE_TYPE = {
+        "bpmn:SequenceFlow": "sequenceFlow",
+        "bpmn:MessageFlow": "messageFlow",
+        "bpmn:Association": "association",
+        "bpmn:DataInputAssociation": "dataInputAssociation",
+        "bpmn:DataOutputAssociation": "dataOutputAssociation"
     };
 
     const EMPTY_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -180,6 +274,15 @@
                 infoViewer.content = "";
             };
 
+            const resolveNodeType = (element) => {
+                if (!element?.businessObject) return null;
+                const bpmnType = element.businessObject.$type;
+                if (bpmnType === "bpmn:SubProcess" && element.businessObject.triggeredByEvent) {
+                    return "eventSubProcess";
+                }
+                return BPMN_TO_TYPE[bpmnType];
+            };
+
             const buildJsonToSave = () => {
                 const modeler = modelerRef.value;
                 if (!modeler) {
@@ -198,10 +301,12 @@
                 elementRegistry.forEach((element) => {
                     if (element.type === "label" || element.isRoot) return;
 
-                    if (element.waypoints && element.businessObject?.$type === "bpmn:SequenceFlow") {
+                    if (element.waypoints && element.businessObject?.$type) {
+                        const edgeType = BPMN_TO_EDGE_TYPE[element.businessObject.$type];
+                        if (!edgeType) return;
                         edges.push({
                             id: String(element.businessObject.id || element.id),
-                            type: "sequenceFlow",
+                            type: edgeType,
                             from: String(element.source?.id || ""),
                             to: String(element.target?.id || ""),
                             waypoints: element.waypoints.map((wp) => ({ x: Math.round(wp.x), y: Math.round(wp.y) })),
@@ -210,7 +315,7 @@
                         return;
                     }
 
-                    const elementType = BPMN_TO_TYPE[element.businessObject?.$type];
+                    const elementType = resolveNodeType(element);
                     if (!elementType) return;
 
                     nodes.push({
@@ -235,6 +340,19 @@
                 };
             };
 
+            const createBusinessObject = (bpmnFactory, type, node) => {
+                const bpmnType = TYPE_TO_BPMN[type];
+                if (!bpmnType) return null;
+                const attributes = {
+                    id: String(node.id || uid("node")),
+                    name: node.name ?? ""
+                };
+                if (type === "eventSubProcess") {
+                    attributes.triggeredByEvent = true;
+                }
+                return bpmnFactory.create(bpmnType, attributes);
+            };
+
             const renderFromJson = async (data) => {
                 const modeler = modelerRef.value;
                 if (!modeler) return;
@@ -250,12 +368,8 @@
                 const created = new Map();
 
                 (data.nodes || []).forEach((node) => {
-                    const bpmnType = TYPE_TO_BPMN[node.type];
-                    if (!bpmnType) return;
-                    const businessObject = bpmnFactory.create(bpmnType, {
-                        id: String(node.id || uid("node")),
-                        name: node.name ?? ""
-                    });
+                    const businessObject = createBusinessObject(bpmnFactory, node.type, node);
+                    if (!businessObject) return;
                     if (node.meta?.infoHtml) {
                         const attrs = ensureAttrs(businessObject);
                         attrs.infoHtml = node.meta.infoHtml;
@@ -264,7 +378,7 @@
                         x: Number(node.x ?? 0) + Number(node.w ?? DEFAULT_SIZES[node.type]?.w ?? 0) / 2,
                         y: Number(node.y ?? 0) + Number(node.h ?? DEFAULT_SIZES[node.type]?.h ?? 0) / 2
                     };
-                    const shape = modeling.createShape({ type: bpmnType, businessObject }, position, root);
+                    const shape = modeling.createShape({ type: businessObject.$type, businessObject }, position, root);
                     created.set(String(node.id), shape);
                 });
 
@@ -272,7 +386,8 @@
                     const source = created.get(String(edge.from));
                     const target = created.get(String(edge.to));
                     if (!source || !target) return;
-                    const connection = modeling.connect(source, target, { type: "bpmn:SequenceFlow" });
+                    const edgeBpmnType = EDGE_TYPE_TO_BPMN[edge.type] || "bpmn:SequenceFlow";
+                    const connection = modeling.connect(source, target, { type: edgeBpmnType });
                     if (connection) {
                         connection.id = String(edge.id || connection.id);
                         connection.businessObject.id = String(edge.id || connection.businessObject.id);
