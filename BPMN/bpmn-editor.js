@@ -318,6 +318,9 @@
                     const elementType = resolveNodeType(element);
                     if (!elementType) return;
 
+                    const parent = element.parent;
+                    const parentId = parent && !parent.isRoot ? String(parent.id) : null;
+
                     nodes.push({
                         id: String(element.businessObject.id || element.id),
                         type: elementType,
@@ -327,7 +330,8 @@
                         w: Math.round(element.width),
                         h: Math.round(element.height),
                         meta: {
-                            ...(element.businessObject?.$attrs?.infoHtml ? { infoHtml: element.businessObject.$attrs.infoHtml } : {})
+                            ...(element.businessObject?.$attrs?.infoHtml ? { infoHtml: element.businessObject.$attrs.infoHtml } : {}),
+                            ...(parentId ? { parentId } : {})
                         }
                     });
                 });
@@ -367,9 +371,10 @@
                 const root = canvas.getRootElement();
                 const created = new Map();
 
-                (data.nodes || []).forEach((node) => {
+                const pendingNodes = [...(data.nodes || [])];
+                const createNodeShape = (node, parent) => {
                     const businessObject = createBusinessObject(bpmnFactory, node.type, node);
-                    if (!businessObject) return;
+                    if (!businessObject) return null;
                     if (node.meta?.infoHtml) {
                         const attrs = ensureAttrs(businessObject);
                         attrs.infoHtml = node.meta.infoHtml;
@@ -378,9 +383,41 @@
                         x: Number(node.x ?? 0) + Number(node.w ?? DEFAULT_SIZES[node.type]?.w ?? 0) / 2,
                         y: Number(node.y ?? 0) + Number(node.h ?? DEFAULT_SIZES[node.type]?.h ?? 0) / 2
                     };
-                    const shape = modeling.createShape({ type: businessObject.$type, businessObject }, position, root);
-                    created.set(String(node.id), shape);
-                });
+                    const shape = modeling.createShape({ type: businessObject.$type, businessObject }, position, parent || root);
+                    return shape || null;
+                };
+
+                let guard = pendingNodes.length * 2;
+                while (pendingNodes.length && guard > 0) {
+                    let progressed = false;
+                    for (let i = pendingNodes.length - 1; i >= 0; i -= 1) {
+                        const node = pendingNodes[i];
+                        const parentId = node.meta?.parentId;
+                        if (parentId && !created.has(String(parentId))) {
+                            continue;
+                        }
+                        const parent = parentId ? created.get(String(parentId)) : root;
+                        const shape = createNodeShape(node, parent);
+                        if (shape) {
+                            created.set(String(node.id), shape);
+                        }
+                        pendingNodes.splice(i, 1);
+                        progressed = true;
+                    }
+                    if (!progressed) {
+                        break;
+                    }
+                    guard -= 1;
+                }
+
+                if (pendingNodes.length) {
+                    pendingNodes.forEach((node) => {
+                        const shape = createNodeShape(node, root);
+                        if (shape) {
+                            created.set(String(node.id), shape);
+                        }
+                    });
+                }
 
                 (data.edges || []).forEach((edge) => {
                     const source = created.get(String(edge.from));
