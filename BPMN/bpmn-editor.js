@@ -219,6 +219,44 @@
                 openInfoViewer(selectedElement.value);
             };
 
+            const createInfoContextPadModule = () => {
+                const InfoContextPadProvider = function (contextPad) {
+                    this.getContextPadEntries = (element) => {
+                        if (!element || element.waypoints || element.isRoot) return {};
+
+                        return {
+                            "edit-info": {
+                                group: "edit",
+                                className: "context-pad-icon context-pad-icon--edit",
+                                title: "Editar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoEditor(target);
+                                    }
+                                }
+                            },
+                            "view-info": {
+                                group: "edit",
+                                className: "context-pad-icon context-pad-icon--view",
+                                title: "Visualizar informações",
+                                action: {
+                                    click: (event, target) => {
+                                        openInfoViewer(target);
+                                    }
+                                }
+                            }
+                        };
+                    };
+                };
+
+                InfoContextPadProvider.$inject = ["contextPad"];
+
+                return {
+                    __init__: ["infoContextPadProvider"],
+                    infoContextPadProvider: ["type", InfoContextPadProvider]
+                };
+            };
+
             const closeInfoViewer = () => {
                 infoViewer.show = false;
                 infoViewer.elementId = null;
@@ -392,7 +430,8 @@
             onMounted(async () => {
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window }
+                    keyboard: { bindTo: window },
+                    additionalModules: [createInfoContextPadModule()]
                 });
                 modelerRef.value = modeler;
 

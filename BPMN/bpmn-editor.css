@@ -567,6 +567,29 @@ body {
     color: #3b4a5a;
 }
 
+.djs-context-pad .entry.context-pad-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .djs-context-pad .entry.context-pad-icon::before {
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 16px;
+        line-height: 1;
+        color: #344054;
+    }
+
+    .djs-context-pad .entry.context-pad-icon--edit::before {
+        content: "\f044";
+    }
+
+    .djs-context-pad .entry.context-pad-icon--view::before {
+        content: "\f06e";
+    }
+
 .node-title {
     font-size: 12px;
     font-weight: 400;
