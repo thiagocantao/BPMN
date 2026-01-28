@@ -219,42 +219,6 @@
                 openInfoViewer(selectedElement.value);
             };
 
-            const registerInfoContextPad = (modeler) => {
-                const contextPad = modeler.get("contextPad");
-                if (!contextPad) return;
-
-                const provider = {
-                    getContextPadEntries(element) {
-                        if (!element || element.waypoints || element.isRoot) return {};
-
-                        return {
-                            "edit-info": {
-                                group: "edit",
-                                className: "context-pad-icon context-pad-icon--edit",
-                                title: "Editar informações",
-                                action: {
-                                    click: (event, target) => {
-                                        openInfoEditor(target);
-                                    }
-                                }
-                            },
-                            "view-info": {
-                                group: "edit",
-                                className: "context-pad-icon context-pad-icon--view",
-                                title: "Visualizar informações",
-                                action: {
-                                    click: (event, target) => {
-                                        openInfoViewer(target);
-                                    }
-                                }
-                            }
-                        };
-                    }
-                };
-
-                contextPad.registerProvider(2000, provider);
-            };
-
             const closeInfoViewer = () => {
                 infoViewer.show = false;
                 infoViewer.elementId = null;
@@ -428,11 +392,9 @@
             onMounted(async () => {
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window },
-                    additionalModules: [createInfoContextPadModule()]
+                    keyboard: { bindTo: window }
                 });
                 modelerRef.value = modeler;
-                registerInfoContextPad(modeler);
 
                 modeler.on("selection.changed", (event) => {
                     const selection = event.newSelection || [];
