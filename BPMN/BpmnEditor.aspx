@@ -47,27 +47,7 @@
         </div>
 
         <div v-if="sidebarMode === 'edit'" class="sidebar-edit">
-          <h3>Paleta</h3>
-          <div class="palette">
-            <button type="button" class="pill palette-item" @click="beginAdd('startEvent')">
-              <span class="palette-shape palette-shape--start"></span>
-              Início
-            </button>
-            <button type="button" class="pill palette-item" @click="beginAdd('task')">
-              <span class="palette-shape palette-shape--task"></span>
-              Tarefa
-            </button>
-            <button type="button" class="pill palette-item" @click="beginAdd('exclusiveGateway')">
-              <span class="palette-shape palette-shape--gateway"></span>
-              Decisão
-            </button>
-            <button type="button" class="pill palette-item" @click="beginAdd('endEvent')">
-              <span class="palette-shape palette-shape--end"></span>
-              Fim
-            </button>
-          </div>
-
-          <h3 style="margin-top:16px;">Modelo</h3>
+          <h3>Modelo</h3>
           <label class="field">
             <span>Nome</span>
             <input class="input" v-model="modelName" />
@@ -80,7 +60,7 @@
           </div>
 
           <div class="hint">
-            <div><strong>Adicionar:</strong> use a paleta acima ou a paleta BPMN do canvas.</div>
+            <div><strong>Adicionar:</strong> use a paleta padrão do BPMN.io no canvas.</div>
             <div><strong>Conectar:</strong> use o botão de conexão do BPMN.io ou a opção Conectar.</div>
             <div><strong>Editar:</strong> dê duplo clique no nome do elemento.</div>
           </div>

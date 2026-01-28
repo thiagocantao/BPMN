@@ -164,11 +164,42 @@ FORMATO DO JSON (OBRIGATÓRIO):
 TIPOS DE NODE PERMITIDOS:
 - startEvent
 - endEvent
+- intermediateThrowEvent
+- intermediateCatchEvent
+- boundaryEvent
 - task
+- userTask
+- serviceTask
+- scriptTask
+- businessRuleTask
+- manualTask
+- sendTask
+- receiveTask
+- callActivity
+- subProcess
+- transaction
+- eventSubProcess
+- adHocSubProcess
 - exclusiveGateway
+- inclusiveGateway
+- parallelGateway
+- eventBasedGateway
+- complexGateway
+- dataObjectReference
+- dataStoreReference
+- dataInput
+- dataOutput
+- textAnnotation
+- group
+- participant
+- lane
 
 TIPOS DE EDGE PERMITIDOS:
 - sequenceFlow
+- messageFlow
+- association
+- dataInputAssociation
+- dataOutputAssociation
 
 REGRAS DE MODELAGEM:
 - Deve existir exatamente UM startEvent.
@@ -184,7 +215,16 @@ REGRAS DE LAYOUT:
 - startEvent à esquerda, endEvent à direita.
 - Tarefas com tamanho padrão: w=160, h=70.
 - startEvent/endEvent: w=36, h=36.
-- exclusiveGateway: w=56, h=56.
+- intermediateThrowEvent/intermediateCatchEvent/boundaryEvent: w=36, h=36.
+- exclusiveGateway/inclusiveGateway/parallelGateway/eventBasedGateway/complexGateway: w=56, h=56.
+- subProcess/transaction/eventSubProcess/adHocSubProcess: w=200, h=110.
+- callActivity: w=180, h=90.
+- dataObjectReference/dataInput/dataOutput: w=36, h=50.
+- dataStoreReference: w=50, h=50.
+- textAnnotation: w=120, h=60.
+- group: w=240, h=160.
+- participant: w=600, h=250.
+- lane: w=600, h=120.
 - Elementos não devem se sobrepor.
 - Coordenadas x e y devem ser números inteiros.
 
