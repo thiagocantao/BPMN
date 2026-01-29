@@ -6,37 +6,37 @@ using System.Data;
 using System.Web;
 using System.Web.Services;
 
-    public partial class BpmnModels : System.Web.UI.Page
+public partial class BpmnModels : System.Web.UI.Page
+{
+    public class BpmnModelListItem
     {
-        public class BpmnModelListItem
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public string UpdatedAt { get; set; } // ISO
-        }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string UpdatedAt { get; set; } // ISO
+    }
 
-        private static string EscapeSql(string s)
-        {
-            return (s ?? "").Replace("'", "''");
-        }
+    private static string EscapeSql(string s)
+    {
+        return (s ?? "").Replace("'", "''");
+    }
 
-        private static string EscapeXml(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return "";
-            return s.Replace("&", "&amp;")
-                    .Replace("<", "&lt;")
-                    .Replace(">", "&gt;")
-                    .Replace("\"", "&quot;")
-                    .Replace("'", "&apos;");
-        }
+    private static string EscapeXml(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        return s.Replace("&", "&amp;")
+                .Replace("<", "&lt;")
+                .Replace(">", "&gt;")
+                .Replace("\"", "&quot;")
+                .Replace("'", "&apos;");
+    }
 
-        private static string BuildDefaultXml(string name)
-        {
-            // MVP: start -> task -> end
-            // XML BPMN para teste (sem depender de libs)
-            var safeName = EscapeXml(name ?? "Processo");
+    private static string BuildDefaultXml(string name)
+    {
+        // MVP: start -> task -> end
+        // XML BPMN para teste (sem depender de libs)
+        var safeName = EscapeXml(name ?? "Processo");
 
-            return @"<?xml version=""1.0"" encoding=""UTF-8""?>
+        return @"<?xml version=""1.0"" encoding=""UTF-8""?>
 <bpmn:definitions xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
   xmlns:bpmn=""http://www.omg.org/spec/BPMN/20100524/MODEL""
   xmlns:bpmndi=""http://www.omg.org/spec/BPMN/20100524/DI""
@@ -72,68 +72,68 @@ using System.Web.Services;
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>";
-        }
+    }
 
-        [WebMethod(EnableSession = true)]
-        public static List<BpmnModelListItem> ListModels()
-        {
-            OrderedDictionary listaParametrosDados = new OrderedDictionary();
+    [WebMethod(EnableSession = true)]
+    public static List<BpmnModelListItem> ListModels()
+    {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
-            listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
-            listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
-            var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-            var db = cd.getDbName();
-            var own = cd.getDbOwner();
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
 
-            string sql = string.Format(@"
+        string sql = string.Format(@"
                 SELECT Id, Name, UpdatedAt
                 FROM [{0}].[{1}].BpmnModel
                 ORDER BY UpdatedAt DESC, Id DESC", db, own);
 
-            DataSet ds = cd.getDataSet(sql);
-            var list = new List<BpmnModelListItem>();
+        DataSet ds = cd.getDataSet(sql);
+        var list = new List<BpmnModelListItem>();
 
-            if (ds != null && ds.Tables.Count > 0)
+        if (ds != null && ds.Tables.Count > 0)
+        {
+            foreach (DataRow r in ds.Tables[0].Rows)
             {
-                foreach (DataRow r in ds.Tables[0].Rows)
+                // UpdatedAt em UTC ISO
+                var dt = Convert.ToDateTime(r["UpdatedAt"]).ToUniversalTime().ToString("o");
+
+                list.Add(new BpmnModelListItem
                 {
-                    // UpdatedAt em UTC ISO
-                    var dt = Convert.ToDateTime(r["UpdatedAt"]).ToUniversalTime().ToString("o");
-
-                    list.Add(new BpmnModelListItem
-                    {
-                        Id = Convert.ToInt32(r["Id"]),
-                        Name = Convert.ToString(r["Name"]),
-                        UpdatedAt = dt
-                    });
-                }
+                    Id = Convert.ToInt32(r["Id"]),
+                    Name = Convert.ToString(r["Name"]),
+                    UpdatedAt = dt
+                });
             }
-
-            return list;
         }
 
-        [WebMethod(EnableSession = true)]
-        public static int CreateModel(string name)
-        {
-            OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        return list;
+    }
 
-            // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
-            listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
-            listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
-            var cd = CdadosUtil.GetCdados(listaParametrosDados);
+    [WebMethod(EnableSession = true)]
+    public static int CreateModel(string name)
+    {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            var db = cd.getDbName();
-            var own = cd.getDbOwner();
+        // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-            name = (name ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(name))
-                throw new Exception("Nome inválido.");
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
 
-            string xml = BuildDefaultXml(name);
+        name = (name ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            throw new Exception("Nome inválido.");
 
-            string sql = string.Format(@"
+        string xml = BuildDefaultXml(name);
+
+        string sql = string.Format(@"
                 SET NOCOUNT ON;
                 INSERT INTO [{0}].[{1}].BpmnModel (Name, ModelJson)
                 VALUES ('{2}', '{3}');
@@ -141,33 +141,32 @@ using System.Web.Services;
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
             ", db, own, EscapeSql(name), EscapeSql(xml));
 
-            DataSet ds = cd.getDataSet(sql);
-            if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
-                throw new Exception("Falha ao criar modelo (sem retorno do ID).");
+        DataSet ds = cd.getDataSet(sql);
+        if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            throw new Exception("Falha ao criar modelo (sem retorno do ID).");
 
-            return Convert.ToInt32(ds.Tables[0].Rows[0]["NewId"]);
-        }
+        return Convert.ToInt32(ds.Tables[0].Rows[0]["NewId"]);
+    }
 
-        [WebMethod(EnableSession = true)]
-        public static void DeleteModel(int id)
-        {
-            OrderedDictionary listaParametrosDados = new OrderedDictionary();
+    [WebMethod(EnableSession = true)]
+    public static void DeleteModel(int id)
+    {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
 
-            // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
-            listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
-            listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
-            var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        // Corrigido: acessar Session via HttpContext.Current em métodos estáticos
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-            var db = cd.getDbName();
-            var own = cd.getDbOwner();
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
 
-            string sql = string.Format(@"
+        string sql = string.Format(@"
                 DELETE FROM [{0}].[{1}].BpmnModel
                 WHERE Id = {2};
             ", db, own, id);
 
-            int afetados = 0;
-            cd.execSQL(sql, ref afetados);
-        }
+        int afetados = 0;
+        cd.execSQL(sql, ref afetados);
     }
-
+}
