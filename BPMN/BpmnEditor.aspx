@@ -23,7 +23,6 @@
   <div id="bpmnApp" class="page">
     <header class="topbar">
       <div class="left">
-        <a class="link" href="/Bpmn/BpmnModels.aspx">← Voltar</a>
         <div class="titlewrap">
           <h1 class="title">Editor BPMN</h1>
           <p class="subtitle">Arraste, conecte e salve</p>
@@ -31,11 +30,13 @@
       </div>
 
       <div class="actions">
+        <button type="button" class="btn btn--ghost" @click="handleBack">Voltar</button>
+        <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
         <button type="button" class="btn btn--ghost" @click="save" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
       </div>
     </header>
 
-    <section class="layout">
+    <section class="layout" :class="{ 'layout--with-sheet': infoEditor.show || infoViewer.show }">
       <aside class="sidebar card">
         <div v-if="aiEnabled" class="sidebar-toggle" role="group" aria-label="Modo do painel">
           <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">Editar</button>
@@ -75,6 +76,12 @@
               <button type="button" class="toolbar-btn" title="Limpar formatação" @click="formatProcessDescription('removeFormat')">
                 <i class="fa-solid fa-eraser"></i>
               </button>
+              <input
+                type="color"
+                class="toolbar-color"
+                title="Cor do texto"
+                @input="formatProcessDescription('foreColor', $event.target.value)"
+              />
             </div>
             <div
               class="rich-editor rich-editor--compact"
@@ -86,7 +93,6 @@
 
           <div class="toolbar">
             <button type="button" class="btn btn--ghost is-hidden" @click="exportAsPdf">Exportar para PDF</button>
-            <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
           </div>
 
           <div class="hint is-hidden">
@@ -117,24 +123,19 @@
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
       </main>
-    </section>
 
-    <!-- Debug i18n: aparece somente com ?debugTranslate=1 -->
-    <div id="bpmnI18nStatus" style="display:none; position: fixed; right: 12px; bottom: 12px; z-index: 9999; background: #fff; border: 1px solid #ddd; padding: 8px 10px; border-radius: 8px; font: 12px/1.3 Arial; box-shadow: 0 2px 10px rgba(0,0,0,.08)">
-      i18n...
-    </div>
-
-    <div v-if="infoEditor.show" class="modal">
-      <div class="modal-backdrop" @click="closeInfoEditor"></div>
-      <div class="modal-card">
-        <header class="modal-header">
-          <h3>Editar informações</h3>
-          <div class="modal-actions">
-            <button type="button" class="btn btn--ghost" @click="closeInfoEditor">Cancelar</button>
-            <button type="button" class="btn btn--primary" @click="saveInfoEditor">Salvar</button>
+      <aside v-if="infoEditor.show || infoViewer.show" class="info-sheet card">
+        <div class="info-sheet-header">
+          <div>
+            <h3>{{ infoEditor.show ? 'Editar informações' : 'Visualizar informações' }}</h3>
+            <label v-if="infoPanelName" class="field">
+              <span>Nome</span>
+              <div class="info-sheet-name">{{ infoPanelName }}</div>
+            </label>
           </div>
-        </header>
-        <div class="modal-body">
+        </div>
+
+        <div v-if="infoEditor.show">
           <div class="rich-toolbar" @mousedown.prevent>
             <button type="button" class="toolbar-btn" title="Negrito" @click="formatInfoEditor('bold')">
               <i class="fa-solid fa-bold"></i>
@@ -159,26 +160,33 @@
             <button type="button" class="toolbar-btn" title="Limpar formatação" @click="formatInfoEditor('removeFormat')">
               <i class="fa-solid fa-eraser"></i>
             </button>
+            <input
+              type="color"
+              class="toolbar-color"
+              title="Cor do texto"
+              @input="formatInfoEditor('foreColor', $event.target.value)"
+            />
           </div>
           <div class="rich-editor" contenteditable="true" ref="infoEditorRef" @input="onEditorInput"></div>
+          <div class="info-sheet-actions info-sheet-actions--bottom">
+            <button type="button" class="btn btn--ghost" @click="requestCloseInfoEditor">Cancelar</button>
+            <button type="button" class="btn btn--primary" @click="saveInfoEditor">Confirmar</button>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div v-if="infoViewer.show" class="modal">
-      <div class="modal-backdrop" @click="closeInfoViewer"></div>
-      <div class="modal-card">
-        <header class="modal-header">
-          <h3>Visualizar informações</h3>
-          <div class="modal-actions">
+        <div v-else>
+          <div v-if="infoViewer.content" class="rich-viewer rich-viewer--boxed" v-html="infoViewer.content"></div>
+          <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
+          <div class="info-sheet-actions info-sheet-actions--bottom">
             <button type="button" class="btn btn--ghost" @click="closeInfoViewer">Fechar</button>
           </div>
-        </header>
-        <div class="modal-body">
-          <div v-if="infoViewer.content" class="rich-viewer" v-html="infoViewer.content"></div>
-          <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
         </div>
-      </div>
+      </aside>
+    </section>
+
+    <!-- Debug i18n: aparece somente com ?debugTranslate=1 -->
+    <div id="bpmnI18nStatus" style="display:none; position: fixed; right: 12px; bottom: 12px; z-index: 9999; background: #fff; border: 1px solid #ddd; padding: 8px 10px; border-radius: 8px; font: 12px/1.3 Arial; box-shadow: 0 2px 10px rgba(0,0,0,.08)">
+      i18n...
     </div>
 
     <div v-if="aiGenerating" class="ai-modal" role="dialog" aria-live="polite" aria-label="Processando instrução da IA">

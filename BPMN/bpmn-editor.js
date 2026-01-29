@@ -402,6 +402,9 @@
             const selectedElement = ref(null);
 
             const infoEditorRef = ref(null);
+            const infoPanelName = ref("");
+            const infoEditorDirty = ref(false);
+            const infoEditorOriginal = ref("");
 
             const aiGenerating = ref(false);
             const aiSteps = [
@@ -441,12 +444,20 @@
                 return Boolean(element && !element.isRoot);
             });
 
+            const getElementName = (element) => element?.businessObject?.name || "";
+
             const openInfoEditor = (element) => {
                 if (!element) return;
+                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
+                    return;
+                }
                 selectedId.value = element.id;
                 infoViewer.show = false;
                 infoEditor.elementId = element.id;
                 infoEditor.content = element.businessObject?.$attrs?.infoHtml ?? "";
+                infoEditorOriginal.value = infoEditor.content;
+                infoEditorDirty.value = false;
+                infoPanelName.value = getElementName(element);
                 infoEditor.show = true;
                 nextTick(() => {
                     if (infoEditorRef.value) {
@@ -465,13 +476,17 @@
                 infoEditor.show = false;
                 infoEditor.elementId = null;
                 infoEditor.content = "";
+                infoPanelName.value = "";
+                infoEditorDirty.value = false;
+                infoEditorOriginal.value = "";
             };
 
             const onEditorInput = () => {
                 infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
+                infoEditorDirty.value = infoEditor.content !== infoEditorOriginal.value;
             };
 
-            const formatInfoEditor = (command) => {
+            const formatInfoEditor = (command, value = null) => {
                 if (!infoEditorRef.value) return;
                 infoEditorRef.value.focus();
                 if (command === "createLink") {
@@ -481,7 +496,7 @@
                     }
                     return;
                 }
-                document.execCommand(command, false, null);
+                document.execCommand(command, false, value);
             };
 
             const saveInfoEditor = () => {
@@ -493,6 +508,8 @@
                 const html = infoEditorRef.value ? infoEditorRef.value.innerHTML : infoEditor.content;
                 const attrs = ensureAttrs(element.businessObject);
                 attrs.infoHtml = html;
+                infoEditorDirty.value = false;
+                infoEditorOriginal.value = html;
                 closeInfoEditor();
             };
 
@@ -529,7 +546,7 @@
                 syncProcessDescriptionToModeler();
             };
 
-            const formatProcessDescription = (command) => {
+            const formatProcessDescription = (command, value = null) => {
                 if (!processDescriptionRef.value) return;
                 processDescriptionRef.value.focus();
                 if (command === "createLink") {
@@ -540,16 +557,20 @@
                     }
                     return;
                 }
-                document.execCommand(command, false, null);
+                document.execCommand(command, false, value);
                 syncProcessDescriptionToModeler();
             };
 
             const openInfoViewer = (element) => {
                 if (!element) return;
+                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
+                    return;
+                }
                 selectedId.value = element.id;
                 infoEditor.show = false;
                 infoViewer.elementId = element.id;
                 infoViewer.content = element.businessObject?.$attrs?.infoHtml ?? "";
+                infoPanelName.value = getElementName(element);
                 infoViewer.show = true;
             };
 
@@ -562,6 +583,23 @@
                 infoViewer.show = false;
                 infoViewer.elementId = null;
                 infoViewer.content = "";
+                infoPanelName.value = "";
+            };
+
+            const confirmDiscardInfo = () => window.confirm("Existem informações não salvas. Deseja sair sem salvar?");
+
+            const requestCloseInfoEditor = () => {
+                if (infoEditorDirty.value && !confirmDiscardInfo()) {
+                    return;
+                }
+                closeInfoEditor();
+            };
+
+            const handleBack = () => {
+                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
+                    return;
+                }
+                window.location.href = "/Bpmn/BpmnModels.aspx";
             };
 
             const getCurrentXml = async () => {
@@ -998,6 +1036,7 @@
                 selectedIds,
                 infoEditor,
                 infoViewer,
+                infoPanelName,
                 infoEditorRef,
                 canEditSelectedInfo,
                 setMode,
@@ -1008,11 +1047,13 @@
                 openInfoEditorFromSelection,
                 openInfoViewerFromSelection,
                 closeInfoEditor,
+                requestCloseInfoEditor,
                 closeInfoViewer,
                 saveInfoEditor,
                 onEditorInput,
                 formatInfoEditor,
                 save,
+                handleBack,
                 deleteSelected,
                 exportAsImage,
                 exportAsPdf,
