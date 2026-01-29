@@ -25,14 +25,14 @@
       <div class="left">
         <div class="titlewrap">
           <h1 class="title">Editor BPMN</h1>
-          <p class="subtitle">Arraste, conecte e salve</p>
+          <p class="subtitle">{{ subtitleText }}</p>
         </div>
       </div>
 
       <div class="actions">
         <button type="button" class="btn btn--ghost" @click="handleBack">Voltar</button>
         <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
-        <button type="button" class="btn btn--ghost" @click="save" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
+        <button type="button" class="btn btn--ghost" @click="save" :disabled="saving || isReadOnly" v-if="!isReadOnly">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
       </div>
     </header>
 
@@ -47,12 +47,12 @@
           <h3>Processo</h3>
           <label class="field">
             <span>Nome</span>
-            <input class="input" v-model="modelName" />
+            <input class="input" v-model="modelName" :disabled="isReadOnly" />
           </label>
 
           <div class="field">
             <span>Descrição</span>
-            <div class="rich-toolbar rich-toolbar--compact" @mousedown.prevent>
+            <div class="rich-toolbar rich-toolbar--compact" v-if="!isReadOnly" @mousedown.prevent>
               <button type="button" class="toolbar-btn" title="Negrito" @click="formatProcessDescription('bold')">
                 <i class="fa-solid fa-bold"></i>
               </button>
@@ -85,7 +85,7 @@
             </div>
             <div
               class="rich-editor rich-editor--compact"
-              contenteditable="true"
+              :contenteditable="!isReadOnly"
               ref="processDescriptionRef"
               @input="onProcessDescriptionInput"
             ></div>
