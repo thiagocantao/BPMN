@@ -30,11 +30,6 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn--ghost" @click="setMode('select')" :class="{ active: mode==='select' }">Selecionar</button>
-        <button type="button" class="btn btn--ghost" @click="setMode('connect')" :class="{ active: mode==='connect' }">Conectar</button>
-
-        <span class="divider"></span>
-
         <button type="button" class="btn btn--ghost" @click="save" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
       </div>
     </header>
