@@ -108,6 +108,40 @@
         "Create": "Criar",
         "Create Task": "Criar tarefa",
         "Create Start Event": "Criar evento de início",
+        "Create End Event": "Criar evento de fim",
+        "Create Intermediate Throw Event": "Criar evento intermediário (lançamento)",
+        "Create Intermediate Catch Event": "Criar evento intermediário (captura)",
+        "Create Boundary Event": "Criar evento de borda",
+        "Create User Task": "Criar tarefa do usuário",
+        "Create Service Task": "Criar tarefa de serviço",
+        "Create Script Task": "Criar tarefa de script",
+        "Create Business Rule Task": "Criar tarefa de regra de negócio",
+        "Create Manual Task": "Criar tarefa manual",
+        "Create Send Task": "Criar tarefa de envio",
+        "Create Receive Task": "Criar tarefa de recebimento",
+        "Create Call Activity": "Criar atividade de chamada",
+        "Create Sub Process": "Criar subprocesso",
+        "Create Expanded Sub Process": "Criar subprocesso expandido",
+        "Create Collapsed Sub Process": "Criar subprocesso recolhido",
+        "Create Transaction": "Criar transação",
+        "Create Event Sub Process": "Criar subprocesso de evento",
+        "Create Ad-hoc Sub Process": "Criar subprocesso ad hoc",
+        "Create Exclusive Gateway": "Criar gateway exclusivo",
+        "Create Inclusive Gateway": "Criar gateway inclusivo",
+        "Create Parallel Gateway": "Criar gateway paralelo",
+        "Create Event based Gateway": "Criar gateway baseado em evento",
+        "Create Complex Gateway": "Criar gateway complexo",
+        "Create Data Object Reference": "Criar objeto de dados",
+        "Create Data Store Reference": "Criar repositório de dados",
+        "Create Data Input": "Criar entrada de dados",
+        "Create Data Output": "Criar saída de dados",
+        "Create Text Annotation": "Criar anotação de texto",
+        "Create Group": "Criar grupo",
+        "Create Participant": "Criar participante",
+        "Create Pool/Participant": "Criar pool/participante",
+        "Create Lane": "Criar raia",
+        "Create Collaboration": "Criar colaboração",
+        "Create Data Object": "Criar objeto de dados",
         "Start Event": "Evento de início",
         "End Event": "Evento de fim",
         "Intermediate Throw Event": "Evento intermediário (lançamento)",
@@ -204,6 +238,10 @@
             const normalized = String(replacement);
             return typeTranslations[normalized] || translationMap[normalized] || normalized;
         });
+    };
+
+    const customTranslateModule = {
+        translate: ["value", customTranslate]
     };
 
     createApp({
@@ -701,9 +739,7 @@
                     container: bpmnCanvasRef.value,
                     keyboard: { bindTo: window },
                     additionalModules: [
-                        {
-                            translate: ["value", customTranslate]
-                        }
+                        customTranslateModule
                     ]
                 });
                 modelerRef.value = modeler;
