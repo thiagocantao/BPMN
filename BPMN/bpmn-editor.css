@@ -95,7 +95,7 @@ body {
     height: 50px;
     font-family: "Source Sans Pro", "Segoe UI", Tahoma, sans-serif;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 400;
     transition: all .15s ease;
     display: inline-flex;
     align-items: center;
