@@ -782,6 +782,13 @@ body {
     color: #1b1f2a;
 }
 
+.rich-viewer--boxed {
+    min-height: 200px;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
 .empty-info {
     margin: 0;
     color: #6c7a89;

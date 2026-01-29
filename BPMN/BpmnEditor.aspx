@@ -123,7 +123,7 @@
           <div>
             <h3>{{ infoEditor.show ? 'Editar informações' : 'Visualizar informações' }}</h3>
             <label v-if="infoPanelName" class="field">
-              <span>Nome do componente</span>
+              <span>Nome</span>
               <div class="info-sheet-name">{{ infoPanelName }}</div>
             </label>
           </div>
@@ -173,7 +173,7 @@
         </div>
 
         <div v-else>
-          <div v-if="infoViewer.content" class="rich-viewer" v-html="infoViewer.content"></div>
+          <div v-if="infoViewer.content" class="rich-viewer rich-viewer--boxed" v-html="infoViewer.content"></div>
           <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
         </div>
       </aside>
