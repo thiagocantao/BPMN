@@ -148,7 +148,7 @@
 
             const canEditSelectedInfo = computed(() => {
                 const element = selectedElement.value;
-                return Boolean(element && !element.waypoints && !element.isRoot);
+                return Boolean(element && !element.isRoot);
             });
 
             const openInfoEditor = (element) => {
@@ -549,7 +549,7 @@
 
                 const provider = {
                     getContextPadEntries(element) {
-                        if (!element || element.waypoints || element.isRoot) {
+                        if (!element || element.isRoot) {
                             return {};
                         }
 
