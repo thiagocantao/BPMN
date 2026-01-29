@@ -1,4 +1,12 @@
 (() => {
+    // --- DEBUG: prova de carregamento do arquivo ---
+    // Se você NÃO enxergar essa linha no console, ESTE arquivo não está sendo executado.
+    // (Possíveis causas: cache, caminho incorreto, erro JS anterior impedindo execução, etc.)
+    try {
+        window.__BPMN_EDITOR_JS_LOADED__ = true;
+        console.log('[bpmn-editor] script carregado', new Date().toISOString());
+    } catch (e) { /* ignore */ }
+
     const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
 
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
@@ -90,7 +98,17 @@
         return businessObject.$attrs;
     };
 
-    const translationMap = {
+    const translations = {
+        "Activate hand tool": "Ativar a ferramenta de mão",
+        "Activate lasso tool": "Ativar a ferramenta de laço",
+        "Activate create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
+        "Activate global connect tool": "Ativar a ferramenta de conexão global",
+        "Create intermediate/boundary event": "Criar evento intermediário/de borda",
+        "Create gateway": "Criar gateway",
+        "Create expanded sub-process": "Criar subprocesso expandido",
+        "Connect to other element": "Conectar a outro elemento",
+        "Change element": "Alterar elemento",
+        "Add text annotation": "Adicionar anotação",
         "Append {type}": "Adicionar {type}",
         "Append End Event": "Adicionar evento de fim",
         "Append Gateway": "Adicionar gateway",
@@ -181,12 +199,30 @@
         "End Event (None)": "Evento de fim (nenhum)",
         "Activate the hand tool": "Ativar a ferramenta de mão",
         "Activate the lasso tool": "Ativar a ferramenta de laço",
+        "Activate the global connect tool": "Ativar a ferramenta de conexão global",
+        "Activate the space tool": "Ativar a ferramenta de espaço",
+        "Activate the selection tool": "Ativar a ferramenta de seleção",
         "Activate the create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
         "Create/Remove Space": "Criar/remover espaço",
         "Hand Tool": "Ferramenta de mão",
         "Lasso Tool": "Ferramenta de laço",
         "Space Tool": "Ferramenta de espaço",
         "Global Connect Tool": "Ferramenta de conexão global",
+        "Activate the hand tool (H)": "Ativar a ferramenta de mão (H)",
+        "Activate the lasso tool (L)": "Ativar a ferramenta de laço (L)",
+        "Activate the global connect tool (C)": "Ativar a ferramenta de conexão global (C)",
+        "Activate the create/remove space tool (S)": "Ativar a ferramenta de criar/remover espaço (S)",
+        "Activate the space tool (S)": "Ativar a ferramenta de espaço (S)",
+        "Activate the selection tool (S)": "Ativar a ferramenta de seleção (S)",
+        "Press space to toggle selection": "Pressione espaço para alternar seleção",
+        "Press space to toggle hand tool": "Pressione espaço para alternar ferramenta de mão",
+        "Press space to toggle lasso tool": "Pressione espaço para alternar ferramenta de laço",
+        "Press space to toggle create/remove space tool": "Pressione espaço para alternar criar/remover espaço",
+        "Zoom In": "Aumentar zoom",
+        "Zoom Out": "Diminuir zoom",
+        "Zoom": "Zoom",
+        "Fit viewport": "Ajustar à tela",
+        "Reset zoom": "Redefinir zoom",
         "Event": "Evento",
         "Gateway": "Gateway",
         "General": "Geral",
@@ -225,23 +261,121 @@
     };
 
     const customTranslate = (template, replacements) => {
-        const translatedTemplate = translationMap[template] || template;
-        if (!replacements) {
-            return translatedTemplate;
+        replacements = replacements || {};
+
+        const raw = String(template || "");
+
+        // tenta match exato
+        let translated = translations[raw];
+
+        // tenta variações comuns (bpmn-js 16+ mudou casing de várias labels)
+        if (!translated) {
+            const compact = raw.replace(/\s+/g, " ").trim();
+            translated = translations[compact] || translated;
+
+            if (!translated) {
+                const titleCase = compact.replace(/\b[a-z]/g, (m) => m.toUpperCase());
+                translated = translations[titleCase] || translated;
+            }
+
+            if (!translated) {
+                const lower = compact.toLowerCase();
+                translated = translations[lower] || translated;
+            }
         }
 
-        return translatedTemplate.replace(/\{([^}]+)\}/g, (match, key) => {
-            const replacement = replacements[key];
-            if (replacement === undefined) {
-                return match;
+        // se não tiver no dicionário, devolve a original e loga (pra você completar o mapa)
+        if (!translated) {
+            const params = new URLSearchParams(window.location.search || "");
+            if (params.has("debugTranslate")) {
+                console.warn("[bpmn-i18n] missing:", raw);
             }
-            const normalized = String(replacement);
-            return typeTranslations[normalized] || translationMap[normalized] || normalized;
+            translated = raw;
+        }
+
+        // replace {tokens}
+        return translated.replace(/{([^}]+)}/g, (_, key) => {
+            return (replacements[key] !== undefined) ? replacements[key] : `{${key}}`;
         });
     };
 
+
     const customTranslateModule = {
         translate: ["value", customTranslate]
+    };
+
+    // ============================================================
+    //  FORCE-TRANSLATE tooltips already rendered as DOM attributes
+    //  (some bpmn-js parts write english titles directly; translate()
+    //   won't retroactively change them)
+    // ============================================================
+    const installUiTooltipTranslator = (modeler) => {
+        if (!modeler || typeof modeler.get !== "function") return () => { };
+        const translate = modeler.get("translate");
+        if (typeof translate !== "function") return () => { };
+
+        const ATTRS = ["title", "aria-label", "data-title", "data-tooltip"];
+        const SELECTOR =
+            ".djs-palette, .djs-context-pad, .djs-popup, .bjs-powered-by, .djs-overlay-container";
+
+        const translateOneAttr = (el, attr) => {
+            if (!el || !el.getAttribute) return;
+            const raw = el.getAttribute(attr);
+            if (!raw) return;
+
+            const translated = translate(raw);
+
+            if (translated && translated !== raw) {
+                el.setAttribute(attr, translated);
+            }
+            else {
+                // If debugTranslate=1, log keys that are still missing
+                try {
+                    const params = new URLSearchParams(window.location.search || "");
+                    if (params.has("debugTranslate")) {
+                        window.__BPMN_I18N_MISSING__ = window.__BPMN_I18N_MISSING__ || {};
+                        if (!window.__BPMN_I18N_MISSING__[raw]) {
+                            window.__BPMN_I18N_MISSING__[raw] = true;
+                            console.debug("[bpmn-i18n] missing:", raw);
+                        }
+                    }
+                } catch { /* ignore */ }
+            }
+        };
+
+        const patchDomTooltips = () => {
+            const rootNodes = document.querySelectorAll(SELECTOR);
+            rootNodes.forEach((root) => {
+                ATTRS.forEach((a) => translateOneAttr(root, a));
+
+                const nodes = root.querySelectorAll(
+                    ATTRS.map(a => `[${a}]`).join(",")
+                );
+                nodes.forEach((el) => {
+                    ATTRS.forEach((a) => translateOneAttr(el, a));
+                });
+            });
+        };
+
+        // Patch now + after next paint (some tooltips appear after render)
+        try { patchDomTooltips(); } catch { }
+        requestAnimationFrame(() => { try { patchDomTooltips(); } catch { } });
+
+        // Keep patching on UI changes
+        const obs = new MutationObserver(() => {
+            try { patchDomTooltips(); } catch { }
+        });
+
+        obs.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ATTRS
+        });
+
+        return () => {
+            try { obs.disconnect(); } catch { }
+        };
     };
 
     createApp({
@@ -743,6 +877,36 @@
                     ]
                 });
                 modelerRef.value = modeler;
+
+
+
+                // Force-translate tooltips already painted in the DOM
+                const __disposeTooltipI18n = installUiTooltipTranslator(modeler);
+                // Diagnóstico / status de i18n
+                try {
+                    const params = new URLSearchParams(window.location.search || "");
+                    const translate = modeler.get("translate");
+                    const testKey = "Activate the global connect tool";
+                    const testValue = translate(testKey);
+                    const ok = (translate("Connect") === "Conectar") || (testValue !== testKey);
+
+                    window.__BPMN_I18N__ = { ok, testKey, testValue };
+
+                    const el = document.getElementById("bpmnI18nStatus");
+                    if (el) {
+                        el.style.display = params.has("debugTranslate") ? "block" : "none";
+                        el.textContent = ok
+                            ? "i18n OK: " + testValue
+                            : "i18n NÃO aplicado (ainda em inglês): " + testValue;
+                    }
+
+                    if (params.has("debugTranslate")) {
+                        console.log("[bpmn-i18n] test:", { testKey, testValue, ok });
+                    }
+                } catch (e) {
+                    try { console.warn("[bpmn-i18n] falha no diagnóstico", e); } catch { }
+                }
+
                 registerInfoContextPad(modeler);
 
                 modeler.on("selection.changed", (event) => {
