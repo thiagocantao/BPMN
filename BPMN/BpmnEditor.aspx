@@ -54,9 +54,8 @@
           </label>
 
           <div class="toolbar">
-            <button type="button" class="btn btn--danger" @click="deleteSelected" :disabled="selectedIds.length === 0">Excluir selecionado</button>
-            <button type="button" class="btn btn--ghost" @click="openInfoEditorFromSelection" :disabled="!canEditSelectedInfo">Editar informações</button>
-            <button type="button" class="btn btn--ghost" @click="openInfoViewerFromSelection" :disabled="!canEditSelectedInfo">Visualizar informações</button>
+            <button type="button" class="btn btn--ghost" @click="exportAsPdf">Exportar para PDF</button>
+            <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
           </div>
 
           <div class="hint">
