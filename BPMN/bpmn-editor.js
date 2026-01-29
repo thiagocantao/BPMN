@@ -90,6 +90,160 @@
         return businessObject.$attrs;
     };
 
+    const translationMap = {
+        "Append {type}": "Adicionar {type}",
+        "Append End Event": "Adicionar evento de fim",
+        "Append Gateway": "Adicionar gateway",
+        "Append Task": "Adicionar tarefa",
+        "Connect": "Conectar",
+        "Remove": "Remover",
+        "Delete": "Excluir",
+        "Cancel": "Cancelar",
+        "Cancel Action": "Cancelar ação",
+        "Undo": "Desfazer",
+        "Redo": "Refazer",
+        "Copy": "Copiar",
+        "Paste": "Colar",
+        "Create Shape": "Criar forma",
+        "Create": "Criar",
+        "Create Task": "Criar tarefa",
+        "Create Start Event": "Criar evento de início",
+        "Create End Event": "Criar evento de fim",
+        "Create Intermediate Throw Event": "Criar evento intermediário (lançamento)",
+        "Create Intermediate Catch Event": "Criar evento intermediário (captura)",
+        "Create Boundary Event": "Criar evento de borda",
+        "Create User Task": "Criar tarefa do usuário",
+        "Create Service Task": "Criar tarefa de serviço",
+        "Create Script Task": "Criar tarefa de script",
+        "Create Business Rule Task": "Criar tarefa de regra de negócio",
+        "Create Manual Task": "Criar tarefa manual",
+        "Create Send Task": "Criar tarefa de envio",
+        "Create Receive Task": "Criar tarefa de recebimento",
+        "Create Call Activity": "Criar atividade de chamada",
+        "Create Sub Process": "Criar subprocesso",
+        "Create Expanded Sub Process": "Criar subprocesso expandido",
+        "Create Collapsed Sub Process": "Criar subprocesso recolhido",
+        "Create Transaction": "Criar transação",
+        "Create Event Sub Process": "Criar subprocesso de evento",
+        "Create Ad-hoc Sub Process": "Criar subprocesso ad hoc",
+        "Create Exclusive Gateway": "Criar gateway exclusivo",
+        "Create Inclusive Gateway": "Criar gateway inclusivo",
+        "Create Parallel Gateway": "Criar gateway paralelo",
+        "Create Event based Gateway": "Criar gateway baseado em evento",
+        "Create Complex Gateway": "Criar gateway complexo",
+        "Create Data Object Reference": "Criar objeto de dados",
+        "Create Data Store Reference": "Criar repositório de dados",
+        "Create Data Input": "Criar entrada de dados",
+        "Create Data Output": "Criar saída de dados",
+        "Create Text Annotation": "Criar anotação de texto",
+        "Create Group": "Criar grupo",
+        "Create Participant": "Criar participante",
+        "Create Pool/Participant": "Criar pool/participante",
+        "Create Lane": "Criar raia",
+        "Create Collaboration": "Criar colaboração",
+        "Create Data Object": "Criar objeto de dados",
+        "Start Event": "Evento de início",
+        "End Event": "Evento de fim",
+        "Intermediate Throw Event": "Evento intermediário (lançamento)",
+        "Intermediate Catch Event": "Evento intermediário (captura)",
+        "Boundary Event": "Evento de borda",
+        "Task": "Tarefa",
+        "User Task": "Tarefa do usuário",
+        "Service Task": "Tarefa de serviço",
+        "Script Task": "Tarefa de script",
+        "Business Rule Task": "Tarefa de regra de negócio",
+        "Manual Task": "Tarefa manual",
+        "Send Task": "Tarefa de envio",
+        "Receive Task": "Tarefa de recebimento",
+        "Call Activity": "Atividade de chamada",
+        "Sub Process": "Subprocesso",
+        "Expanded Sub Process": "Subprocesso expandido",
+        "Collapsed Sub Process": "Subprocesso recolhido",
+        "Transaction": "Transação",
+        "Event Sub Process": "Subprocesso de evento",
+        "Ad-hoc Sub Process": "Subprocesso ad hoc",
+        "Exclusive Gateway": "Gateway exclusivo",
+        "Inclusive Gateway": "Gateway inclusivo",
+        "Parallel Gateway": "Gateway paralelo",
+        "Event based Gateway": "Gateway baseado em evento",
+        "Complex Gateway": "Gateway complexo",
+        "Data Object Reference": "Objeto de dados",
+        "Data Store Reference": "Repositório de dados",
+        "Data Input": "Entrada de dados",
+        "Data Output": "Saída de dados",
+        "Text Annotation": "Anotação de texto",
+        "Group": "Grupo",
+        "Participant": "Participante",
+        "Lane": "Raia",
+        "Start Event (None)": "Evento de início (nenhum)",
+        "Intermediate Throw Event (None)": "Evento intermediário (nenhum)",
+        "Intermediate Catch Event (None)": "Evento intermediário (nenhum)",
+        "End Event (None)": "Evento de fim (nenhum)",
+        "Activate the hand tool": "Ativar a ferramenta de mão",
+        "Activate the lasso tool": "Ativar a ferramenta de laço",
+        "Activate the create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
+        "Create/Remove Space": "Criar/remover espaço",
+        "Hand Tool": "Ferramenta de mão",
+        "Lasso Tool": "Ferramenta de laço",
+        "Space Tool": "Ferramenta de espaço",
+        "Global Connect Tool": "Ferramenta de conexão global",
+        "Event": "Evento",
+        "Gateway": "Gateway",
+        "General": "Geral",
+        "Activities": "Atividades",
+        "Events": "Eventos",
+        "Gateways": "Gateways",
+        "Data Objects": "Objetos de dados"
+    };
+
+    const typeTranslations = {
+        Event: "Evento",
+        Task: "Tarefa",
+        Gateway: "Gateway",
+        "Start Event": "Evento de início",
+        "End Event": "Evento de fim",
+        "Intermediate Throw Event": "Evento intermediário (lançamento)",
+        "Intermediate Catch Event": "Evento intermediário (captura)",
+        "Boundary Event": "Evento de borda",
+        "User Task": "Tarefa do usuário",
+        "Service Task": "Tarefa de serviço",
+        "Script Task": "Tarefa de script",
+        "Business Rule Task": "Tarefa de regra de negócio",
+        "Manual Task": "Tarefa manual",
+        "Send Task": "Tarefa de envio",
+        "Receive Task": "Tarefa de recebimento",
+        "Call Activity": "Atividade de chamada",
+        "Sub Process": "Subprocesso",
+        "Transaction": "Transação",
+        "Event Sub Process": "Subprocesso de evento",
+        "Ad-hoc Sub Process": "Subprocesso ad hoc",
+        "Exclusive Gateway": "Gateway exclusivo",
+        "Inclusive Gateway": "Gateway inclusivo",
+        "Parallel Gateway": "Gateway paralelo",
+        "Event based Gateway": "Gateway baseado em evento",
+        "Complex Gateway": "Gateway complexo"
+    };
+
+    const customTranslate = (template, replacements) => {
+        const translatedTemplate = translationMap[template] || template;
+        if (!replacements) {
+            return translatedTemplate;
+        }
+
+        return translatedTemplate.replace(/\{([^}]+)\}/g, (match, key) => {
+            const replacement = replacements[key];
+            if (replacement === undefined) {
+                return match;
+            }
+            const normalized = String(replacement);
+            return typeTranslations[normalized] || translationMap[normalized] || normalized;
+        });
+    };
+
+    const customTranslateModule = {
+        translate: ["value", customTranslate]
+    };
+
     createApp({
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
@@ -583,7 +737,10 @@
                 }
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window }
+                    keyboard: { bindTo: window },
+                    additionalModules: [
+                        customTranslateModule
+                    ]
                 });
                 modelerRef.value = modeler;
                 registerInfoContextPad(modeler);
