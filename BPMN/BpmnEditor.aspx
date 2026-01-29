@@ -17,6 +17,7 @@
   <script>
       // Id vem do QueryString
       window.__BPMN_MODEL_ID__ = <%= ModelId %>;
+      window.__BPMN_AI_ENABLED__ = <%= HasOpenAiKey.ToString().ToLowerInvariant() %>;
   </script>
 
   <div id="bpmnApp" class="page">
@@ -36,12 +37,12 @@
 
     <section class="layout">
       <aside class="sidebar card">
-        <div class="sidebar-toggle" role="group" aria-label="Modo do painel">
+        <div v-if="aiEnabled" class="sidebar-toggle" role="group" aria-label="Modo do painel">
           <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">Editar</button>
           <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">IA</button>
         </div>
 
-        <div v-if="sidebarMode === 'edit'" class="sidebar-edit">
+        <div v-if="sidebarMode === 'edit' || !aiEnabled" class="sidebar-edit">
           <h3>Modelo</h3>
           <label class="field">
             <span>Nome</span>
@@ -60,7 +61,7 @@
           </div>
         </div>
 
-        <div v-else class="sidebar-ai">
+        <div v-else-if="aiEnabled" class="sidebar-ai">
           <div class="sidebar-ai-spacer"></div>
           <div class="sidebar-ai-input">
             <textarea

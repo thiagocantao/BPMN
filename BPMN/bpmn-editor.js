@@ -93,6 +93,7 @@
     createApp({
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
+            const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__));
 
             const saving = ref(false);
             const mode = ref("select");
@@ -577,6 +578,9 @@
             };
 
             onMounted(async () => {
+                if (!aiEnabled.value) {
+                    sidebarMode.value = "edit";
+                }
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
                     keyboard: { bindTo: window }
@@ -604,6 +608,7 @@
 
             return {
                 saving,
+                aiEnabled,
                 mode,
                 addType,
                 modelName,
