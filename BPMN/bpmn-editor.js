@@ -402,6 +402,7 @@
             const selectedElement = ref(null);
 
             const infoEditorRef = ref(null);
+            const infoPanelName = ref("");
 
             const aiGenerating = ref(false);
             const aiSteps = [
@@ -441,12 +442,15 @@
                 return Boolean(element && !element.isRoot);
             });
 
+            const getElementName = (element) => element?.businessObject?.name || "";
+
             const openInfoEditor = (element) => {
                 if (!element) return;
                 selectedId.value = element.id;
                 infoViewer.show = false;
                 infoEditor.elementId = element.id;
                 infoEditor.content = element.businessObject?.$attrs?.infoHtml ?? "";
+                infoPanelName.value = getElementName(element);
                 infoEditor.show = true;
                 nextTick(() => {
                     if (infoEditorRef.value) {
@@ -465,6 +469,7 @@
                 infoEditor.show = false;
                 infoEditor.elementId = null;
                 infoEditor.content = "";
+                infoPanelName.value = "";
             };
 
             const onEditorInput = () => {
@@ -550,6 +555,7 @@
                 infoEditor.show = false;
                 infoViewer.elementId = element.id;
                 infoViewer.content = element.businessObject?.$attrs?.infoHtml ?? "";
+                infoPanelName.value = getElementName(element);
                 infoViewer.show = true;
             };
 
@@ -562,6 +568,7 @@
                 infoViewer.show = false;
                 infoViewer.elementId = null;
                 infoViewer.content = "";
+                infoPanelName.value = "";
             };
 
             const getCurrentXml = async () => {
@@ -998,6 +1005,7 @@
                 selectedIds,
                 infoEditor,
                 infoViewer,
+                infoPanelName,
                 infoEditorRef,
                 canEditSelectedInfo,
                 setMode,
