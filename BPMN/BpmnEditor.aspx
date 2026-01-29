@@ -23,7 +23,6 @@
   <div id="bpmnApp" class="page">
     <header class="topbar">
       <div class="left">
-        <a class="link" href="/Bpmn/BpmnModels.aspx">← Voltar</a>
         <div class="titlewrap">
           <h1 class="title">Editor BPMN</h1>
           <p class="subtitle">Arraste, conecte e salve</p>
@@ -31,6 +30,8 @@
       </div>
 
       <div class="actions">
+        <button type="button" class="btn btn--ghost" @click="handleBack">Voltar</button>
+        <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
         <button type="button" class="btn btn--ghost" @click="save" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
       </div>
     </header>
@@ -92,7 +93,6 @@
 
           <div class="toolbar">
             <button type="button" class="btn btn--ghost is-hidden" @click="exportAsPdf">Exportar para PDF</button>
-            <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
           </div>
 
           <div class="hint is-hidden">
@@ -133,20 +133,6 @@
               <div class="info-sheet-name">{{ infoPanelName }}</div>
             </label>
           </div>
-          <div class="info-sheet-actions">
-            <button
-              v-if="infoViewer.show"
-              type="button"
-              class="btn btn--ghost"
-              @click="closeInfoViewer"
-            >
-              Fechar
-            </button>
-            <template v-else>
-              <button type="button" class="btn btn--ghost" @click="closeInfoEditor">Cancelar</button>
-              <button type="button" class="btn btn--primary" @click="saveInfoEditor">Salvar</button>
-            </template>
-          </div>
         </div>
 
         <div v-if="infoEditor.show">
@@ -182,11 +168,18 @@
             />
           </div>
           <div class="rich-editor" contenteditable="true" ref="infoEditorRef" @input="onEditorInput"></div>
+          <div class="info-sheet-actions info-sheet-actions--bottom">
+            <button type="button" class="btn btn--ghost" @click="requestCloseInfoEditor">Cancelar</button>
+            <button type="button" class="btn btn--primary" @click="saveInfoEditor">Confirmar</button>
+          </div>
         </div>
 
         <div v-else>
           <div v-if="infoViewer.content" class="rich-viewer rich-viewer--boxed" v-html="infoViewer.content"></div>
           <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
+          <div class="info-sheet-actions info-sheet-actions--bottom">
+            <button type="button" class="btn btn--ghost" @click="closeInfoViewer">Fechar</button>
+          </div>
         </div>
       </aside>
     </section>
