@@ -476,7 +476,7 @@
                 infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
             };
 
-            const formatInfoEditor = (command) => {
+            const formatInfoEditor = (command, value = null) => {
                 if (!infoEditorRef.value) return;
                 infoEditorRef.value.focus();
                 if (command === "createLink") {
@@ -486,7 +486,7 @@
                     }
                     return;
                 }
-                document.execCommand(command, false, null);
+                document.execCommand(command, false, value);
             };
 
             const saveInfoEditor = () => {
@@ -534,7 +534,7 @@
                 syncProcessDescriptionToModeler();
             };
 
-            const formatProcessDescription = (command) => {
+            const formatProcessDescription = (command, value = null) => {
                 if (!processDescriptionRef.value) return;
                 processDescriptionRef.value.focus();
                 if (command === "createLink") {
@@ -545,7 +545,7 @@
                     }
                     return;
                 }
-                document.execCommand(command, false, null);
+                document.execCommand(command, false, value);
                 syncProcessDescriptionToModeler();
             };
 

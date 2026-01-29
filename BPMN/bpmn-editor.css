@@ -759,6 +759,16 @@ body {
     margin: 0 2px;
 }
 
+.toolbar-color {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #d9e1eb;
+    padding: 0;
+    background: #ffffff;
+    cursor: pointer;
+}
+
 .rich-editor {
     min-height: 200px;
     border: 1px solid #d9e1eb;

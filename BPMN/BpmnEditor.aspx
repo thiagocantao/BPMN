@@ -75,6 +75,12 @@
               <button type="button" class="toolbar-btn" title="Limpar formatação" @click="formatProcessDescription('removeFormat')">
                 <i class="fa-solid fa-eraser"></i>
               </button>
+              <input
+                type="color"
+                class="toolbar-color"
+                title="Cor do texto"
+                @input="formatProcessDescription('foreColor', $event.target.value)"
+              />
             </div>
             <div
               class="rich-editor rich-editor--compact"
@@ -168,6 +174,12 @@
             <button type="button" class="toolbar-btn" title="Limpar formatação" @click="formatInfoEditor('removeFormat')">
               <i class="fa-solid fa-eraser"></i>
             </button>
+            <input
+              type="color"
+              class="toolbar-color"
+              title="Cor do texto"
+              @input="formatInfoEditor('foreColor', $event.target.value)"
+            />
           </div>
           <div class="rich-editor" contenteditable="true" ref="infoEditorRef" @input="onEditorInput"></div>
         </div>
