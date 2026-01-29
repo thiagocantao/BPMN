@@ -35,9 +35,9 @@ public partial class BpmnModels : System.Web.UI.Page
         // MVP: start -> task -> end
         // XML BPMN para teste (sem depender de libs)
         var safeName = EscapeXml(name ?? "Processo");
-        var startEventName = "In\u00edcio";
-        var taskName = "Nova tarefa";
-        var endEventName = "Fim";
+        var startEventNameEncoded = "In&#237;cio";
+        var taskNameEncoded = "Nova tarefa";
+        var endEventNameEncoded = "Fim";
 
         return @"<?xml version=""1.0"" encoding=""UTF-8""?>
 <bpmn:definitions xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
@@ -47,9 +47,9 @@ public partial class BpmnModels : System.Web.UI.Page
   xmlns:di=""http://www.omg.org/spec/DD/20100524/DI""
   id=""Definitions_1"" targetNamespace=""http://bpmn.io/schema/bpmn"">
   <bpmn:process id=""Process_1"" name=""" + safeName + @""" isExecutable=""false"">
-    <bpmn:startEvent id=""StartEvent_1"" name=""" + EscapeXml(startEventName) + @""" />
-    <bpmn:task id=""Task_1"" name=""" + EscapeXml(taskName) + @""" />
-    <bpmn:endEvent id=""EndEvent_1"" name=""" + EscapeXml(endEventName) + @""" />
+    <bpmn:startEvent id=""StartEvent_1"" name=""" + startEventNameEncoded + @""" />
+    <bpmn:task id=""Task_1"" name=""" + taskNameEncoded + @""" />
+    <bpmn:endEvent id=""EndEvent_1"" name=""" + endEventNameEncoded + @""" />
     <bpmn:sequenceFlow id=""Flow_1"" sourceRef=""StartEvent_1"" targetRef=""Task_1"" />
     <bpmn:sequenceFlow id=""Flow_2"" sourceRef=""Task_1"" targetRef=""EndEvent_1"" />
   </bpmn:process>
