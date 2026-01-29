@@ -44,14 +44,14 @@
         </div>
 
         <div v-if="sidebarMode === 'edit' || !aiEnabled" class="sidebar-edit">
-          <h3>Modelo</h3>
+          <h3>Processo</h3>
           <label class="field">
             <span>Nome</span>
             <input class="input" v-model="modelName" />
           </label>
 
           <div class="field">
-            <span>Descrição do Processo</span>
+            <span>Descrição</span>
             <div class="rich-toolbar rich-toolbar--compact" @mousedown.prevent>
               <button type="button" class="toolbar-btn" title="Negrito" @click="formatProcessDescription('bold')">
                 <i class="fa-solid fa-bold"></i>
