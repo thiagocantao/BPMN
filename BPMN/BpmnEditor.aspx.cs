@@ -259,12 +259,13 @@ RESULTADO:
         var user1 = BuildUserPrompt_Step1(prompt, currentModelXml);
 
         var payload1 = "{"
-            + "\"model\":\"gpt-4o-mini\","
+            + "\"model\":\"gpt-5-mini\","
             + "\"input\":["
             + "{\"role\":\"system\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(system1) + "}]},"
             + "{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(user1) + "}]}]"
-            + ",\"temperature\":0.2"
-            + ",\"max_output_tokens\":4000"
+            + ",\"reasoning\":{\"effort\":\"minimal\"}"
+            + ",\"text\":{\"verbosity\":\"low\",\"format\":{\"type\":\"text\"}}"
+            + ",\"max_output_tokens\":12000"
             + "}";
 
         var resp1 = PostJson("https://api.openai.com/v1/responses", apiKey, payload1);
@@ -291,11 +292,12 @@ RESULTADO:
         var user2 = BuildUserPrompt_Step2(processXml);
 
         var payload2 = "{"
-            + "\"model\":\"gpt-4o-mini\","
+            + "\"model\":\"gpt-5-mini\","
             + "\"input\":["
             + "{\"role\":\"system\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(system2) + "}]},"
             + "{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(user2) + "}]}]"
-            + ",\"temperature\":0.2"
+            + ",\"reasoning\":{\"effort\":\"minimal\"}"
+            + ",\"text\":{\"verbosity\":\"low\",\"format\":{\"type\":\"text\"}}"
             + ",\"max_output_tokens\":12000"
             + "}";
 
