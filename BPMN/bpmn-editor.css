@@ -5,7 +5,7 @@
 
 body {
     margin: 0;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
     background: #f6f8fb;
     color: #1b1f2a;
 }
@@ -228,10 +228,10 @@ body {
     gap: 12px;
 }
 
-.info-sheet-header h3 {
-    margin: 0;
-    font-size: 16px;
-}
+    .info-sheet-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
 
 .info-sheet-actions {
     display: flex;
@@ -824,3 +824,39 @@ body {
         height: 70vh;
     }
 }
+
+/* =========================================================
+   BPMN.io — Fonte Roboto (SVG + Labels)
+   ========================================================= */
+
+/* Base do SVG */
+.bpmn-canvas svg {
+    font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+}
+
+    /* Todos os textos SVG */
+    .bpmn-canvas svg text,
+    .bpmn-canvas svg tspan {
+        font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+        font-weight: 400;
+    }
+
+/* Labels do BPMN (nomes de tarefas, eventos, gateways) */
+.bpmn-canvas .djs-label,
+.bpmn-canvas .djs-direct-editing-content,
+.bpmn-canvas .djs-visual text {
+    font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif !important;
+}
+
+/* Texto durante edição inline */
+.bpmn-canvas .djs-direct-editing-content {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* Opcional: melhorar legibilidade */
+.bpmn-canvas svg text {
+    fill: #0b1b3f;
+    text-rendering: geometricPrecision;
+}
+
