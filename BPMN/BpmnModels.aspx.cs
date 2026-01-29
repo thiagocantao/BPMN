@@ -136,7 +136,7 @@ public partial class BpmnModels : System.Web.UI.Page
         string sql = string.Format(@"
                 SET NOCOUNT ON;
                 INSERT INTO [{0}].[{1}].BpmnModel (Name, ModelJson)
-                VALUES ('{2}', '{3}');
+                VALUES (N'{2}', N'{3}');
 
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
             ", db, own, EscapeSql(name), EscapeSql(xml));

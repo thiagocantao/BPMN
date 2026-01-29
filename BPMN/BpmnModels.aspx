@@ -83,7 +83,7 @@
 
                     PageMethods.CreateModel(
                         name,
-                        (newId) => { window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + newId; },
+                        (newId) => { window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + newId + "&mode=edit"; },
                         (err) => { console.error(err); alert("Erro ao criar modelo."); }
                     );
                 };
