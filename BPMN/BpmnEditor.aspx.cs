@@ -402,6 +402,12 @@ RESULTADO:
     private static string UnescapeResponseText(string s)
     {
         if (s == null) return "";
+        s = Regex.Replace(s, @"\\u([0-9a-fA-F]{4})", m =>
+        {
+            var code = Convert.ToInt32(m.Groups[1].Value, 16);
+            return ((char)code).ToString();
+        });
+
         return s
             .Replace("\\\\", "\\")
             .Replace("\\\"", "\"")
