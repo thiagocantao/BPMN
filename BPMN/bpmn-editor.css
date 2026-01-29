@@ -127,6 +127,10 @@ body {
     outline: 2px solid rgba(47,128,237,.35);
 }
 
+.is-hidden {
+    display: none !important;
+}
+
 .table {
     display: grid;
     gap: 8px;
@@ -687,6 +691,12 @@ body {
     margin-bottom: 12px;
 }
 
+.rich-toolbar--compact {
+    padding: 6px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
 .toolbar-btn {
     border: none;
     background: #ffffff;
@@ -720,6 +730,13 @@ body {
     font-size: 16px;
     line-height: 1.5;
     outline: none;
+}
+
+.rich-editor--compact {
+    min-height: 140px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .rich-viewer {

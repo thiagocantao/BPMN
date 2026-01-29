@@ -49,12 +49,47 @@
             <input class="input" v-model="modelName" />
           </label>
 
+          <div class="field">
+            <span>Descrição do Processo</span>
+            <div class="rich-toolbar rich-toolbar--compact" @mousedown.prevent>
+              <button type="button" class="toolbar-btn" title="Negrito" @click="formatProcessDescription('bold')">
+                <i class="fa-solid fa-bold"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Itálico" @click="formatProcessDescription('italic')">
+                <i class="fa-solid fa-italic"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Sublinhado" @click="formatProcessDescription('underline')">
+                <i class="fa-solid fa-underline"></i>
+              </button>
+              <span class="toolbar-divider"></span>
+              <button type="button" class="toolbar-btn" title="Lista" @click="formatProcessDescription('insertUnorderedList')">
+                <i class="fa-solid fa-list-ul"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Lista numerada" @click="formatProcessDescription('insertOrderedList')">
+                <i class="fa-solid fa-list-ol"></i>
+              </button>
+              <span class="toolbar-divider"></span>
+              <button type="button" class="toolbar-btn" title="Link" @click="formatProcessDescription('createLink')">
+                <i class="fa-solid fa-link"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Limpar formatação" @click="formatProcessDescription('removeFormat')">
+                <i class="fa-solid fa-eraser"></i>
+              </button>
+            </div>
+            <div
+              class="rich-editor rich-editor--compact"
+              contenteditable="true"
+              ref="processDescriptionRef"
+              @input="onProcessDescriptionInput"
+            ></div>
+          </div>
+
           <div class="toolbar">
-            <button type="button" class="btn btn--ghost" @click="exportAsPdf">Exportar para PDF</button>
+            <button type="button" class="btn btn--ghost is-hidden" @click="exportAsPdf">Exportar para PDF</button>
             <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
           </div>
 
-          <div class="hint">
+          <div class="hint is-hidden">
             <div><strong>Adicionar:</strong> use a paleta padrão do BPMN.io no canvas.</div>
             <div><strong>Conectar:</strong> use o botão de conexão do BPMN.io ou a opção Conectar.</div>
             <div><strong>Editar:</strong> dê duplo clique no nome do elemento.</div>
