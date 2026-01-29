@@ -91,6 +91,7 @@ body {
 .btn {
     border: none;
     padding: 0 18px;
+    padding-right: 44px;
     font-size: 16px;
     height: 50px;
     font-family: "Source Sans Pro", "Segoe UI", Tahoma, sans-serif;
@@ -101,6 +102,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-width: 150px;
+    position: relative;
 }
 
     .btn:disabled {
@@ -137,6 +140,13 @@ body {
 
 .btn.active {
     outline: 2px solid rgba(47,128,237,.35);
+}
+
+.btn__icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .is-hidden {
@@ -278,6 +288,7 @@ body {
         border: none;
         background: transparent;
         padding: 6px 14px;
+        padding-right: 32px;
         border-radius: 999px;
         font-size: 12px;
         font-weight: 400;
@@ -287,7 +298,15 @@ body {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        position: relative;
     }
+
+.sidebar-toggle .btn__icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
 
         .sidebar-toggle button.active {
             background: #ffffff;
