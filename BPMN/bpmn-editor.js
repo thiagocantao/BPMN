@@ -389,6 +389,158 @@
                 selectedElement.value = null;
             };
 
+            const parseSvgSize = (svgText) => {
+                const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+                const svg = doc.documentElement;
+                const widthAttr = svg.getAttribute("width");
+                const heightAttr = svg.getAttribute("height");
+                const viewBox = svg.getAttribute("viewBox");
+
+                const parseNumber = (value) => {
+                    if (!value) return null;
+                    const parsed = parseFloat(value.toString().replace("px", "").trim());
+                    return Number.isFinite(parsed) ? parsed : null;
+                };
+
+                const width = parseNumber(widthAttr);
+                const height = parseNumber(heightAttr);
+                if (width && height) {
+                    return { width, height };
+                }
+
+                if (viewBox) {
+                    const parts = viewBox.split(/\s+/).map((part) => parseFloat(part));
+                    if (parts.length === 4 && parts.every((value) => Number.isFinite(value))) {
+                        return { width: parts[2], height: parts[3] };
+                    }
+                }
+
+                return { width: 1200, height: 800 };
+            };
+
+            const downloadBlob = (blob, filename) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            };
+
+            const exportAsImage = async () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                try {
+                    const { svg } = await modeler.saveSVG();
+                    if (!svg) {
+                        alert("Não foi possível gerar a imagem.");
+                        return;
+                    }
+
+                    const { width, height } = parseSvgSize(svg);
+                    const scale = 2;
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.ceil(width * scale);
+                    canvas.height = Math.ceil(height * scale);
+                    const ctx = canvas.getContext("2d");
+                    if (!ctx) {
+                        alert("Seu navegador não suporta exportação de imagem.");
+                        return;
+                    }
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.scale(scale, scale);
+
+                    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+                    const url = URL.createObjectURL(svgBlob);
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                alert("Falha ao gerar a imagem.");
+                                URL.revokeObjectURL(url);
+                                return;
+                            }
+                            downloadBlob(blob, "bpmn-diagrama.png");
+                            URL.revokeObjectURL(url);
+                        }, "image/png");
+                    };
+                    img.onerror = () => {
+                        alert("Falha ao carregar o diagrama.");
+                        URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                } catch (err) {
+                    console.error(err);
+                    alert("Erro ao exportar imagem.");
+                }
+            };
+
+            const exportAsPdf = async () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                try {
+                    const { svg } = await modeler.saveSVG();
+                    if (!svg) {
+                        alert("Não foi possível gerar o PDF.");
+                        return;
+                    }
+
+                    const printWindow = window.open("", "_blank");
+                    if (!printWindow) {
+                        alert("Permita pop-ups para exportar em PDF.");
+                        return;
+                    }
+
+                    printWindow.document.write(`
+                      <!doctype html>
+                      <html>
+                        <head>
+                          <title>Exportar PDF</title>
+                          <style>
+                            html, body {
+                              margin: 0;
+                              padding: 0;
+                              width: 100%;
+                              height: 100%;
+                              background: #fff;
+                            }
+                            .print-container {
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              width: 100%;
+                              height: 100%;
+                              padding: 24px;
+                              box-sizing: border-box;
+                            }
+                            svg {
+                              width: 100%;
+                              height: auto;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="print-container">${svg}</div>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 300);
+                } catch (err) {
+                    console.error(err);
+                    alert("Erro ao exportar PDF.");
+                }
+            };
+
             const registerInfoContextPad = (modeler) => {
                 if (!modeler) return;
                 const contextPad = modeler.get("contextPad");
@@ -477,6 +629,8 @@
                 formatInfoEditor,
                 save,
                 deleteSelected,
+                exportAsImage,
+                exportAsPdf,
                 bpmnCanvasRef
             };
         }
