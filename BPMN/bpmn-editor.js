@@ -381,7 +381,9 @@
     createApp({
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
-            const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__));
+            const params = new URLSearchParams(window.location.search || "");
+            const isReadOnly = ref(params.get("mode") !== "edit");
+            const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
 
             const saving = ref(false);
             const mode = ref("select");
@@ -415,6 +417,7 @@
             ];
             const aiStepIndex = ref(0);
             const aiStepMessage = computed(() => aiSteps[aiStepIndex.value]);
+            const subtitleText = computed(() => (isReadOnly.value ? "Somente leitura" : "Arraste, conecte e salve"));
             let aiStepTimer = null;
 
             const resizeAiPrompt = () => {
@@ -441,12 +444,13 @@
 
             const canEditSelectedInfo = computed(() => {
                 const element = selectedElement.value;
-                return Boolean(element && !element.isRoot);
+                return Boolean(element && !element.isRoot && !isReadOnly.value);
             });
 
             const getElementName = (element) => element?.businessObject?.name || "";
 
             const openInfoEditor = (element) => {
+                if (isReadOnly.value) return;
                 if (!element) return;
                 if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
                     return;
@@ -482,11 +486,13 @@
             };
 
             const onEditorInput = () => {
+                if (isReadOnly.value) return;
                 infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
                 infoEditorDirty.value = infoEditor.content !== infoEditorOriginal.value;
             };
 
             const formatInfoEditor = (command, value = null) => {
+                if (isReadOnly.value) return;
                 if (!infoEditorRef.value) return;
                 infoEditorRef.value.focus();
                 if (command === "createLink") {
@@ -500,6 +506,7 @@
             };
 
             const saveInfoEditor = () => {
+                if (isReadOnly.value) return;
                 const modeler = modelerRef.value;
                 if (!modeler || !infoEditor.elementId) return;
                 const elementRegistry = modeler.get("elementRegistry");
@@ -543,10 +550,12 @@
             };
 
             const onProcessDescriptionInput = () => {
+                if (isReadOnly.value) return;
                 syncProcessDescriptionToModeler();
             };
 
             const formatProcessDescription = (command, value = null) => {
+                if (isReadOnly.value) return;
                 if (!processDescriptionRef.value) return;
                 processDescriptionRef.value.focus();
                 if (command === "createLink") {
@@ -643,6 +652,10 @@
             };
 
             const save = async () => {
+                if (isReadOnly.value) {
+                    alert("Modo somente leitura. Clique em editar para salvar alterações.");
+                    return;
+                }
                 saving.value = true;
                 syncProcessDescriptionToModeler();
                 const xml = await getCurrentXml();
@@ -657,6 +670,7 @@
             };
 
             const sendAiPrompt = async () => {
+                if (isReadOnly.value) return;
                 const prompt = (aiPrompt.value || "").trim();
                 if (!prompt) return;
 
@@ -714,6 +728,7 @@
             });
 
             const beginAdd = (type) => {
+                if (isReadOnly.value) return;
                 addType.value = type;
                 mode.value = "select";
                 const modeler = modelerRef.value;
@@ -747,6 +762,7 @@
             };
 
             const setMode = (m) => {
+                if (isReadOnly.value) return;
                 mode.value = m;
                 addType.value = null;
 
@@ -760,6 +776,7 @@
             };
 
             const deleteSelected = () => {
+                if (isReadOnly.value) return;
                 const modeler = modelerRef.value;
                 if (!modeler) return;
                 const selection = modeler.get("selection").get();
@@ -933,6 +950,19 @@
                             return {};
                         }
 
+                        if (isReadOnly.value) {
+                            return {
+                                "info.view": {
+                                    group: "info",
+                                    className: "context-pad-icon context-pad-icon--view",
+                                    title: "Visualizar informações",
+                                    action: {
+                                        click: (event, target) => openInfoViewer(target || element)
+                                    }
+                                }
+                            };
+                        }
+
                         return {
                             "info.edit": {
                                 group: "info",
@@ -955,6 +985,42 @@
                 };
 
                 contextPad.registerProvider(provider);
+            };
+
+            const applyReadOnlyGuards = (modeler) => {
+                if (!modeler || !isReadOnly.value) return;
+                const commandStack = modeler.get("commandStack");
+                if (commandStack && !commandStack.__readonlyWrapped) {
+                    const originalExecute = commandStack.execute.bind(commandStack);
+                    commandStack.execute = (command, ctx) => {
+                        if (isReadOnly.value) {
+                            return;
+                        }
+                        return originalExecute(command, ctx);
+                    };
+                    commandStack.__readonlyWrapped = true;
+                }
+
+                const palette = modeler.get("palette");
+                if (palette && palette._container) {
+                    palette._container.style.display = "none";
+                }
+
+                const contextPad = modeler.get("contextPad");
+                if (contextPad && !contextPad.__readonlyWrapped) {
+                    const originalGetEntries = contextPad.getEntries.bind(contextPad);
+                    contextPad.getEntries = (element) => {
+                        if (!isReadOnly.value) {
+                            return originalGetEntries(element);
+                        }
+                        const entries = originalGetEntries(element) || {};
+                        if (entries["info.view"]) {
+                            return { "info.view": entries["info.view"] };
+                        }
+                        return {};
+                    };
+                    contextPad.__readonlyWrapped = true;
+                }
             };
 
             onMounted(async () => {
@@ -1000,6 +1066,7 @@
                 }
 
                 registerInfoContextPad(modeler);
+                applyReadOnlyGuards(modeler);
 
                 modeler.on("selection.changed", (event) => {
                     const selection = event.newSelection || [];
@@ -1023,6 +1090,7 @@
             return {
                 saving,
                 aiEnabled,
+                isReadOnly,
                 mode,
                 addType,
                 modelName,
@@ -1033,6 +1101,7 @@
                 processDescriptionRef,
                 aiGenerating,
                 aiStepMessage,
+                subtitleText,
                 selectedIds,
                 infoEditor,
                 infoViewer,

@@ -41,6 +41,9 @@
             <div>{{ m.Name }}</div>
             <div class="muted">{{ formatDate(m.UpdatedAt) }}</div>
             <div class="row-actions">
+              <button type="button" class="icon-button" @click="view(m.Id)" aria-label="Visualizar">
+                <i class="fa-regular fa-eye"></i>
+              </button>
               <button type="button" class="icon-button" @click="edit(m.Id)" aria-label="Editar">
                 <i class="fa-solid fa-pencil"></i>
               </button>
@@ -85,7 +88,8 @@
                     );
                 };
 
-                const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id;
+                const view = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=view";
+                const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=edit";
 
                 const remove = (id) => {
                     if (!confirm("Excluir este modelo?")) return;
@@ -103,7 +107,7 @@
 
                 refresh();
 
-                return { loading, models, refresh, createNew, edit, remove, formatDate };
+                return { loading, models, refresh, createNew, view, edit, remove, formatDate };
             }
         }).mount("#app");
     </script>
