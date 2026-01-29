@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.0.2/dist/assets/bpmn-font/css/bpmn.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
 </head>
@@ -34,17 +34,32 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn--ghost" @click="handleBack">Voltar</button>
-        <button type="button" class="btn btn--ghost" @click="exportAsImage">Exportar como imagem</button>
-        <button type="button" class="btn btn--ghost" @click="save" :disabled="saving || isReadOnly" v-if="!isReadOnly">{{ saving ? 'Salvando...' : 'Salvar' }}</button>
+        <button type="button" class="btn btn--ghost" @click="handleBack">
+          Voltar
+          <i class="fa fa-arrow-left btn__icon" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn--primary" @click="exportAsImage">
+          Exportar como imagem
+          <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn--primary" @click="save" :disabled="saving || isReadOnly" v-if="!isReadOnly">
+          {{ saving ? 'Salvando...' : 'Salvar' }}
+          <i class="fa fa-check btn__icon" aria-hidden="true"></i>
+        </button>
       </div>
     </header>
 
     <section class="layout" :class="{ 'layout--with-sheet': infoEditor.show || infoViewer.show }">
       <aside class="sidebar card">
         <div v-if="aiEnabled" class="sidebar-toggle" role="group" aria-label="Modo do painel">
-          <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">Editar</button>
-          <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">IA</button>
+          <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">
+            Editar
+            <i class="fa fa-pen btn__icon" aria-hidden="true"></i>
+          </button>
+          <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">
+            IA
+            <i class="fa fa-robot btn__icon" aria-hidden="true"></i>
+          </button>
         </div>
 
         <div v-if="sidebarMode === 'edit' || !aiEnabled" class="sidebar-edit">
@@ -96,7 +111,10 @@
           </div>
 
           <div class="toolbar">
-            <button type="button" class="btn btn--ghost is-hidden" @click="exportAsPdf">Exportar para PDF</button>
+            <button type="button" class="btn btn--primary is-hidden" @click="exportAsPdf">
+              Exportar para PDF
+              <i class="fa fa-file-pdf btn__icon" aria-hidden="true"></i>
+            </button>
           </div>
 
           <div class="hint is-hidden">
@@ -173,8 +191,14 @@
           </div>
           <div class="rich-editor" contenteditable="true" ref="infoEditorRef" @input="onEditorInput"></div>
           <div class="info-sheet-actions info-sheet-actions--bottom">
-            <button type="button" class="btn btn--ghost" @click="requestCloseInfoEditor">Cancelar</button>
-            <button type="button" class="btn btn--primary" @click="saveInfoEditor">Confirmar</button>
+            <button type="button" class="btn btn--ghost" @click="requestCloseInfoEditor">
+              Cancelar
+              <i class="fa fa-close btn__icon" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn--primary" @click="saveInfoEditor">
+              Confirmar
+              <i class="fa fa-check btn__icon" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
 
@@ -182,7 +206,10 @@
           <div v-if="infoViewer.content" class="rich-viewer rich-viewer--boxed" v-html="infoViewer.content"></div>
           <p v-else class="empty-info">Nenhuma informação cadastrada.</p>
           <div class="info-sheet-actions info-sheet-actions--bottom">
-            <button type="button" class="btn btn--ghost" @click="closeInfoViewer">Fechar</button>
+            <button type="button" class="btn btn--ghost" @click="closeInfoViewer">
+              Fechar
+              <i class="fa fa-close btn__icon" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </aside>
