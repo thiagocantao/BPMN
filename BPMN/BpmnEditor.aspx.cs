@@ -13,11 +13,13 @@ using System.Web.Services;
 public partial class BpmnEditor : System.Web.UI.Page
 {
     protected int ModelId = 0;
+    protected bool HasOpenAiKey = false;
 
     protected void Page_Load(object sender, EventArgs e)
     {
         int id;
         ModelId = int.TryParse(Request.QueryString["id"], out id) ? id : 0;
+        HasOpenAiKey = !string.IsNullOrWhiteSpace(GetOpenAiApiKey());
     }
 
     public class BpmnModelDto
