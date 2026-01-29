@@ -8,6 +8,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Web.Script.Serialization;
 using System.Web.Services;
 
 public partial class BpmnEditor : System.Web.UI.Page
@@ -402,14 +403,28 @@ RESULTADO:
     private static string UnescapeResponseText(string s)
     {
         if (s == null) return "";
-        return s
-            .Replace("\\\\", "\\")
-            .Replace("\\\"", "\"")
-            .Replace("\\n", "\n")
-            .Replace("\\r", "\r")
-            .Replace("\\t", "\t")
-            .Replace("\\/", "/")
-            .Replace("\\b", "\b")
-            .Replace("\\f", "\f");
+        try
+        {
+            var serializer = new JavaScriptSerializer();
+            return serializer.Deserialize<string>("\"" + s + "\"");
+        }
+        catch
+        {
+            s = Regex.Replace(s, @"(?:\\\\u|\\u)([0-9a-fA-F]{4})", m =>
+            {
+                var code = Convert.ToInt32(m.Groups[1].Value, 16);
+                return ((char)code).ToString();
+            });
+
+            return s
+                .Replace("\\\\", "\\")
+                .Replace("\\\"", "\"")
+                .Replace("\\n", "\n")
+                .Replace("\\r", "\r")
+                .Replace("\\t", "\t")
+                .Replace("\\/", "/")
+                .Replace("\\b", "\b")
+                .Replace("\\f", "\f");
+        }
     }
 }
