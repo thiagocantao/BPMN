@@ -388,9 +388,11 @@
             const addType = ref(null);
 
             const modelName = ref("");
+            const processDescription = ref("");
             const sidebarMode = ref("edit");
             const aiPrompt = ref("");
             const aiPromptRef = ref(null);
+            const processDescriptionRef = ref(null);
 
             const modelerRef = ref(null);
             const bpmnCanvasRef = ref(null);
@@ -494,6 +496,54 @@
                 closeInfoEditor();
             };
 
+            const getProcessDefinition = (modeler) => {
+                if (!modeler) return null;
+                const definitions = modeler.getDefinitions ? modeler.getDefinitions() : null;
+                if (!definitions || !definitions.rootElements) return null;
+                return definitions.rootElements.find((element) => element.$type === "bpmn:Process") || null;
+            };
+
+            const setProcessDescriptionFromModeler = () => {
+                const modeler = modelerRef.value;
+                const process = getProcessDefinition(modeler);
+                const html = process?.$attrs?.processDescriptionHtml ?? "";
+                processDescription.value = html;
+                nextTick(() => {
+                    if (processDescriptionRef.value) {
+                        processDescriptionRef.value.innerHTML = html;
+                    }
+                });
+            };
+
+            const syncProcessDescriptionToModeler = () => {
+                const modeler = modelerRef.value;
+                const process = getProcessDefinition(modeler);
+                if (!process) return;
+                const html = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+                const attrs = ensureAttrs(process);
+                attrs.processDescriptionHtml = html;
+                processDescription.value = html;
+            };
+
+            const onProcessDescriptionInput = () => {
+                syncProcessDescriptionToModeler();
+            };
+
+            const formatProcessDescription = (command) => {
+                if (!processDescriptionRef.value) return;
+                processDescriptionRef.value.focus();
+                if (command === "createLink") {
+                    const url = window.prompt("Informe o link:");
+                    if (url) {
+                        document.execCommand(command, false, url);
+                        syncProcessDescriptionToModeler();
+                    }
+                    return;
+                }
+                document.execCommand(command, false, null);
+                syncProcessDescriptionToModeler();
+            };
+
             const openInfoViewer = (element) => {
                 if (!element) return;
                 selectedId.value = element.id;
@@ -536,12 +586,14 @@
                         modelerRef.value.importXML(xml)
                             .then(() => {
                                 modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                setProcessDescriptionFromModeler();
                             })
                             .catch((err) => {
                                 console.error(err);
                                 alert("XML inválido no banco. Carregando vazio.");
                                 modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                    setProcessDescriptionFromModeler();
                                 });
                             });
                     },
@@ -554,6 +606,7 @@
 
             const save = async () => {
                 saving.value = true;
+                syncProcessDescriptionToModeler();
                 const xml = await getCurrentXml();
 
                 PageMethods.SaveModel(
@@ -588,6 +641,7 @@
                         modelerRef.value.importXML(xml)
                             .then(() => {
                                 modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                setProcessDescriptionFromModeler();
                             })
                             .catch((e) => {
                                 console.error("AI returned invalid XML:", res);
@@ -923,6 +977,7 @@
 
                 await modeler.importXML(EMPTY_BPMN_XML);
                 modeler.get("canvas").zoom("fit-viewport", "auto");
+                setProcessDescriptionFromModeler();
                 load();
                 nextTick(resizeAiPrompt);
             });
@@ -933,9 +988,11 @@
                 mode,
                 addType,
                 modelName,
+                processDescription,
                 sidebarMode,
                 aiPrompt,
                 aiPromptRef,
+                processDescriptionRef,
                 aiGenerating,
                 aiStepMessage,
                 selectedIds,
@@ -946,6 +1003,8 @@
                 setMode,
                 beginAdd,
                 sendAiPrompt,
+                onProcessDescriptionInput,
+                formatProcessDescription,
                 openInfoEditorFromSelection,
                 openInfoViewerFromSelection,
                 closeInfoEditor,
