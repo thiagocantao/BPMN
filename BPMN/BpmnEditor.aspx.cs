@@ -138,38 +138,66 @@ public partial class BpmnEditor : System.Web.UI.Page
     //  PROMPT PADRÃO (regras) + chamada OpenAI
     // ============================================================
 
-    private static string BuildSystemPromptWithRules()
+    private static string BuildSystemPrompt_Step1_ProcessOnly()
     {
-        // Instruções fixas com regras (como você pediu)
         return
-@"Você é um gerador de diagramas BPMN para o modelador BPMN.io.
+    @"Você é um gerador de BPMN 2.0 para BPMN.io.
+
+OBJETIVO (ETAPA 1):
+- Gerar/aplicar alterações SOMENTE na parte de PROCESSO (bpmn:process) do BPMN.
+- Retornar um XML BPMN 2.0 VÁLIDO, porém SEM BPMNDI (sem layout).
 
 REGRAS OBRIGATÓRIAS:
-- Responda SOMENTE com um XML BPMN 2.0 válido (BPMN.io).
+- Responda SOMENTE com XML BPMN 2.0 válido.
 - NÃO use markdown.
 - NÃO escreva explicações, comentários ou texto fora do XML.
-- NÃO envolva o XML em blocos ``` ou qualquer outro delimitador.
-- O XML retornado deve ser completamente auto-suficiente.
+- NÃO inclua <bpmndi:BPMNDiagram>, <bpmndi:BPMNPlane>, <bpmndi:BPMNShape>, <bpmndi:BPMNEdge>.
 
 REQUISITOS DO XML:
-- Deve conter <bpmn:definitions> com namespaces BPMN, BPMNDI e DC.
-- Deve conter <bpmn:process> e <bpmndi:BPMNDiagram> com <bpmndi:BPMNPlane>.
-- Inclua informações de layout no BPMNDI para manter o posicionamento.
+- Deve conter <bpmn:definitions> com namespace BPMN.
+- Deve conter <bpmn:process>.
 - IDs devem ser únicos e estáveis.
-
-REGRAS DE MODELAGEM:
-- Deve existir exatamente UM startEvent.
-- Deve existir pelo menos UM endEvent.
+- Não pode haver elementos desconectados.
+- Exatamente UM startEvent.
+- Pelo menos UM endEvent.
+- Todo exclusiveGateway com no mínimo DUAS saídas.
 - O fluxo deve começar no startEvent e terminar em um endEvent.
-- Todo exclusiveGateway deve possuir no mínimo DUAS saídas.
-- Nenhum elemento pode ficar desconectado.
 
 COMPORTAMENTO:
-- Se o texto do usuário for vago, crie um fluxo simples e coerente.
-- Se o texto indicar decisão (ex: ""se"", ""caso"", ""aprovado/reprovado"", ""sim/não""), use exclusiveGateway.
 - Se existir um XML atual fornecido, ajuste o diagrama existente ao invés de criar um novo, sempre que possível.
 ";
     }
+
+    private static string BuildSystemPrompt_Step2_AddLayout()
+    {
+        return
+    @"Você é um gerador de layout BPMNDI para BPMN.io.
+
+OBJETIVO (ETAPA 2):
+- Receber um BPMN 2.0 com <bpmn:process> pronto e adicionar SOMENTE o layout BPMNDI.
+- Retornar um XML BPMN 2.0 VÁLIDO para BPMN.io, contendo BPMNDI/DC/DI.
+
+REGRAS OBRIGATÓRIAS:
+- Responda SOMENTE com XML BPMN 2.0 válido.
+- NÃO use markdown.
+- NÃO escreva explicações, comentários ou texto fora do XML.
+- NÃO altere o processo: NÃO mude nomes, NÃO mude IDs, NÃO adicione/remova tarefas, gateways, eventos ou flows.
+- Somente adicione/complete:
+  - namespaces di/dc/bpmndi (se faltarem)
+  - <bpmn:collaboration> e <bpmn:participant> (se necessário)
+  - <bpmndi:BPMNDiagram>, <bpmndi:BPMNPlane>, shapes/edges e Bounds/Waypoints
+
+REQUISITOS DO LAYOUT:
+- Cada elemento do process deve ter um BPMNShape com dc:Bounds.
+- Cada sequenceFlow deve ter um BPMNEdge com di:waypoint.
+- Posicione em fluxo da esquerda para direita, evitando sobreposição.
+- Mantenha isHorizontal=true no Participant quando usar Collaboration.
+
+RESULTADO:
+- O XML final deve conter <bpmn:definitions>, <bpmn:process> e <bpmndi:BPMNDiagram>.
+";
+    }
+
 
     private static string BuildUserPrompt(string userPrompt, string currentModelXml)
     {
@@ -186,6 +214,32 @@ COMPORTAMENTO:
             "XML ATUAL (se existir, pode estar vazio):\n" + currentModelXml;
     }
 
+    private static string BuildUserPrompt_Step1(string userPrompt, string currentModelXml)
+    {
+        userPrompt = (userPrompt ?? "").Trim();
+        currentModelXml = currentModelXml ?? "";
+
+        if (userPrompt.Length > 1500) userPrompt = userPrompt.Substring(0, 1500);
+
+        return
+            "ETAPA 1 - GERAR PROCESSO (SEM BPMNDI)\n" +
+            "DESCRIÇÃO DO PROCESSO PELO USUÁRIO:\n" + userPrompt + "\n\n" +
+            "XML ATUAL (pode estar vazio):\n" + currentModelXml;
+    }
+
+    private static string BuildUserPrompt_Step2(string processOnlyXml)
+    {
+        processOnlyXml = (processOnlyXml ?? "").Trim();
+
+        return
+            "ETAPA 2 - ADICIONAR BPMNDI (LAYOUT)\n" +
+            "A seguir está o BPMN com o processo pronto. " +
+            "Adicione SOMENTE o BPMNDI/DC/DI e o necessário para o BPMN.io renderizar. " +
+            "NÃO altere o processo nem IDs.\n\n" +
+            "BPMN (PROCESSO SEM LAYOUT):\n" + processOnlyXml;
+    }
+
+
     [WebMethod(EnableSession = true)]
     public static AiResultDto GenerateFromAi(string prompt, string currentModelXml)
     {
@@ -197,34 +251,74 @@ COMPORTAMENTO:
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new Exception("OpenAI_ApiKey não configurada no WebCDIS.Config/web.config.");
 
-        var system = BuildSystemPromptWithRules();
-        var user = BuildUserPrompt(prompt, currentModelXml);
+        // ============================================================
+        // ETAPA 1: gerar processo SEM BPMNDI
+        // ============================================================
+        var system1 = BuildSystemPrompt_Step1_ProcessOnly();
+        var user1 = BuildUserPrompt_Step1(prompt, currentModelXml);
 
-        // Responses API
-        var payload = "{"
+        var payload1 = "{"
             + "\"model\":\"gpt-4o-mini\","
             + "\"input\":["
-            + "{\"role\":\"system\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(system) + "}]},"
-            + "{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(user) + "}]}]"
+            + "{\"role\":\"system\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(system1) + "}]},"
+            + "{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(user1) + "}]}]"
             + ",\"temperature\":0.2"
-            + ",\"max_output_tokens\":1200"
+            + ",\"max_output_tokens\":4000"
             + "}";
 
-        var resp = PostJson("https://api.openai.com/v1/responses", apiKey, payload);
+        var resp1 = PostJson("https://api.openai.com/v1/responses", apiKey, payload1);
+        var processXml = ExtractDiagramXmlFromResponsesApi(resp1);
 
-        // Extrai o XML BPMN (não o envelope do Responses API)
-        var extracted = ExtractDiagramXmlFromResponsesApi(resp);
-
-        // validação mínima
-        if (string.IsNullOrWhiteSpace(extracted) ||
-            extracted.IndexOf("<bpmn:definitions", StringComparison.OrdinalIgnoreCase) < 0 ||
-            extracted.IndexOf("</bpmn:definitions>", StringComparison.OrdinalIgnoreCase) < 0)
+        // validação mínima da etapa 1
+        if (string.IsNullOrWhiteSpace(processXml) ||
+            processXml.IndexOf("<bpmn:definitions", StringComparison.OrdinalIgnoreCase) < 0 ||
+            processXml.IndexOf("<bpmn:process", StringComparison.OrdinalIgnoreCase) < 0 ||
+            processXml.IndexOf("</bpmn:definitions>", StringComparison.OrdinalIgnoreCase) < 0)
         {
-            throw new Exception("A IA não retornou um XML BPMN válido.");
+            throw new Exception("ETAPA 1: A IA não retornou um XML BPMN válido (processo).");
         }
 
-        return new AiResultDto { ModelXml = extracted, RawText = resp };
+        // garantir que NÃO veio BPMNDI (para manter a proposta)
+        // (se vier, ainda funciona, mas a ideia é evitar blow-up de tokens)
+        // então não falho, só limpo o risco: se detectar BPMNDI, seguimos mesmo assim.
+        // if (processXml.IndexOf("bpmndi:BPMNDiagram", StringComparison.OrdinalIgnoreCase) >= 0) { ... }
+
+        // ============================================================
+        // ETAPA 2: adicionar layout BPMNDI (sem alterar processo)
+        // ============================================================
+        var system2 = BuildSystemPrompt_Step2_AddLayout();
+        var user2 = BuildUserPrompt_Step2(processXml);
+
+        var payload2 = "{"
+            + "\"model\":\"gpt-4o-mini\","
+            + "\"input\":["
+            + "{\"role\":\"system\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(system2) + "}]},"
+            + "{\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":" + EscapeForJson(user2) + "}]}]"
+            + ",\"temperature\":0.2"
+            + ",\"max_output_tokens\":12000"
+            + "}";
+
+        var resp2 = PostJson("https://api.openai.com/v1/responses", apiKey, payload2);
+        var finalXml = ExtractDiagramXmlFromResponsesApi(resp2);
+
+        // validação mínima da etapa 2
+        if (string.IsNullOrWhiteSpace(finalXml) ||
+            finalXml.IndexOf("<bpmn:definitions", StringComparison.OrdinalIgnoreCase) < 0 ||
+            finalXml.IndexOf("<bpmn:process", StringComparison.OrdinalIgnoreCase) < 0 ||
+            finalXml.IndexOf("bpmndi:BPMNDiagram", StringComparison.OrdinalIgnoreCase) < 0 ||
+            finalXml.IndexOf("</bpmn:definitions>", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            throw new Exception("ETAPA 2: A IA não retornou um XML BPMN válido com BPMNDI (layout).");
+        }
+
+        // Você pode devolver o RawText concatenando as duas respostas para debug
+        return new AiResultDto
+        {
+            ModelXml = finalXml,
+            RawText = "=== STEP1 ===\n" + resp1 + "\n\n=== STEP2 ===\n" + resp2
+        };
     }
+
 
     private static string PostJson(string url, string apiKey, string jsonBody)
     {
