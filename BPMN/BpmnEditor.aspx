@@ -84,6 +84,11 @@
       </main>
     </section>
 
+    <!-- Debug i18n: aparece somente com ?debugTranslate=1 -->
+    <div id="bpmnI18nStatus" style="display:none; position: fixed; right: 12px; bottom: 12px; z-index: 9999; background: #fff; border: 1px solid #ddd; padding: 8px 10px; border-radius: 8px; font: 12px/1.3 Arial; box-shadow: 0 2px 10px rgba(0,0,0,.08)">
+      i18n...
+    </div>
+
     <div v-if="infoEditor.show" class="modal">
       <div class="modal-backdrop" @click="closeInfoEditor"></div>
       <div class="modal-card">
@@ -150,7 +155,8 @@
 
   <script src="https://unpkg.com/bpmn-js@17.0.2/dist/bpmn-modeler.production.min.js"></script>
   <script src="./vue.global.prod.js"></script>
-  <script src="/Bpmn/bpmn-editor.js"></script>
+  <!-- Cache-buster para garantir que o browser carregue a última versão do JS -->
+  <script src="/Bpmn/bpmn-editor.js?v=<%= DateTime.UtcNow.Ticks %>"></script>
 </form>
 </body>
 </html>
