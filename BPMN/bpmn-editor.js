@@ -1005,6 +1005,22 @@
                 if (palette && palette._container) {
                     palette._container.style.display = "none";
                 }
+
+                const contextPad = modeler.get("contextPad");
+                if (contextPad && !contextPad.__readonlyWrapped) {
+                    const originalGetEntries = contextPad.getEntries.bind(contextPad);
+                    contextPad.getEntries = (element) => {
+                        if (!isReadOnly.value) {
+                            return originalGetEntries(element);
+                        }
+                        const entries = originalGetEntries(element) || {};
+                        if (entries["info.view"]) {
+                            return { "info.view": entries["info.view"] };
+                        }
+                        return {};
+                    };
+                    contextPad.__readonlyWrapped = true;
+                }
             };
 
             onMounted(async () => {
