@@ -186,17 +186,19 @@ body {
 }
 
 .icon-button {
-    border: 1px solid #d9e1eb;
+    border: 1px solid #555555;
     background: #fff;
-    color: #2f80ed;
+    color: #555555;
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
+    font-weight: 600 !important;
+    font-size:16px !important;
 }
 
     .icon-button:hover {
@@ -301,18 +303,18 @@ body {
         position: relative;
     }
 
-.sidebar-toggle .btn__icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-}
+    .sidebar-toggle .btn__icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
 
-        .sidebar-toggle button.active {
-            background: #ffffff;
-            color: #2f80ed;
-            box-shadow: 0 6px 14px rgba(31, 43, 55, 0.12);
-        }
+    .sidebar-toggle button.active {
+        background: #ffffff;
+        color: #2f80ed;
+        box-shadow: 0 6px 14px rgba(31, 43, 55, 0.12);
+    }
 
 .sidebar-edit {
     display: flex;
@@ -493,11 +495,11 @@ body {
     z-index: 5;
 }
 
-    .bpmn-canvas .djs-container {
-        border-radius: 14px;
-        background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
-        background-size: 24px 24px;
-    }
+.bpmn-canvas .djs-container {
+    border-radius: 14px;
+    background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
+    background-size: 24px 24px;
+}
 
 .svg {
     min-width: 100%;
