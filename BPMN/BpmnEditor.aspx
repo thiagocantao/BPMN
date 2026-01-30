@@ -144,6 +144,37 @@
 
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
+        <div class="canvas-controls" role="group" aria-label="Controles de zoom">
+          <button
+            ref="shortcutsButtonRef"
+            type="button"
+            class="icon-button"
+            title="Atalhos do teclado"
+            aria-label="Atalhos do teclado"
+            @click="toggleShortcuts"
+          >
+            <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
+            <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="icon-button" title="Zoom out" aria-label="Zoom out" @click="zoomOut">
+            <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="icon-button" title="Re-centralizar" aria-label="Re-centralizar" @click="recenterCanvas">
+            <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div v-if="showShortcuts" ref="shortcutsRef" class="canvas-shortcuts" role="dialog" aria-label="Atalhos do teclado">
+          <h4>Atalhos</h4>
+          <ul>
+            <li><span>Ctrl+C</span><strong>Copiar</strong></li>
+            <li><span>Ctrl+V</span><strong>Colar</strong></li>
+            <li><span>Ctrl+Z</span><strong>Desfazer</strong></li>
+            <li><span>Ctrl+Y</span><strong>Refazer</strong></li>
+            <li><span>Ctrl+A</span><strong>Selecionar Todos</strong></li>
+          </ul>
+        </div>
       </main>
 
       <aside v-if="infoEditor.show || infoViewer.show" class="info-sheet card">

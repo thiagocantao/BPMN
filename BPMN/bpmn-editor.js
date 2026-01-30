@@ -7,7 +7,7 @@
         console.log('[bpmn-editor] script carregado', new Date().toISOString());
     } catch (e) { /* ignore */ }
 
-    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+    const { createApp, ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } = Vue;
 
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
 
@@ -398,6 +398,9 @@
 
             const modelerRef = ref(null);
             const bpmnCanvasRef = ref(null);
+            const showShortcuts = ref(false);
+            const shortcutsRef = ref(null);
+            const shortcutsButtonRef = ref(null);
 
             const selectedId = ref(null);
             const selectedIds = ref([]);
@@ -503,6 +506,22 @@
                     return;
                 }
                 document.execCommand(command, false, value);
+            };
+
+            const toggleShortcuts = () => {
+                showShortcuts.value = !showShortcuts.value;
+            };
+
+            const closeShortcuts = () => {
+                showShortcuts.value = false;
+            };
+
+            const handleDocumentClick = (event) => {
+                if (!showShortcuts.value) return;
+                const target = event.target;
+                if (shortcutsRef.value && shortcutsRef.value.contains(target)) return;
+                if (shortcutsButtonRef.value && shortcutsButtonRef.value.contains(target)) return;
+                closeShortcuts();
             };
 
             const saveInfoEditor = () => {
@@ -775,6 +794,30 @@
                 }
             };
 
+            const zoomIn = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                const canvas = modeler.get("canvas");
+                const currentZoom = canvas.zoom();
+                const nextZoom = Math.min(currentZoom + 0.2, 2.5);
+                canvas.zoom(nextZoom);
+            };
+
+            const zoomOut = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                const canvas = modeler.get("canvas");
+                const currentZoom = canvas.zoom();
+                const nextZoom = Math.max(currentZoom - 0.2, 0.2);
+                canvas.zoom(nextZoom);
+            };
+
+            const recenterCanvas = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                modeler.get("canvas").zoom("fit-viewport", "auto");
+            };
+
             const deleteSelected = () => {
                 if (isReadOnly.value) return;
                 const modeler = modelerRef.value;
@@ -1024,6 +1067,7 @@
             };
 
             onMounted(async () => {
+                document.addEventListener("click", handleDocumentClick);
                 if (!aiEnabled.value) {
                     sidebarMode.value = "edit";
                 }
@@ -1087,6 +1131,10 @@
                 nextTick(resizeAiPrompt);
             });
 
+            onBeforeUnmount(() => {
+                document.removeEventListener("click", handleDocumentClick);
+            });
+
             return {
                 saving,
                 aiEnabled,
@@ -1099,6 +1147,9 @@
                 aiPrompt,
                 aiPromptRef,
                 processDescriptionRef,
+                showShortcuts,
+                shortcutsRef,
+                shortcutsButtonRef,
                 aiGenerating,
                 aiStepMessage,
                 subtitleText,
@@ -1121,9 +1172,13 @@
                 saveInfoEditor,
                 onEditorInput,
                 formatInfoEditor,
+                toggleShortcuts,
                 save,
                 handleBack,
                 deleteSelected,
+                zoomIn,
+                zoomOut,
+                recenterCanvas,
                 exportAsImage,
                 exportAsPdf,
                 bpmnCanvasRef
