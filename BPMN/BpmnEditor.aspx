@@ -145,13 +145,13 @@
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
         <div class="canvas-controls" role="group" aria-label="Controles de zoom">
-          <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
+          <button type="button" class="icon-button" title="Aumentar zoom" aria-label="Zoom in" @click="zoomIn">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
           </button>
-          <button type="button" class="icon-button" title="Zoom out" aria-label="Zoom out" @click="zoomOut">
+          <button type="button" class="icon-button" title="Diminuir zoom" aria-label="Zoom out" @click="zoomOut">
             <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>
           </button>
-          <button type="button" class="icon-button" title="Re-centralizar" aria-label="Re-centralizar" @click="recenterCanvas">
+          <button type="button" class="icon-button" title="Centralizar" aria-label="Re-centralizar" @click="recenterCanvas">
             <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
           </button>
         </div>
