@@ -875,12 +875,16 @@ body {
 
 .rich-editor {
     min-height: 200px;
+    max-height: 400px;
+    overflow: auto;
     border: 1px solid #d9e1eb;
     border-radius: 12px;
     padding: 12px 14px;
     font-size: 16px;
     line-height: 1.5;
     outline: none;
+    scrollbar-width: thin;
+    scrollbar-color: #b5c2d1 transparent;
 }
 
 .rich-editor--compact {
@@ -888,6 +892,25 @@ body {
     padding: 10px 12px;
     font-size: 13px;
     line-height: 1.4;
+}
+
+.rich-editor::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rich-editor::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.rich-editor::-webkit-scrollbar-thumb {
+    background-color: #b5c2d1;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.rich-editor::-webkit-scrollbar-thumb:hover {
+    background-color: #99a8bb;
 }
 
 .rich-viewer {
