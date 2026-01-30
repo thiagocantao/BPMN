@@ -775,6 +775,30 @@
                 }
             };
 
+            const zoomIn = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                const canvas = modeler.get("canvas");
+                const currentZoom = canvas.zoom();
+                const nextZoom = Math.min(currentZoom + 0.2, 2.5);
+                canvas.zoom(nextZoom);
+            };
+
+            const zoomOut = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                const canvas = modeler.get("canvas");
+                const currentZoom = canvas.zoom();
+                const nextZoom = Math.max(currentZoom - 0.2, 0.2);
+                canvas.zoom(nextZoom);
+            };
+
+            const recenterCanvas = () => {
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+                modeler.get("canvas").zoom("fit-viewport", "auto");
+            };
+
             const deleteSelected = () => {
                 if (isReadOnly.value) return;
                 const modeler = modelerRef.value;
@@ -1124,6 +1148,9 @@
                 save,
                 handleBack,
                 deleteSelected,
+                zoomIn,
+                zoomOut,
+                recenterCanvas,
                 exportAsImage,
                 exportAsPdf,
                 bpmnCanvasRef
