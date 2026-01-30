@@ -495,11 +495,63 @@ body {
     z-index: 5;
 }
 
-.bpmn-canvas .djs-container {
-    border-radius: 14px;
-    background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
-    background-size: 24px 24px;
+.canvas-shortcuts {
+    position: absolute;
+    top: 16px;
+    right: 64px;
+    background: #ffffff;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    min-width: 200px;
+    z-index: 6;
 }
+
+    .canvas-shortcuts h4 {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        color: #1f2a37;
+        font-weight: 600;
+    }
+
+    .canvas-shortcuts ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+        font-size: 12px;
+        color: #4b5563;
+    }
+
+    .canvas-shortcuts li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .canvas-shortcuts span {
+        font-family: "Source Sans Pro", "Roboto", sans-serif;
+        font-weight: 600;
+        color: #2f80ed;
+        background: #eef4ff;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 11px;
+    }
+
+    .canvas-shortcuts strong {
+        font-weight: 600;
+        color: #1f2a37;
+    }
+
+    .bpmn-canvas .djs-container {
+        border-radius: 14px;
+        background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
 
 .svg {
     min-width: 100%;
