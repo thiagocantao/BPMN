@@ -99,6 +99,7 @@
     };
 
     const translations = {
+        "Align elements": "Alinhar elementos",
         "Activate hand tool": "Ativar a ferramenta de mão",
         "Activate lasso tool": "Ativar a ferramenta de laço",
         "Activate create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
