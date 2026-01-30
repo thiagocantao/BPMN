@@ -11,6 +11,82 @@
 
     const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
 
+    const createToastManager = () => {
+        let toastEl = null;
+        let messageEl = null;
+        let closeButton = null;
+        let overlayEl = null;
+        let hideTimer = null;
+        let currentType = "success";
+
+        const hideToast = () => {
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+                hideTimer = null;
+            }
+            if (toastEl) toastEl.classList.remove("is-active");
+            if (overlayEl) overlayEl.classList.remove("is-active");
+        };
+
+        const ensureElements = () => {
+            if (toastEl) return;
+
+            overlayEl = document.createElement("div");
+            overlayEl.className = "toast-overlay";
+
+            toastEl = document.createElement("div");
+            toastEl.className = "toast-container";
+
+            messageEl = document.createElement("span");
+            messageEl.className = "toast-message";
+
+            closeButton = document.createElement("button");
+            closeButton.type = "button";
+            closeButton.className = "toast-close";
+            closeButton.setAttribute("aria-label", "Fechar");
+            closeButton.innerHTML = "&times;";
+            closeButton.addEventListener("click", (event) => {
+                event.stopPropagation();
+                hideToast();
+            });
+
+            toastEl.addEventListener("click", () => {
+                if (currentType !== "error") {
+                    hideToast();
+                }
+            });
+
+            toastEl.appendChild(messageEl);
+            toastEl.appendChild(closeButton);
+            document.body.appendChild(overlayEl);
+            document.body.appendChild(toastEl);
+        };
+
+        const showToast = (message, type = "success") => {
+            ensureElements();
+            currentType = type;
+            messageEl.textContent = message;
+            toastEl.classList.remove("toast--success", "toast--error");
+            toastEl.classList.add(`toast--${type}`);
+            toastEl.classList.add("is-active");
+            overlayEl.classList.add("is-active");
+
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+            }
+
+            if (type !== "error") {
+                hideTimer = setTimeout(hideToast, 2000);
+            } else {
+                hideTimer = null;
+            }
+        };
+
+        return { showToast, hideToast };
+    };
+
+    const toast = createToastManager();
+
     const DEFAULT_SIZES = {
         startEvent: { w: 36, h: 36, name: "Início" },
         endEvent: { w: 36, h: 36, name: "Fim" },
@@ -657,7 +733,7 @@
                             })
                             .catch((err) => {
                                 console.error(err);
-                                alert("XML inválido no banco. Carregando vazio.");
+                                toast.showToast("XML inválido no banco. Carregando vazio.", "error");
                                 modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                     setProcessDescriptionFromModeler();
@@ -666,14 +742,14 @@
                     },
                     (err) => {
                         console.error(err);
-                        alert("Erro ao carregar modelo.");
+                        toast.showToast("Erro ao carregar modelo.", "error");
                     }
                 );
             };
 
             const save = async () => {
                 if (isReadOnly.value) {
-                    alert("Modo somente leitura. Clique em editar para salvar alterações.");
+                    toast.showToast("Modo somente leitura. Clique em editar para salvar alterações.", "error");
                     return;
                 }
                 saving.value = true;
@@ -684,8 +760,8 @@
                     modelId,
                     modelName.value || "Processo",
                     xml,
-                    () => { saving.value = false; alert("Salvo com sucesso."); },
-                    (err) => { console.error(err); saving.value = false; alert("Erro ao salvar."); }
+                    () => { saving.value = false; toast.showToast("Salvo com sucesso.", "success"); },
+                    (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao salvar.", "error"); }
                 );
             };
 
@@ -706,7 +782,7 @@
 
                         const xml = res.ModelXml || "";
                         if (!xml) {
-                            alert("A IA retornou um XML vazio.");
+                            toast.showToast("A IA retornou um XML vazio.", "error");
                             return;
                         }
 
@@ -717,7 +793,7 @@
                             })
                             .catch((e) => {
                                 console.error("AI returned invalid XML:", res);
-                                alert("A IA retornou um XML inválido. Veja o console.");
+                                toast.showToast("A IA retornou um XML inválido. Veja o console.", "error");
                                 console.error(e);
                             });
 
@@ -728,7 +804,7 @@
                     (err) => {
                         aiGenerating.value = false;
                         console.error(err);
-                        alert((err && err.get_message) ? err.get_message() : "Erro ao chamar IA.");
+                        toast.showToast((err && err.get_message) ? err.get_message() : "Erro ao chamar IA.", "error");
                     }
                 );
             };
@@ -877,7 +953,7 @@
                 try {
                     const { svg } = await modeler.saveSVG();
                     if (!svg) {
-                        alert("Não foi possível gerar a imagem.");
+                        toast.showToast("Não foi possível gerar a imagem.", "error");
                         return;
                     }
 
@@ -888,7 +964,7 @@
                     canvas.height = Math.ceil(height * scale);
                     const ctx = canvas.getContext("2d");
                     if (!ctx) {
-                        alert("Seu navegador não suporta exportação de imagem.");
+                        toast.showToast("Seu navegador não suporta exportação de imagem.", "error");
                         return;
                     }
 
@@ -903,7 +979,7 @@
                         ctx.drawImage(img, 0, 0);
                         canvas.toBlob((blob) => {
                             if (!blob) {
-                                alert("Falha ao gerar a imagem.");
+                                toast.showToast("Falha ao gerar a imagem.", "error");
                                 URL.revokeObjectURL(url);
                                 return;
                             }
@@ -912,13 +988,13 @@
                         }, "image/png");
                     };
                     img.onerror = () => {
-                        alert("Falha ao carregar o diagrama.");
+                        toast.showToast("Falha ao carregar o diagrama.", "error");
                         URL.revokeObjectURL(url);
                     };
                     img.src = url;
                 } catch (err) {
                     console.error(err);
-                    alert("Erro ao exportar imagem.");
+                    toast.showToast("Erro ao exportar imagem.", "error");
                 }
             };
 
@@ -928,13 +1004,13 @@
                 try {
                     const { svg } = await modeler.saveSVG();
                     if (!svg) {
-                        alert("Não foi possível gerar o PDF.");
+                        toast.showToast("Não foi possível gerar o PDF.", "error");
                         return;
                     }
 
                     const printWindow = window.open("", "_blank");
                     if (!printWindow) {
-                        alert("Permita pop-ups para exportar em PDF.");
+                        toast.showToast("Permita pop-ups para exportar em PDF.", "error");
                         return;
                     }
 
@@ -979,7 +1055,7 @@
                     }, 300);
                 } catch (err) {
                     console.error(err);
-                    alert("Erro ao exportar PDF.");
+                    toast.showToast("Erro ao exportar PDF.", "error");
                 }
             };
 
