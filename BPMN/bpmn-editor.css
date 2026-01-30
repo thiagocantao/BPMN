@@ -198,7 +198,7 @@ body {
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease, color .15s ease;
     font-weight: 600 !important;
-    font-size:16px !important;
+    font-size: 16px !important;
 }
 
     .icon-button:hover {
@@ -509,10 +509,10 @@ body {
 }
 
     .canvas-shortcuts h4 {
-        margin: 0 0 8px 0;
-        font-size: 13px;
+        margin: 0 0 12px 0;
+        font-size: 14px;
         color: #1f2a37;
-        font-weight: 600;
+        font-weight: 400;
     }
 
     .canvas-shortcuts ul {
@@ -521,7 +521,7 @@ body {
         list-style: none;
         display: grid;
         gap: 6px;
-        font-size: 12px;
+        font-size: 13px;
         color: #4b5563;
     }
 
@@ -534,24 +534,24 @@ body {
 
     .canvas-shortcuts span {
         font-family: "Source Sans Pro", "Roboto", sans-serif;
-        font-weight: 600;
+        font-weight: 400;
         color: #2f80ed;
         background: #eef4ff;
         border-radius: 6px;
         padding: 2px 6px;
-        font-size: 11px;
+        font-size: 13px;
     }
 
     .canvas-shortcuts strong {
-        font-weight: 600;
+        font-weight: 400;
         color: #1f2a37;
     }
 
-    .bpmn-canvas .djs-container {
-        border-radius: 14px;
-        background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
-        background-size: 24px 24px;
-    }
+.bpmn-canvas .djs-container {
+    border-radius: 14px;
+    background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
+    background-size: 24px 24px;
+}
 
 .svg {
     min-width: 100%;
