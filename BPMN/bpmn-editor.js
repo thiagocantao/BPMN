@@ -455,6 +455,247 @@
         };
     };
 
+    // ============================================================
+    //  PopupMenu ("...") como Sheet fixo à direita (mesma altura do canvas)
+    // ============================================================
+    const installPopupMenuAsRightSheet = (canvasEl) => {
+        if (!canvasEl) return () => { };
+
+        const root = document.documentElement;
+
+        const updateVars = () => {
+            try {
+                const rect = canvasEl.getBoundingClientRect();
+
+                // topo do canvas no viewport
+                const top = Math.max(0, rect.top);
+
+                // altura visível do canvas (em viewport)
+                // (se a página rolar, mantém a altura real do canvas)
+                const height = Math.max(220, rect.height);
+
+                root.style.setProperty("--bpmn-sheet-top", `${top}px`);
+                root.style.setProperty("--bpmn-sheet-height", `${height}px`);
+            } catch (e) { /* ignore */ }
+        };
+
+        // aplica classe e força "desarmar" left/top/transform inline do bpmn-js
+        const patchPopup = (popup) => {
+            if (!popup || popup.__sheetPatched) return;
+
+            popup.classList.add("bpmn-sheet-popup");
+
+            // neutraliza coordenadas inline (o CSS manda)
+            popup.style.left = "auto";
+            popup.style.right = "var(--bpmn-sheet-right-gap)";
+            popup.style.top = "var(--bpmn-sheet-top)";
+            popup.style.height = "var(--bpmn-sheet-height)";
+            popup.style.width = "var(--sidebar-width)";
+            popup.style.transform = "none";
+            popup.style.transformOrigin = "left top";
+
+            popup.__sheetPatched = true;
+        };
+
+        updateVars();
+
+        // Observa criação do popup
+        const obs = new MutationObserver(() => {
+            updateVars();
+            const popups = document.querySelectorAll(".djs-popup");
+            popups.forEach(patchPopup);
+        });
+
+        obs.observe(document.body, { childList: true, subtree: true });
+
+        // atualiza em resize/scroll (para manter top/height corretos)
+        const onResize = () => updateVars();
+        const onScroll = () => updateVars();
+
+        window.addEventListener("resize", onResize, { passive: true });
+        window.addEventListener("scroll", onScroll, { passive: true });
+
+        // patch imediato se já existir
+        try {
+            document.querySelectorAll(".djs-popup").forEach(patchPopup);
+        } catch { }
+
+        return () => {
+            try { obs.disconnect(); } catch { }
+            window.removeEventListener("resize", onResize);
+            window.removeEventListener("scroll", onScroll);
+        };
+    };
+
+
+    // ============================================================
+    //  PopupMenu position fix
+    //  Some layouts (sidebar + flex + scroll) can make the popup
+    //  (the "..." menu) open offset to the right. We align the popup
+    //  position to the last pointer event, relative to the canvas
+    //  container.
+    // ============================================================
+    const installPopupMenuPositionFix = (modeler, getCanvasEl) => {
+        if (!modeler || typeof modeler.get !== "function") return () => { };
+
+        const popupMenu = modeler.get("popupMenu");
+        if (!popupMenu || typeof popupMenu.open !== "function") return () => { };
+
+        let lastPointer = null;
+
+        const capturePointer = (ev) => {
+            // store coordinates for the next popup open
+            lastPointer = {
+                clientX: ev.clientX,
+                clientY: ev.clientY
+            };
+        };
+
+        // capture early so we get coords before bpmn-js handlers run
+        document.addEventListener("pointerdown", capturePointer, true);
+        document.addEventListener("mousedown", capturePointer, true);
+        // Observe popup DOM creation to force-position near the click (covers context-pad + palette)
+        let popupObserver = null;
+
+        const repositionPopupEl = (popupEl) => {
+            if (!popupEl || !lastPointer) return;
+            const parent = popupEl.offsetParent || popupEl.parentElement || document.body;
+            const prect = parent.getBoundingClientRect ? parent.getBoundingClientRect() : { left: 0, top: 0 };
+
+            const px = safeNumber(lastPointer.clientX);
+            const py = safeNumber(lastPointer.clientY);
+
+            // Position relative to the offsetParent (same coordinate space as left/top CSS)
+            const x = px - safeNumber(prect.left) + safeNumber(parent.scrollLeft);
+            const y = py - safeNumber(prect.top) + safeNumber(parent.scrollTop);
+
+            popupEl.style.left = `${x}px`;
+            popupEl.style.top = `${y}px`;
+        };
+
+        const tryRepositionLatestPopup = () => {
+            const popupEl = document.querySelector(".djs-popup");
+            if (popupEl) repositionPopupEl(popupEl);
+        };
+
+        try {
+            popupObserver = new MutationObserver((mutations) => {
+                for (const m of mutations) {
+                    for (const n of (m.addedNodes || [])) {
+                        if (!n || n.nodeType !== 1) continue;
+                        if (n.classList && n.classList.contains("djs-popup")) {
+                            repositionPopupEl(n);
+                        } else {
+                            const found = n.querySelector ? n.querySelector(".djs-popup") : null;
+                            if (found) repositionPopupEl(found);
+                        }
+                    }
+                }
+            });
+            popupObserver.observe(document.body, { childList: true, subtree: true });
+        } catch (e) { /* ignore */ }
+
+
+        const originalOpen = popupMenu.open.bind(popupMenu);
+
+        popupMenu.open = function (...args) {
+            try {
+                if (lastPointer) {
+                    const canvasEl = (typeof getCanvasEl === "function") ? getCanvasEl() : null;
+                    // Prefer the popup host container used by bpmn-js, fallback to canvas.
+                    // This avoids applying the wrong offset (which often happens on context-pad popups).
+                    const hostEl = popupMenu._container || canvasEl || document.body;
+
+                    if (hostEl && typeof hostEl.getBoundingClientRect === "function") {
+                        const rect = hostEl.getBoundingClientRect();
+
+                        // If the popup host is BODY/HTML, bpmn-js expects *page* coordinates.
+                        // If the popup host is an inner container, it expects coordinates relative to that container.
+                        const isDocHost = (hostEl === document.body || hostEl === document.documentElement);
+                        const fixedPos = isDocHost
+                            ? {
+                                x: Math.max(0, (lastPointer.pageX ?? (lastPointer.clientX + window.scrollX))),
+                                y: Math.max(0, (lastPointer.pageY ?? (lastPointer.clientY + window.scrollY)))
+                            }
+                            : {
+                                x: Math.max(0, lastPointer.clientX - rect.left),
+                                y: Math.max(0, lastPointer.clientY - rect.top)
+                            };
+
+                        const posIndex = args.findIndex(a => a && typeof a === "object" && "x" in a && "y" in a);
+                        if (posIndex >= 0) {
+                            args[posIndex] = fixedPos;
+                        } else {
+                            // some open() variants pass a single options object with "position"
+                            const optIndex = args.findIndex(a => a && typeof a === "object" && "position" in a && a.position && typeof a.position === "object");
+                            if (optIndex >= 0) {
+                                args[optIndex] = { ...args[optIndex], position: fixedPos };
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                // never break popup menu due to fix
+                try { console.warn("[bpmn-editor] popup position fix failed", e); } catch { }
+            }
+
+            return originalOpen(...args);
+        };
+
+        return () => {
+            try { document.removeEventListener("pointerdown", capturePointer, true); } catch { }
+            try {
+                document.removeEventListener("mousedown", capturePointer, true);
+                try { if (popupObserver) popupObserver.disconnect(); } catch (e) { /* ignore */ }
+            } catch { }
+            try { popupMenu.open = originalOpen; } catch { }
+        };
+    };
+
+
+    // ============================================================
+    // Popup "..." como Sheet à direita: ajusta variáveis CSS de topo/altura
+    // ============================================================
+    const installPopupAsRightSheet = () => {
+        const updateVars = () => {
+            try {
+                // tenta usar sua topbar (ajuste o seletor se necessário)
+                const topbar =
+                    document.querySelector(".topbar") ||
+                    document.querySelector(".bpmn-topbar") ||
+                    document.querySelector("header");
+
+                const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
+
+                // margem superior: encosta abaixo da topbar com um respiro
+                const top = Math.max(12, Math.round(topbarBottom + 12));
+
+                // margem inferior
+                const bottom = 16;
+
+                document.documentElement.style.setProperty("--bpmn-sheet-top", `${top}px`);
+                document.documentElement.style.setProperty("--bpmn-sheet-bottom", `${bottom}px`);
+            } catch { /* ignore */ }
+        };
+
+        // atualiza já e em eventos comuns
+        updateVars();
+        window.addEventListener("resize", updateVars, { passive: true });
+        window.addEventListener("scroll", updateVars, { passive: true });
+
+        // se o DOM mudar (popup abre/fecha, topbar muda), recalcula
+        const obs = new MutationObserver(() => updateVars());
+        obs.observe(document.body, { childList: true, subtree: true });
+
+        return () => {
+            try { window.removeEventListener("resize", updateVars); } catch { }
+            try { window.removeEventListener("scroll", updateVars); } catch { }
+            try { obs.disconnect(); } catch { }
+        };
+    };
+
+
+
     createApp({
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
@@ -1149,25 +1390,86 @@
                 if (!aiEnabled.value) {
                     sidebarMode.value = "edit";
                 }
-                const createAppendAnythingModule =
-                    window.BpmnJSCreateAppendAnything ||
-                    window.bpmnJSCreateAppendAnything ||
-                    window.createAppendAnything ||
-                    window.createAppendAnythingModule ||
-                    null;
-                if (!createAppendAnythingModule) {
-                    console.warn("[bpmn-editor] bpmn-js-create-append-anything não carregado; a opção de criação pode ficar indisponível.");
+                // ------------------------------------------------------------
+                // Criação do BPMN Modeler
+                //
+                // Cenários suportados:
+                //  1) Bundle local (npm/esbuild): expõe window.createBpmnModeler()
+                //     -> inclui bpmn-js + bpmn-js-create-append-anything no mesmo arquivo.
+                //  2) CDN (fallback): expõe window.BpmnJS / window.BpmnJS.Modeler e (opcionalmente)
+                //     window.BpmnJSCreateAppendAnything (UMD)
+                // ------------------------------------------------------------
+
+                const canUseBundleFactory = (typeof window.createBpmnModeler === "function");
+
+                // Fallback CDN (caso você ainda esteja usando bpmn-modeler.production.min.js)
+                const BpmnModelerCdn =
+                    (window.BpmnJS && window.BpmnJS.Modeler) ? window.BpmnJS.Modeler
+                        : window.BpmnJS;
+
+                if (!canUseBundleFactory && !BpmnModelerCdn) {
+                    console.error("[bpmn-editor] BPMN Modeler não carregou. Verifique se /Bpmn/bpmn-bundle.js está sendo carregado (ou o CDN bpmn-modeler.production.min.js).");
+                    toast.showToast("Falha ao carregar BPMN Modeler.", "error");
+                    return;
                 }
 
-                const modeler = new BpmnJS({
-                    container: bpmnCanvasRef.value,
-                    keyboard: { bindTo: window },
-                    additionalModules: [
-                        customTranslateModule,
-                        ...(createAppendAnythingModule ? [createAppendAnythingModule] : [])
-                    ]
-                });
+                let modeler = null;
+
+                if (canUseBundleFactory) {
+                    // Bundle: o próprio factory já injeta CreateAppendAnythingModule
+                    modeler = window.createBpmnModeler({
+                        container: bpmnCanvasRef.value,
+                        keyboard: { bindTo: window },
+                        additionalModules: [customTranslateModule]
+                    });
+                } else {
+                    // ------------------------------------------------------------
+                    // (Fallback) Resolve o módulo bpmn-js-create-append-anything via UMD (se existir)
+                    // ------------------------------------------------------------
+                    let createAppendAnythingModule =
+                        window.BpmnJSCreateAppendAnything ||
+                        window.bpmnJSCreateAppendAnything ||
+                        window.createAppendAnything ||
+                        window.createAppendAnythingModule ||
+                        null;
+
+                    if (createAppendAnythingModule && createAppendAnythingModule.default) {
+                        createAppendAnythingModule = createAppendAnythingModule.default;
+                    }
+
+                    if (!createAppendAnythingModule) {
+                        console.warn("[bpmn-editor] bpmn-js-create-append-anything não carregado; a opção '...' pode ficar indisponível.");
+                    }
+
+                    modeler = new BpmnModelerCdn({
+                        container: bpmnCanvasRef.value,
+                        keyboard: { bindTo: window },
+                        additionalModules: [
+                            customTranslateModule,
+                            ...(createAppendAnythingModule ? [createAppendAnythingModule] : [])
+                        ]
+                    });
+                }
+
                 modelerRef.value = modeler;
+
+                const __disposePopupSheet = installPopupMenuAsRightSheet(bpmnCanvasRef.value);
+
+                // Keep popup menu (\"...\") anchored where the user clicked
+                const __disposePopupPosFix = installPopupMenuPositionFix(modeler, () => bpmnCanvasRef.value);
+                window.__BPMN_DISPOSE_POPUP_POS_FIX__ = __disposePopupPosFix;
+                // Diagnóstico: confirme no console se os serviços necessários ao menu "..."
+                // estão disponíveis (popupMenu / bpmnReplace). Deixe apenas como log.
+                try {
+                    console.log("[bpmn-editor] services", {
+                        palette: !!modeler.get("palette"),
+                        contextPad: !!modeler.get("contextPad"),
+                        popupMenu: !!modeler.get("popupMenu"),
+                        bpmnReplace: !!modeler.get("bpmnReplace")
+                    });
+                } catch (e) {
+                    console.warn("[bpmn-editor] não foi possível ler services", e);
+                }
 
 
 
@@ -1222,6 +1524,10 @@
 
             onBeforeUnmount(() => {
                 document.removeEventListener("click", handleDocumentClick);
+                try { __disposePopupSheet && __disposePopupSheet(); } catch (e) { }
+
+                try { if (window.__BPMN_DISPOSE_POPUP_POS_FIX__) window.__BPMN_DISPOSE_POPUP_POS_FIX__(); } catch (e) { }
+                try { delete window.__BPMN_DISPOSE_POPUP_POS_FIX__; } catch (e) { }
             });
 
             return {
