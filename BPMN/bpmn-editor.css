@@ -1,1583 +1,1150 @@
-(() => {
-    // --- DEBUG: prova de carregamento do arquivo ---
-    // Se você NÃO enxergar essa linha no console, ESTE arquivo não está sendo executado.
-    // (Possíveis causas: cache, caminho incorreto, erro JS anterior impedindo execução, etc.)
-    try {
-        window.__BPMN_EDITOR_JS_LOADED__ = true;
-        console.log('[bpmn-editor] script carregado', new Date().toISOString());
-    } catch (e) { /* ignore */ }
+:root {
+    color-scheme: light;
+    --sidebar-width: 370px;
+}
 
-    const { createApp, ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } = Vue;
+body {
+    margin: 0;
+    font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+    background: #ecf0f5;
+    color: #1b1f2a;
+}
 
-    const uid = (prefix = "X") => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1e9)}`;
+*,
+*::before,
+*::after {
+    border-radius: 0 !important;
+}
 
-    const createToastManager = () => {
-        let toastEl = null;
-        let messageEl = null;
-        let closeButton = null;
-        let overlayEl = null;
-        let hideTimer = null;
-        let currentType = "success";
+.page {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
-        const hideToast = () => {
-            if (hideTimer) {
-                clearTimeout(hideTimer);
-                hideTimer = null;
-            }
-            if (toastEl) toastEl.classList.remove("is-active");
-            if (overlayEl) overlayEl.classList.remove("is-active");
-        };
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    padding: 16px 18px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(31, 43, 55, 0.08);
+}
 
-        const ensureElements = () => {
-            if (toastEl) return;
+    .topbar .left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-            overlayEl = document.createElement("div");
-            overlayEl.className = "toast-overlay";
+.titlewrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 
-            toastEl = document.createElement("div");
-            toastEl.className = "toast-container";
+.title {
+    margin: 0;
+    font-size: 20px;
+}
 
-            messageEl = document.createElement("span");
-            messageEl.className = "toast-message";
+.subtitle {
+    margin: 0;
+    color: #6c7a89;
+    font-size: 12px;
+}
 
-            closeButton = document.createElement("button");
-            closeButton.type = "button";
-            closeButton.className = "toast-close";
-            closeButton.setAttribute("aria-label", "Fechar");
-            closeButton.innerHTML = "&times;";
-            closeButton.addEventListener("click", (event) => {
-                event.stopPropagation();
-                hideToast();
-            });
+.actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
 
-            toastEl.addEventListener("click", () => {
-                if (currentType !== "error") {
-                    hideToast();
-                }
-            });
+.divider {
+    width: 1px;
+    height: 26px;
+    background: #e5ebf2;
+    display: inline-block;
+}
 
-            toastEl.appendChild(messageEl);
-            toastEl.appendChild(closeButton);
-            document.body.appendChild(overlayEl);
-            document.body.appendChild(toastEl);
-        };
+.link {
+    color: #2f80ed;
+    text-decoration: none;
+    font-weight: 600;
+}
 
-        const showToast = (message, type = "success") => {
-            ensureElements();
-            currentType = type;
-            messageEl.textContent = message;
-            toastEl.classList.remove("toast--success", "toast--error");
-            toastEl.classList.add(`toast--${type}`);
-            toastEl.classList.add("is-active");
-            overlayEl.classList.add("is-active");
+    .link:hover {
+        text-decoration: underline;
+    }
 
-            if (hideTimer) {
-                clearTimeout(hideTimer);
-            }
+.card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(31, 43, 55, 0.08);
+    padding: 16px;
+}
 
-            if (type !== "error") {
-                hideTimer = setTimeout(hideToast, 2000);
-            } else {
-                hideTimer = null;
-            }
-        };
+.btn {
+    border: none;
+    padding: 0 18px;
+    padding-right: 44px;
+    font-size: 16px;
+    height: 50px;
+    font-family: "Source Sans Pro", "Segoe UI", Tahoma, sans-serif;
+    cursor: pointer;
+    font-weight: 400;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 150px;
+    position: relative;
+}
 
-        return { showToast, hideToast };
-    };
+    .btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+    }
 
-    const toast = createToastManager();
+.btn--primary {
+    background: #7d8e38;
+    color: #fff;
+}
 
-    const DEFAULT_SIZES = {
-        startEvent: { w: 36, h: 36, name: "Início" },
-        endEvent: { w: 36, h: 36, name: "Fim" },
-        intermediateThrowEvent: { w: 36, h: 36, name: "Evento intermediário" },
-        intermediateCatchEvent: { w: 36, h: 36, name: "Evento intermediário" },
-        boundaryEvent: { w: 36, h: 36, name: "Evento de borda" },
-        task: { w: 160, h: 70, name: "Tarefa" },
-        userTask: { w: 160, h: 70, name: "Tarefa do usuário" },
-        serviceTask: { w: 160, h: 70, name: "Tarefa de serviço" },
-        scriptTask: { w: 160, h: 70, name: "Tarefa de script" },
-        businessRuleTask: { w: 160, h: 70, name: "Regra de negócio" },
-        manualTask: { w: 160, h: 70, name: "Tarefa manual" },
-        sendTask: { w: 160, h: 70, name: "Enviar" },
-        receiveTask: { w: 160, h: 70, name: "Receber" },
-        callActivity: { w: 180, h: 90, name: "Chamada" },
-        subProcess: { w: 200, h: 110, name: "Subprocesso" },
-        transaction: { w: 200, h: 110, name: "Transação" },
-        eventSubProcess: { w: 200, h: 110, name: "Subprocesso de evento" },
-        adHocSubProcess: { w: 200, h: 110, name: "Subprocesso ad hoc" },
-        exclusiveGateway: { w: 56, h: 56, name: "Decisão" },
-        inclusiveGateway: { w: 56, h: 56, name: "Gateway inclusivo" },
-        parallelGateway: { w: 56, h: 56, name: "Gateway paralelo" },
-        eventBasedGateway: { w: 56, h: 56, name: "Gateway baseado em evento" },
-        complexGateway: { w: 56, h: 56, name: "Gateway complexo" },
-        dataObjectReference: { w: 36, h: 50, name: "Objeto de dados" },
-        dataStoreReference: { w: 50, h: 50, name: "Repositório de dados" },
-        dataInput: { w: 36, h: 50, name: "Entrada de dados" },
-        dataOutput: { w: 36, h: 50, name: "Saída de dados" },
-        textAnnotation: { w: 120, h: 60, name: "" },
-        group: { w: 240, h: 160, name: "" },
-        participant: { w: 600, h: 250, name: "Participante" },
-        lane: { w: 600, h: 120, name: "Raia" }
-    };
+    .btn--primary:hover {
+        background: #9CBB20;
+    }
 
-    const TYPE_TO_BPMN = {
-        startEvent: "bpmn:StartEvent",
-        endEvent: "bpmn:EndEvent",
-        intermediateThrowEvent: "bpmn:IntermediateThrowEvent",
-        intermediateCatchEvent: "bpmn:IntermediateCatchEvent",
-        boundaryEvent: "bpmn:BoundaryEvent",
-        task: "bpmn:Task",
-        userTask: "bpmn:UserTask",
-        serviceTask: "bpmn:ServiceTask",
-        scriptTask: "bpmn:ScriptTask",
-        businessRuleTask: "bpmn:BusinessRuleTask",
-        manualTask: "bpmn:ManualTask",
-        sendTask: "bpmn:SendTask",
-        receiveTask: "bpmn:ReceiveTask",
-        callActivity: "bpmn:CallActivity",
-        subProcess: "bpmn:SubProcess",
-        transaction: "bpmn:Transaction",
-        eventSubProcess: "bpmn:SubProcess",
-        adHocSubProcess: "bpmn:AdHocSubProcess",
-        exclusiveGateway: "bpmn:ExclusiveGateway",
-        inclusiveGateway: "bpmn:InclusiveGateway",
-        parallelGateway: "bpmn:ParallelGateway",
-        eventBasedGateway: "bpmn:EventBasedGateway",
-        complexGateway: "bpmn:ComplexGateway",
-        dataObjectReference: "bpmn:DataObjectReference",
-        dataStoreReference: "bpmn:DataStoreReference",
-        dataInput: "bpmn:DataInput",
-        dataOutput: "bpmn:DataOutput",
-        textAnnotation: "bpmn:TextAnnotation",
-        group: "bpmn:Group",
-        participant: "bpmn:Participant",
-        lane: "bpmn:Lane"
-    };
+.btn--ghost {
+    background: #e1e1e1;
+    color: #555555;
+}
 
-    const EMPTY_BPMN_XML = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="false" />
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1" />
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`;
+    .btn--ghost:hover {
+        background: #cccccc;
+    }
 
-    const ensureAttrs = (businessObject) => {
-        if (!businessObject.$attrs) {
-            businessObject.$attrs = {};
+.btn--danger {
+    background: #ffeded;
+    color: #b40000;
+}
+
+    .btn--danger:hover {
+        background: #ffd8d8;
+    }
+
+.btn.active {
+    outline: 2px solid rgba(47,128,237,.35);
+}
+
+.btn__icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.table {
+    display: grid;
+    gap: 8px;
+}
+
+.tr {
+    display: grid;
+    grid-template-columns: 90px 1fr 220px 220px;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 10px;
+    border-radius: 12px;
+    background: #f5f7fa;
+}
+
+    .tr.th {
+        background: transparent;
+        font-size: 12px;
+        color: #5a6b7b;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-weight: 400;
+    }
+
+.row-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    max-width: 106px;
+}
+
+.icon-button {
+    border: 1px solid #555555;
+    background: #fff;
+    color: #555555;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+}
+
+    .icon-button:hover {
+        background: #eef2f7;
+        border-color: #cdd7e5;
+    }
+
+.icon-button--danger {
+    color: #b40000;
+    background: #ffeded;
+    border-color: #ffd8d8;
+}
+
+    .icon-button--danger:hover {
+        background: #ffd8d8;
+        border-color: #f5bcbc;
+    }
+
+.muted {
+    color: #6c7a89;
+}
+
+.toast-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 9998;
+}
+
+    .toast-overlay.is-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+.toast-container {
+    position: fixed;
+    right: 50px;
+    bottom: 70px;
+    color: #ffffff;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    padding: 0 25px 0 30px;
+    min-height: 60px;
+    min-width: 350px;
+    box-shadow: 5px 5px 10px 0 rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 9999;
+}
+
+    .toast-container.is-active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast-container.toast--success {
+        background: #83C783;
+    }
+
+    .toast-container.toast--error {
+        background: #E57373;
+    }
+
+.toast-message {
+    font-size: 16px;
+    line-height: 1.4;
+    padding-right: 24px;
+}
+
+.toast-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+}
+
+.toast-container.toast--error .toast-close {
+    display: block;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    gap: 16px;
+    min-height: calc(100vh - 140px);
+}
+
+.layout--with-sheet {
+    grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+    .info-sheet-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+.info-sheet-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.info-sheet-actions--bottom {
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+.info-sheet-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1b1f2a;
+    background: #f5f7fa;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 4px;
+    border: 1px solid #d4dbe6;
+    background: #f1f4f9;
+    width: fit-content;
+}
+
+    .sidebar-toggle button {
+        border: none;
+        background: transparent;
+        padding: 6px 14px;
+        padding-right: 32px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 400;
+        color: #6c7a89;
+        cursor: pointer;
+        transition: all .15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        position: relative;
+    }
+
+    .sidebar-toggle .btn__icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .sidebar-toggle button.active {
+        background: #ffffff;
+        color: #2f80ed;
+        box-shadow: 0 6px 14px rgba(31, 43, 55, 0.12);
+    }
+
+.sidebar-edit {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-ai {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.sidebar-ai-spacer {
+    flex: 1;
+}
+
+.sidebar-ai-input {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-top: auto;
+}
+
+    .sidebar-ai-input .input {
+        flex: 1;
+        min-height: 40px;
+        max-height: 300px;
+        resize: none;
+        overflow-y: hidden;
+        line-height: 1.4;
+    }
+
+.ai-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    backdrop-filter: blur(2px);
+}
+
+.ai-modal-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    min-width: 260px;
+    text-align: center;
+}
+
+.ai-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1b1f2a;
+}
+
+.sidebar h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pill {
+    border: 1px solid #d9e1eb;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+    .pill:hover {
+        background: #f2f6fc;
+    }
+
+.palette-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.palette-shape {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #6c7a89;
+    background: #fff;
+    flex: 0 0 auto;
+}
+
+.palette-shape--start,
+.palette-shape--end {
+    border-radius: 50%;
+}
+
+.palette-shape--end {
+    border-width: 3px;
+}
+
+.palette-shape--task {
+    width: 22px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+.palette-shape--gateway {
+    width: 16px;
+    height: 16px;
+    transform: rotate(45deg);
+    margin: 1px 3px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+    .field span {
+        font-size: 12px;
+        color: #5a6b7b;
+        font-weight: 400;
+    }
+
+.input {
+    border: 1px solid #d9e1eb;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.toolbar {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hint {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #5a6b7b;
+    line-height: 1.4;
+    background: #f7faff;
+    border: 1px solid #e3ecff;
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.canvas {
+    padding: 0;
+    overflow: visible;
+    height: calc(100vh - 140px);
+    position: relative;
+}
+
+.bpmn-canvas {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+}
+
+    .bpmn-canvas,
+    .bpmn-canvas .djs-container {
+        overflow: visible;
+    }
+
+        .bpmn-canvas .djs-popup {
+            z-index: 8;
         }
-        return businessObject.$attrs;
-    };
-
-    const translations = {
-        "Align elements": "Alinhar elementos",
-        "Activate hand tool": "Ativar a ferramenta de mão",
-        "Activate lasso tool": "Ativar a ferramenta de laço",
-        "Activate create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
-        "Activate global connect tool": "Ativar a ferramenta de conexão global",
-        "Create intermediate/boundary event": "Criar evento intermediário/de borda",
-        "Create gateway": "Criar gateway",
-        "Create expanded sub-process": "Criar subprocesso expandido",
-        "Connect to other element": "Conectar a outro elemento",
-        "Change element": "Alterar elemento",
-        "Add text annotation": "Adicionar anotação",
-        "Append {type}": "Adicionar {type}",
-        "Append End Event": "Adicionar evento de fim",
-        "Append Gateway": "Adicionar gateway",
-        "Append Task": "Adicionar tarefa",
-        "Connect": "Conectar",
-        "Remove": "Remover",
-        "Delete": "Excluir",
-        "Cancel": "Cancelar",
-        "Cancel Action": "Cancelar ação",
-        "Undo": "Desfazer",
-        "Redo": "Refazer",
-        "Copy": "Copiar",
-        "Paste": "Colar",
-        "Create Shape": "Criar forma",
-        "Create": "Criar",
-        "Create Task": "Criar tarefa",
-        "Create Start Event": "Criar evento de início",
-        "Create End Event": "Criar evento de fim",
-        "Create Intermediate Throw Event": "Criar evento intermediário (lançamento)",
-        "Create Intermediate Catch Event": "Criar evento intermediário (captura)",
-        "Create Boundary Event": "Criar evento de borda",
-        "Create User Task": "Criar tarefa do usuário",
-        "Create Service Task": "Criar tarefa de serviço",
-        "Create Script Task": "Criar tarefa de script",
-        "Create Business Rule Task": "Criar tarefa de regra de negócio",
-        "Create Manual Task": "Criar tarefa manual",
-        "Create Send Task": "Criar tarefa de envio",
-        "Create Receive Task": "Criar tarefa de recebimento",
-        "Create Call Activity": "Criar atividade de chamada",
-        "Create Sub Process": "Criar subprocesso",
-        "Create Expanded Sub Process": "Criar subprocesso expandido",
-        "Create Collapsed Sub Process": "Criar subprocesso recolhido",
-        "Create Transaction": "Criar transação",
-        "Create Event Sub Process": "Criar subprocesso de evento",
-        "Create Ad-hoc Sub Process": "Criar subprocesso ad hoc",
-        "Create Exclusive Gateway": "Criar gateway exclusivo",
-        "Create Inclusive Gateway": "Criar gateway inclusivo",
-        "Create Parallel Gateway": "Criar gateway paralelo",
-        "Create Event based Gateway": "Criar gateway baseado em evento",
-        "Create Complex Gateway": "Criar gateway complexo",
-        "Create Data Object Reference": "Criar objeto de dados",
-        "Create Data Store Reference": "Criar repositório de dados",
-        "Create Data Input": "Criar entrada de dados",
-        "Create Data Output": "Criar saída de dados",
-        "Create Text Annotation": "Criar anotação de texto",
-        "Create Group": "Criar grupo",
-        "Create Participant": "Criar participante",
-        "Create Pool/Participant": "Criar pool/participante",
-        "Create Lane": "Criar raia",
-        "Create Collaboration": "Criar colaboração",
-        "Create Data Object": "Criar objeto de dados",
-        "Start Event": "Evento de início",
-        "End Event": "Evento de fim",
-        "Intermediate Throw Event": "Evento intermediário (lançamento)",
-        "Intermediate Catch Event": "Evento intermediário (captura)",
-        "Boundary Event": "Evento de borda",
-        "Task": "Tarefa",
-        "User Task": "Tarefa do usuário",
-        "Service Task": "Tarefa de serviço",
-        "Script Task": "Tarefa de script",
-        "Business Rule Task": "Tarefa de regra de negócio",
-        "Manual Task": "Tarefa manual",
-        "Send Task": "Tarefa de envio",
-        "Receive Task": "Tarefa de recebimento",
-        "Call Activity": "Atividade de chamada",
-        "Sub Process": "Subprocesso",
-        "Expanded Sub Process": "Subprocesso expandido",
-        "Collapsed Sub Process": "Subprocesso recolhido",
-        "Transaction": "Transação",
-        "Event Sub Process": "Subprocesso de evento",
-        "Ad-hoc Sub Process": "Subprocesso ad hoc",
-        "Exclusive Gateway": "Gateway exclusivo",
-        "Inclusive Gateway": "Gateway inclusivo",
-        "Parallel Gateway": "Gateway paralelo",
-        "Event based Gateway": "Gateway baseado em evento",
-        "Complex Gateway": "Gateway complexo",
-        "Data Object Reference": "Objeto de dados",
-        "Data Store Reference": "Repositório de dados",
-        "Data Input": "Entrada de dados",
-        "Data Output": "Saída de dados",
-        "Text Annotation": "Anotação de texto",
-        "Group": "Grupo",
-        "Participant": "Participante",
-        "Lane": "Raia",
-        "Start Event (None)": "Evento de início (nenhum)",
-        "Intermediate Throw Event (None)": "Evento intermediário (nenhum)",
-        "Intermediate Catch Event (None)": "Evento intermediário (nenhum)",
-        "End Event (None)": "Evento de fim (nenhum)",
-        "Activate the hand tool": "Ativar a ferramenta de mão",
-        "Activate the lasso tool": "Ativar a ferramenta de laço",
-        "Activate the global connect tool": "Ativar a ferramenta de conexão global",
-        "Activate the space tool": "Ativar a ferramenta de espaço",
-        "Activate the selection tool": "Ativar a ferramenta de seleção",
-        "Activate the create/remove space tool": "Ativar a ferramenta de criar/remover espaço",
-        "Create/Remove Space": "Criar/remover espaço",
-        "Hand Tool": "Ferramenta de mão",
-        "Lasso Tool": "Ferramenta de laço",
-        "Space Tool": "Ferramenta de espaço",
-        "Global Connect Tool": "Ferramenta de conexão global",
-        "Activate the hand tool (H)": "Ativar a ferramenta de mão (H)",
-        "Activate the lasso tool (L)": "Ativar a ferramenta de laço (L)",
-        "Activate the global connect tool (C)": "Ativar a ferramenta de conexão global (C)",
-        "Activate the create/remove space tool (S)": "Ativar a ferramenta de criar/remover espaço (S)",
-        "Activate the space tool (S)": "Ativar a ferramenta de espaço (S)",
-        "Activate the selection tool (S)": "Ativar a ferramenta de seleção (S)",
-        "Press space to toggle selection": "Pressione espaço para alternar seleção",
-        "Press space to toggle hand tool": "Pressione espaço para alternar ferramenta de mão",
-        "Press space to toggle lasso tool": "Pressione espaço para alternar ferramenta de laço",
-        "Press space to toggle create/remove space tool": "Pressione espaço para alternar criar/remover espaço",
-        "Zoom In": "Aumentar zoom",
-        "Zoom Out": "Diminuir zoom",
-        "Zoom": "Zoom",
-        "Fit viewport": "Ajustar à tela",
-        "Reset zoom": "Redefinir zoom",
-        "Event": "Evento",
-        "Gateway": "Gateway",
-        "General": "Geral",
-        "Activities": "Atividades",
-        "Events": "Eventos",
-        "Gateways": "Gateways",
-        "Data Objects": "Objetos de dados"
-    };
-
-    const typeTranslations = {
-        Event: "Evento",
-        Task: "Tarefa",
-        Gateway: "Gateway",
-        "Start Event": "Evento de início",
-        "End Event": "Evento de fim",
-        "Intermediate Throw Event": "Evento intermediário (lançamento)",
-        "Intermediate Catch Event": "Evento intermediário (captura)",
-        "Boundary Event": "Evento de borda",
-        "User Task": "Tarefa do usuário",
-        "Service Task": "Tarefa de serviço",
-        "Script Task": "Tarefa de script",
-        "Business Rule Task": "Tarefa de regra de negócio",
-        "Manual Task": "Tarefa manual",
-        "Send Task": "Tarefa de envio",
-        "Receive Task": "Tarefa de recebimento",
-        "Call Activity": "Atividade de chamada",
-        "Sub Process": "Subprocesso",
-        "Transaction": "Transação",
-        "Event Sub Process": "Subprocesso de evento",
-        "Ad-hoc Sub Process": "Subprocesso ad hoc",
-        "Exclusive Gateway": "Gateway exclusivo",
-        "Inclusive Gateway": "Gateway inclusivo",
-        "Parallel Gateway": "Gateway paralelo",
-        "Event based Gateway": "Gateway baseado em evento",
-        "Complex Gateway": "Gateway complexo"
-    };
-
-    const customTranslate = (template, replacements) => {
-        replacements = replacements || {};
-
-        const raw = String(template || "");
-
-        // tenta match exato
-        let translated = translations[raw];
-
-        // tenta variações comuns (bpmn-js 16+ mudou casing de várias labels)
-        if (!translated) {
-            const compact = raw.replace(/\s+/g, " ").trim();
-            translated = translations[compact] || translated;
-
-            if (!translated) {
-                const titleCase = compact.replace(/\b[a-z]/g, (m) => m.toUpperCase());
-                translated = translations[titleCase] || translated;
-            }
-
-            if (!translated) {
-                const lower = compact.toLowerCase();
-                translated = translations[lower] || translated;
-            }
-        }
-
-        // se não tiver no dicionário, devolve a original e loga (pra você completar o mapa)
-        if (!translated) {
-            const params = new URLSearchParams(window.location.search || "");
-            if (params.has("debugTranslate")) {
-                console.warn("[bpmn-i18n] missing:", raw);
-            }
-            translated = raw;
-        }
-
-        // replace {tokens}
-        return translated.replace(/{([^}]+)}/g, (_, key) => {
-            return (replacements[key] !== undefined) ? replacements[key] : `{${key}}`;
-        });
-    };
-
-
-    const customTranslateModule = {
-        translate: ["value", customTranslate]
-    };
-
-    // ============================================================
-    //  FORCE-TRANSLATE tooltips already rendered as DOM attributes
-    //  (some bpmn-js parts write english titles directly; translate()
-    //   won't retroactively change them)
-    // ============================================================
-    const installUiTooltipTranslator = (modeler) => {
-        if (!modeler || typeof modeler.get !== "function") return () => { };
-        const translate = modeler.get("translate");
-        if (typeof translate !== "function") return () => { };
-
-        const ATTRS = ["title", "aria-label", "data-title", "data-tooltip"];
-        const SELECTOR =
-            ".djs-palette, .djs-context-pad, .djs-popup, .bjs-powered-by, .djs-overlay-container";
-
-        const translateOneAttr = (el, attr) => {
-            if (!el || !el.getAttribute) return;
-            const raw = el.getAttribute(attr);
-            if (!raw) return;
-
-            const translated = translate(raw);
-
-            if (translated && translated !== raw) {
-                el.setAttribute(attr, translated);
-            }
-            else {
-                // If debugTranslate=1, log keys that are still missing
-                try {
-                    const params = new URLSearchParams(window.location.search || "");
-                    if (params.has("debugTranslate")) {
-                        window.__BPMN_I18N_MISSING__ = window.__BPMN_I18N_MISSING__ || {};
-                        if (!window.__BPMN_I18N_MISSING__[raw]) {
-                            window.__BPMN_I18N_MISSING__[raw] = true;
-                            console.debug("[bpmn-i18n] missing:", raw);
-                        }
-                    }
-                } catch { /* ignore */ }
-            }
-        };
-
-        const patchDomTooltips = () => {
-            const rootNodes = document.querySelectorAll(SELECTOR);
-            rootNodes.forEach((root) => {
-                ATTRS.forEach((a) => translateOneAttr(root, a));
-
-                const nodes = root.querySelectorAll(
-                    ATTRS.map(a => `[${a}]`).join(",")
-                );
-                nodes.forEach((el) => {
-                    ATTRS.forEach((a) => translateOneAttr(el, a));
-                });
-            });
-        };
-
-        // Patch now + after next paint (some tooltips appear after render)
-        try { patchDomTooltips(); } catch { }
-        requestAnimationFrame(() => { try { patchDomTooltips(); } catch { } });
-
-        // Keep patching on UI changes
-        const obs = new MutationObserver(() => {
-            try { patchDomTooltips(); } catch { }
-        });
-
-        obs.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ATTRS
-        });
-
-        return () => {
-            try { obs.disconnect(); } catch { }
-        };
-    };
-
-    // ============================================================
-    //  PopupMenu ("...") como Sheet fixo à direita (mesma altura do canvas)
-    // ============================================================
-    const installPopupMenuAsRightSheet = (canvasEl) => {
-        if (!canvasEl) return () => { };
-
-        const root = document.documentElement;
-
-        const updateVars = () => {
-            try {
-                const rect = canvasEl.getBoundingClientRect();
-
-                // topo do canvas no viewport
-                const top = Math.max(0, rect.top);
-
-                // altura visível do canvas (em viewport)
-                // (se a página rolar, mantém a altura real do canvas)
-                const height = Math.max(220, rect.height);
-
-                root.style.setProperty("--bpmn-sheet-top", `${top}px`);
-                root.style.setProperty("--bpmn-sheet-height", `${height}px`);
-            } catch (e) { /* ignore */ }
-        };
-
-        // aplica classe e força "desarmar" left/top/transform inline do bpmn-js
-        const patchPopup = (popup) => {
-            if (!popup || popup.__sheetPatched) return;
-
-            popup.classList.add("bpmn-sheet-popup");
-
-            // neutraliza coordenadas inline (o CSS manda)
-            popup.style.left = "auto";
-            popup.style.right = "var(--bpmn-sheet-right-gap)";
-            popup.style.top = "var(--bpmn-sheet-top)";
-            popup.style.height = "var(--bpmn-sheet-height)";
-            popup.style.width = "var(--sidebar-width)";
-            popup.style.transform = "none";
-            popup.style.transformOrigin = "left top";
-
-            popup.__sheetPatched = true;
-        };
-
-        updateVars();
-
-        // Observa criação do popup
-        const obs = new MutationObserver(() => {
-            updateVars();
-            const popups = document.querySelectorAll(".djs-popup");
-            popups.forEach(patchPopup);
-        });
-
-        obs.observe(document.body, { childList: true, subtree: true });
-
-        // atualiza em resize/scroll (para manter top/height corretos)
-        const onResize = () => updateVars();
-        const onScroll = () => updateVars();
-
-        window.addEventListener("resize", onResize, { passive: true });
-        window.addEventListener("scroll", onScroll, { passive: true });
-
-        // patch imediato se já existir
-        try {
-            document.querySelectorAll(".djs-popup").forEach(patchPopup);
-        } catch { }
-
-        return () => {
-            try { obs.disconnect(); } catch { }
-            window.removeEventListener("resize", onResize);
-            window.removeEventListener("scroll", onScroll);
-        };
-    };
-
-
-    // ============================================================
-    //  PopupMenu position fix
-    //  Some layouts (sidebar + flex + scroll) can make the popup
-    //  (the "..." menu) open offset to the right. We align the popup
-    //  position to the last pointer event, relative to the canvas
-    //  container.
-    // ============================================================
-    const installPopupMenuPositionFix = (modeler, getCanvasEl) => {
-        if (!modeler || typeof modeler.get !== "function") return () => { };
-
-        const popupMenu = modeler.get("popupMenu");
-        if (!popupMenu || typeof popupMenu.open !== "function") return () => { };
-
-        let lastPointer = null;
-
-        const capturePointer = (ev) => {
-            // store coordinates for the next popup open
-            lastPointer = {
-                clientX: ev.clientX,
-                clientY: ev.clientY
-            };
-        };
-
-        // capture early so we get coords before bpmn-js handlers run
-        document.addEventListener("pointerdown", capturePointer, true);
-        document.addEventListener("mousedown", capturePointer, true);
-        // Observe popup DOM creation to force-position near the click (covers context-pad + palette)
-        let popupObserver = null;
-
-        const repositionPopupEl = (popupEl) => {
-            if (!popupEl || !lastPointer) return;
-            const parent = popupEl.offsetParent || popupEl.parentElement || document.body;
-            const prect = parent.getBoundingClientRect ? parent.getBoundingClientRect() : { left: 0, top: 0 };
-
-            const px = safeNumber(lastPointer.clientX);
-            const py = safeNumber(lastPointer.clientY);
-
-            // Position relative to the offsetParent (same coordinate space as left/top CSS)
-            const x = px - safeNumber(prect.left) + safeNumber(parent.scrollLeft);
-            const y = py - safeNumber(prect.top) + safeNumber(parent.scrollTop);
-
-            popupEl.style.left = `${x}px`;
-            popupEl.style.top = `${y}px`;
-        };
-
-        const tryRepositionLatestPopup = () => {
-            const popupEl = document.querySelector(".djs-popup");
-            if (popupEl) repositionPopupEl(popupEl);
-        };
-
-        try {
-            popupObserver = new MutationObserver((mutations) => {
-                for (const m of mutations) {
-                    for (const n of (m.addedNodes || [])) {
-                        if (!n || n.nodeType !== 1) continue;
-                        if (n.classList && n.classList.contains("djs-popup")) {
-                            repositionPopupEl(n);
-                        } else {
-                            const found = n.querySelector ? n.querySelector(".djs-popup") : null;
-                            if (found) repositionPopupEl(found);
-                        }
-                    }
-                }
-            });
-            popupObserver.observe(document.body, { childList: true, subtree: true });
-        } catch (e) { /* ignore */ }
-
-
-        const originalOpen = popupMenu.open.bind(popupMenu);
-
-        popupMenu.open = function (...args) {
-            try {
-                if (lastPointer) {
-                    const canvasEl = (typeof getCanvasEl === "function") ? getCanvasEl() : null;
-                    // Prefer the popup host container used by bpmn-js, fallback to canvas.
-                    // This avoids applying the wrong offset (which often happens on context-pad popups).
-                    const hostEl = popupMenu._container || canvasEl || document.body;
-
-                    if (hostEl && typeof hostEl.getBoundingClientRect === "function") {
-                        const rect = hostEl.getBoundingClientRect();
-
-                        // If the popup host is BODY/HTML, bpmn-js expects *page* coordinates.
-                        // If the popup host is an inner container, it expects coordinates relative to that container.
-                        const isDocHost = (hostEl === document.body || hostEl === document.documentElement);
-                        const fixedPos = isDocHost
-                            ? {
-                                x: Math.max(0, (lastPointer.pageX ?? (lastPointer.clientX + window.scrollX))),
-                                y: Math.max(0, (lastPointer.pageY ?? (lastPointer.clientY + window.scrollY)))
-                            }
-                            : {
-                                x: Math.max(0, lastPointer.clientX - rect.left),
-                                y: Math.max(0, lastPointer.clientY - rect.top)
-                            };
-
-                        const posIndex = args.findIndex(a => a && typeof a === "object" && "x" in a && "y" in a);
-                        if (posIndex >= 0) {
-                            args[posIndex] = fixedPos;
-                        } else {
-                            // some open() variants pass a single options object with "position"
-                            const optIndex = args.findIndex(a => a && typeof a === "object" && "position" in a && a.position && typeof a.position === "object");
-                            if (optIndex >= 0) {
-                                args[optIndex] = { ...args[optIndex], position: fixedPos };
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                // never break popup menu due to fix
-                try { console.warn("[bpmn-editor] popup position fix failed", e); } catch { }
-            }
-
-            return originalOpen(...args);
-        };
-
-        return () => {
-            try { document.removeEventListener("pointerdown", capturePointer, true); } catch { }
-            try {
-                document.removeEventListener("mousedown", capturePointer, true);
-                try { if (popupObserver) popupObserver.disconnect(); } catch (e) { /* ignore */ }
-            } catch { }
-            try { popupMenu.open = originalOpen; } catch { }
-        };
-    };
-
-
-    // ============================================================
-    // Popup "..." como Sheet à direita: ajusta variáveis CSS de topo/altura
-    // ============================================================
-    const installPopupAsRightSheet = () => {
-        const updateVars = () => {
-            try {
-                // tenta usar sua topbar (ajuste o seletor se necessário)
-                const topbar =
-                    document.querySelector(".topbar") ||
-                    document.querySelector(".bpmn-topbar") ||
-                    document.querySelector("header");
-
-                const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
-
-                // margem superior: encosta abaixo da topbar com um respiro
-                const top = Math.max(12, Math.round(topbarBottom + 12));
-
-                // margem inferior
-                const bottom = 16;
-
-                document.documentElement.style.setProperty("--bpmn-sheet-top", `${top}px`);
-                document.documentElement.style.setProperty("--bpmn-sheet-bottom", `${bottom}px`);
-            } catch { /* ignore */ }
-        };
-
-        // atualiza já e em eventos comuns
-        updateVars();
-        window.addEventListener("resize", updateVars, { passive: true });
-        window.addEventListener("scroll", updateVars, { passive: true });
-
-        // se o DOM mudar (popup abre/fecha, topbar muda), recalcula
-        const obs = new MutationObserver(() => updateVars());
-        obs.observe(document.body, { childList: true, subtree: true });
-
-        return () => {
-            try { window.removeEventListener("resize", updateVars); } catch { }
-            try { window.removeEventListener("scroll", updateVars); } catch { }
-            try { obs.disconnect(); } catch { }
-        };
-    };
-
-
-
-    createApp({
-        setup() {
-            const modelId = window.__BPMN_MODEL_ID__ || 0;
-            const params = new URLSearchParams(window.location.search || "");
-            const modeParam = (params.get("mode") || "").toLowerCase();
-            const isReadOnly = ref(modeParam === "view" || modeParam === "readonly");
-            const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
-
-            const saving = ref(false);
-            const mode = ref("select");
-            const addType = ref(null);
-
-            const modelName = ref("");
-            const processDescription = ref("");
-            const sidebarMode = ref("edit");
-            const aiPrompt = ref("");
-            const aiPromptRef = ref(null);
-            const processDescriptionRef = ref(null);
-
-            const modelerRef = ref(null);
-            const bpmnCanvasRef = ref(null);
-            const showShortcuts = ref(false);
-            const shortcutsRef = ref(null);
-            const shortcutsButtonRef = ref(null);
-
-            const selectedId = ref(null);
-            const selectedIds = ref([]);
-            const selectedElement = ref(null);
-
-            const infoEditorRef = ref(null);
-            const infoPanelName = ref("");
-            const infoEditorDirty = ref(false);
-            const infoEditorOriginal = ref("");
-
-            const aiGenerating = ref(false);
-            const aiSteps = [
-                "Pensando...",
-                "Carregando informações...",
-                "Processando os dados...",
-                "Gerando o gráfico..."
-            ];
-            const aiStepIndex = ref(0);
-            const aiStepMessage = computed(() => aiSteps[aiStepIndex.value]);
-            const subtitleText = computed(() => (isReadOnly.value ? "Somente leitura" : "Arraste, conecte e salve"));
-            let aiStepTimer = null;
-
-            const resizeAiPrompt = () => {
-                const el = aiPromptRef.value;
-                if (!el) return;
-                const maxHeight = 300;
-                el.style.height = "auto";
-                const nextHeight = Math.min(el.scrollHeight, maxHeight);
-                el.style.height = `${nextHeight}px`;
-                el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
-            };
-
-            const infoEditor = reactive({
-                show: false,
-                elementId: null,
-                content: ""
-            });
-
-            const infoViewer = reactive({
-                show: false,
-                elementId: null,
-                content: ""
-            });
-
-            const canEditSelectedInfo = computed(() => {
-                const element = selectedElement.value;
-                return Boolean(element && !element.isRoot && !isReadOnly.value);
-            });
-
-            const getElementName = (element) => element?.businessObject?.name || "";
-
-            const openInfoEditor = (element) => {
-                if (isReadOnly.value) return;
-                if (!element) return;
-                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
-                    return;
-                }
-                selectedId.value = element.id;
-                infoViewer.show = false;
-                infoEditor.elementId = element.id;
-                infoEditor.content = element.businessObject?.$attrs?.infoHtml ?? "";
-                infoEditorOriginal.value = infoEditor.content;
-                infoEditorDirty.value = false;
-                infoPanelName.value = getElementName(element);
-                infoEditor.show = true;
-                nextTick(() => {
-                    if (infoEditorRef.value) {
-                        infoEditorRef.value.innerHTML = infoEditor.content;
-                        infoEditorRef.value.focus();
-                    }
-                });
-            };
-
-            const openInfoEditorFromSelection = () => {
-                if (!canEditSelectedInfo.value) return;
-                openInfoEditor(selectedElement.value);
-            };
-
-            const closeInfoEditor = () => {
-                infoEditor.show = false;
-                infoEditor.elementId = null;
-                infoEditor.content = "";
-                infoPanelName.value = "";
-                infoEditorDirty.value = false;
-                infoEditorOriginal.value = "";
-            };
-
-            const onEditorInput = () => {
-                if (isReadOnly.value) return;
-                infoEditor.content = infoEditorRef.value ? infoEditorRef.value.innerHTML : "";
-                infoEditorDirty.value = infoEditor.content !== infoEditorOriginal.value;
-            };
-
-            const formatInfoEditor = (command, value = null) => {
-                if (isReadOnly.value) return;
-                if (!infoEditorRef.value) return;
-                infoEditorRef.value.focus();
-                if (command === "createLink") {
-                    const url = window.prompt("Informe o link:");
-                    if (url) {
-                        document.execCommand(command, false, url);
-                    }
-                    return;
-                }
-                document.execCommand(command, false, value);
-            };
-
-            const toggleShortcuts = () => {
-                showShortcuts.value = !showShortcuts.value;
-            };
-
-            const closeShortcuts = () => {
-                showShortcuts.value = false;
-            };
-
-            const handleDocumentClick = (event) => {
-                if (!showShortcuts.value) return;
-                const target = event.target;
-                if (shortcutsRef.value && shortcutsRef.value.contains(target)) return;
-                if (shortcutsButtonRef.value && shortcutsButtonRef.value.contains(target)) return;
-                closeShortcuts();
-            };
-
-            const saveInfoEditor = () => {
-                if (isReadOnly.value) return;
-                const modeler = modelerRef.value;
-                if (!modeler || !infoEditor.elementId) return;
-                const elementRegistry = modeler.get("elementRegistry");
-                const element = elementRegistry.get(infoEditor.elementId);
-                if (!element) return;
-                const html = infoEditorRef.value ? infoEditorRef.value.innerHTML : infoEditor.content;
-                const attrs = ensureAttrs(element.businessObject);
-                attrs.infoHtml = html;
-                infoEditorDirty.value = false;
-                infoEditorOriginal.value = html;
-                closeInfoEditor();
-            };
-
-            const getProcessDefinition = (modeler) => {
-                if (!modeler) return null;
-                const definitions = modeler.getDefinitions ? modeler.getDefinitions() : null;
-                if (!definitions || !definitions.rootElements) return null;
-                return definitions.rootElements.find((element) => element.$type === "bpmn:Process") || null;
-            };
-
-            const setProcessDescriptionFromModeler = () => {
-                const modeler = modelerRef.value;
-                const process = getProcessDefinition(modeler);
-                const html = process?.$attrs?.processDescriptionHtml ?? "";
-                processDescription.value = html;
-                nextTick(() => {
-                    if (processDescriptionRef.value) {
-                        processDescriptionRef.value.innerHTML = html;
-                    }
-                });
-            };
-
-            const syncProcessDescriptionToModeler = () => {
-                const modeler = modelerRef.value;
-                const process = getProcessDefinition(modeler);
-                if (!process) return;
-                const html = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
-                const attrs = ensureAttrs(process);
-                attrs.processDescriptionHtml = html;
-                processDescription.value = html;
-            };
-
-            const onProcessDescriptionInput = () => {
-                if (isReadOnly.value) return;
-                syncProcessDescriptionToModeler();
-            };
-
-            const formatProcessDescription = (command, value = null) => {
-                if (isReadOnly.value) return;
-                if (!processDescriptionRef.value) return;
-                processDescriptionRef.value.focus();
-                if (command === "createLink") {
-                    const url = window.prompt("Informe o link:");
-                    if (url) {
-                        document.execCommand(command, false, url);
-                        syncProcessDescriptionToModeler();
-                    }
-                    return;
-                }
-                document.execCommand(command, false, value);
-                syncProcessDescriptionToModeler();
-            };
-
-            const openInfoViewer = (element) => {
-                if (!element) return;
-                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
-                    return;
-                }
-                selectedId.value = element.id;
-                infoEditor.show = false;
-                infoViewer.elementId = element.id;
-                infoViewer.content = element.businessObject?.$attrs?.infoHtml ?? "";
-                infoPanelName.value = getElementName(element);
-                infoViewer.show = true;
-            };
-
-            const openInfoViewerFromSelection = () => {
-                if (!canEditSelectedInfo.value) return;
-                openInfoViewer(selectedElement.value);
-            };
-
-            const closeInfoViewer = () => {
-                infoViewer.show = false;
-                infoViewer.elementId = null;
-                infoViewer.content = "";
-                infoPanelName.value = "";
-            };
-
-            const confirmDiscardInfo = () => window.confirm("Existem informações não salvas. Deseja sair sem salvar?");
-
-            const requestCloseInfoEditor = () => {
-                if (infoEditorDirty.value && !confirmDiscardInfo()) {
-                    return;
-                }
-                closeInfoEditor();
-            };
-
-            const handleBack = () => {
-                if (infoEditor.show && infoEditorDirty.value && !confirmDiscardInfo()) {
-                    return;
-                }
-                window.location.href = "/Bpmn/BpmnModels.aspx";
-            };
-
-            const getCurrentXml = async () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return EMPTY_BPMN_XML;
-                try {
-                    const result = await modeler.saveXML({ format: true });
-                    return result?.xml || EMPTY_BPMN_XML;
-                } catch (err) {
-                    console.error(err);
-                    return EMPTY_BPMN_XML;
-                }
-            };
-
-            const load = () => {
-                PageMethods.GetModel(
-                    modelId,
-                    (dto) => {
-                        modelName.value = dto.Name;
-
-                        const xml = dto.ModelXml || EMPTY_BPMN_XML;
-                        modelerRef.value.importXML(xml)
-                            .then(() => {
-                                modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                setProcessDescriptionFromModeler();
-                            })
-                            .catch((err) => {
-                                console.error(err);
-                                toast.showToast("XML inválido no banco. Carregando vazio.", "error");
-                                modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
-                                    modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                    setProcessDescriptionFromModeler();
-                                });
-                            });
-                    },
-                    (err) => {
-                        console.error(err);
-                        toast.showToast("Erro ao carregar modelo.", "error");
-                    }
-                );
-            };
-
-            const save = async () => {
-                if (isReadOnly.value) {
-                    toast.showToast("Modo somente leitura. Clique em editar para salvar alterações.", "error");
-                    return;
-                }
-                saving.value = true;
-                syncProcessDescriptionToModeler();
-                const xml = await getCurrentXml();
-
-                PageMethods.SaveModel(
-                    modelId,
-                    modelName.value || "Processo",
-                    xml,
-                    () => { saving.value = false; toast.showToast("Salvo com sucesso.", "success"); },
-                    (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao salvar.", "error"); }
-                );
-            };
-
-            const sendAiPrompt = async () => {
-                if (isReadOnly.value) return;
-                const prompt = (aiPrompt.value || "").trim();
-                if (!prompt) return;
-
-                aiGenerating.value = true;
-
-                const current = await getCurrentXml();
-
-                PageMethods.GenerateFromAi(
-                    prompt,
-                    current,
-                    (res) => {
-                        aiGenerating.value = false;
-
-                        const xml = res.ModelXml || "";
-                        if (!xml) {
-                            toast.showToast("A IA retornou um XML vazio.", "error");
-                            return;
-                        }
-
-                        modelerRef.value.importXML(xml)
-                            .then(() => {
-                                modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                setProcessDescriptionFromModeler();
-                            })
-                            .catch((e) => {
-                                console.error("AI returned invalid XML:", res);
-                                toast.showToast("A IA retornou um XML inválido. Veja o console.", "error");
-                                console.error(e);
-                            });
-
-                        aiPrompt.value = "";
-                        nextTick(resizeAiPrompt);
-                        sidebarMode.value = "edit";
-                    },
-                    (err) => {
-                        aiGenerating.value = false;
-                        console.error(err);
-                        toast.showToast((err && err.get_message) ? err.get_message() : "Erro ao chamar IA.", "error");
-                    }
-                );
-            };
-
-            watch(aiGenerating, (active) => {
-                if (active) {
-                    aiStepIndex.value = 0;
-                    if (aiStepTimer) clearInterval(aiStepTimer);
-                    aiStepTimer = setInterval(() => {
-                        aiStepIndex.value = (aiStepIndex.value + 1) % aiSteps.length;
-                    }, 1400);
-                    nextTick(resizeAiPrompt);
-                } else if (aiStepTimer) {
-                    clearInterval(aiStepTimer);
-                    aiStepTimer = null;
-                }
-            });
-
-            const beginAdd = (type) => {
-                if (isReadOnly.value) return;
-                addType.value = type;
-                mode.value = "select";
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-
-                const modeling = modeler.get("modeling");
-                const bpmnFactory = modeler.get("bpmnFactory");
-                const canvas = modeler.get("canvas");
-                const selection = modeler.get("selection");
-
-                const root = canvas.getRootElement();
-                const viewbox = canvas.viewbox();
-                const size = DEFAULT_SIZES[type] || { w: 100, h: 80, name: "" };
-                const position = {
-                    x: viewbox.x + viewbox.width / 2,
-                    y: viewbox.y + viewbox.height / 2
-                };
-
-                const bpmnType = TYPE_TO_BPMN[type];
-                if (!bpmnType) return;
-
-                const businessObject = bpmnFactory.create(bpmnType, {
-                    id: uid(type),
-                    name: size.name
-                });
-
-                const shape = modeling.createShape({ type: bpmnType, businessObject }, position, root);
-                if (shape) {
-                    selection.select(shape);
-                }
-            };
-
-            const setMode = (m) => {
-                if (isReadOnly.value) return;
-                mode.value = m;
-                addType.value = null;
-
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-
-                const globalConnect = modeler.get("globalConnect");
-                if (m === "connect" && globalConnect && typeof globalConnect.toggle === "function") {
-                    globalConnect.toggle();
-                }
-            };
-
-            const zoomIn = () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                const canvas = modeler.get("canvas");
-                const currentZoom = canvas.zoom();
-                const nextZoom = Math.min(currentZoom + 0.2, 2.5);
-                canvas.zoom(nextZoom);
-            };
-
-            const zoomOut = () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                const canvas = modeler.get("canvas");
-                const currentZoom = canvas.zoom();
-                const nextZoom = Math.max(currentZoom - 0.2, 0.2);
-                canvas.zoom(nextZoom);
-            };
-
-            const recenterCanvas = () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                modeler.get("canvas").zoom("fit-viewport", "auto");
-            };
-
-            const deleteSelected = () => {
-                if (isReadOnly.value) return;
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                const selection = modeler.get("selection").get();
-                if (!selection.length) return;
-                modeler.get("modeling").removeElements(selection);
-                selectedId.value = null;
-                selectedIds.value = [];
-                selectedElement.value = null;
-            };
-
-            const parseSvgSize = (svgText) => {
-                const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-                const svg = doc.documentElement;
-                const widthAttr = svg.getAttribute("width");
-                const heightAttr = svg.getAttribute("height");
-                const viewBox = svg.getAttribute("viewBox");
-
-                const parseNumber = (value) => {
-                    if (!value) return null;
-                    const parsed = parseFloat(value.toString().replace("px", "").trim());
-                    return Number.isFinite(parsed) ? parsed : null;
-                };
-
-                const width = parseNumber(widthAttr);
-                const height = parseNumber(heightAttr);
-                if (width && height) {
-                    return { width, height };
-                }
-
-                if (viewBox) {
-                    const parts = viewBox.split(/\s+/).map((part) => parseFloat(part));
-                    if (parts.length === 4 && parts.every((value) => Number.isFinite(value))) {
-                        return { width: parts[2], height: parts[3] };
-                    }
-                }
-
-                return { width: 1200, height: 800 };
-            };
-
-            const downloadBlob = (blob, filename) => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(url);
-            };
-
-            const exportAsImage = async () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                try {
-                    const { svg } = await modeler.saveSVG();
-                    if (!svg) {
-                        toast.showToast("Não foi possível gerar a imagem.", "error");
-                        return;
-                    }
-
-                    const { width, height } = parseSvgSize(svg);
-                    const scale = 2;
-                    const canvas = document.createElement("canvas");
-                    canvas.width = Math.ceil(width * scale);
-                    canvas.height = Math.ceil(height * scale);
-                    const ctx = canvas.getContext("2d");
-                    if (!ctx) {
-                        toast.showToast("Seu navegador não suporta exportação de imagem.", "error");
-                        return;
-                    }
-
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.scale(scale, scale);
-
-                    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-                    const url = URL.createObjectURL(svgBlob);
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => {
-                            if (!blob) {
-                                toast.showToast("Falha ao gerar a imagem.", "error");
-                                URL.revokeObjectURL(url);
-                                return;
-                            }
-                            downloadBlob(blob, "bpmn-diagrama.png");
-                            URL.revokeObjectURL(url);
-                        }, "image/png");
-                    };
-                    img.onerror = () => {
-                        toast.showToast("Falha ao carregar o diagrama.", "error");
-                        URL.revokeObjectURL(url);
-                    };
-                    img.src = url;
-                } catch (err) {
-                    console.error(err);
-                    toast.showToast("Erro ao exportar imagem.", "error");
-                }
-            };
-
-            const exportAsPdf = async () => {
-                const modeler = modelerRef.value;
-                if (!modeler) return;
-                try {
-                    const { svg } = await modeler.saveSVG();
-                    if (!svg) {
-                        toast.showToast("Não foi possível gerar o PDF.", "error");
-                        return;
-                    }
-
-                    const printWindow = window.open("", "_blank");
-                    if (!printWindow) {
-                        toast.showToast("Permita pop-ups para exportar em PDF.", "error");
-                        return;
-                    }
-
-                    printWindow.document.write(`
-                      <!doctype html>
-                      <html>
-                        <head>
-                          <title>Exportar PDF</title>
-                          <style>
-                            html, body {
-                              margin: 0;
-                              padding: 0;
-                              width: 100%;
-                              height: 100%;
-                              background: #fff;
-                            }
-                            .print-container {
-                              display: flex;
-                              align-items: center;
-                              justify-content: center;
-                              width: 100%;
-                              height: 100%;
-                              padding: 24px;
-                              box-sizing: border-box;
-                            }
-                            svg {
-                              width: 100%;
-                              height: auto;
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="print-container">${svg}</div>
-                        </body>
-                      </html>
-                    `);
-                    printWindow.document.close();
-                    printWindow.focus();
-                    setTimeout(() => {
-                        printWindow.print();
-                        printWindow.close();
-                    }, 300);
-                } catch (err) {
-                    console.error(err);
-                    toast.showToast("Erro ao exportar PDF.", "error");
-                }
-            };
-
-            const registerInfoContextPad = (modeler) => {
-                if (!modeler) return;
-                const contextPad = modeler.get("contextPad");
-                if (!contextPad) return;
-
-                const provider = {
-                    getContextPadEntries(element) {
-                        if (!element || element.isRoot) {
-                            return {};
-                        }
-
-                        if (isReadOnly.value) {
-                            return {
-                                "info.view": {
-                                    group: "info",
-                                    className: "context-pad-icon context-pad-icon--view",
-                                    title: "Visualizar informações",
-                                    action: {
-                                        click: (event, target) => openInfoViewer(target || element)
-                                    }
-                                }
-                            };
-                        }
-
-                        return {
-                            "info.edit": {
-                                group: "info",
-                                className: "context-pad-icon context-pad-icon--edit",
-                                title: "Editar informações",
-                                action: {
-                                    click: (event, target) => openInfoEditor(target || element)
-                                }
-                            },
-                            "info.view": {
-                                group: "info",
-                                className: "context-pad-icon context-pad-icon--view",
-                                title: "Visualizar informações",
-                                action: {
-                                    click: (event, target) => openInfoViewer(target || element)
-                                }
-                            }
-                        };
-                    }
-                };
-
-                contextPad.registerProvider(provider);
-            };
-
-            const applyReadOnlyGuards = (modeler) => {
-                if (!modeler || !isReadOnly.value) return;
-                const commandStack = modeler.get("commandStack");
-                if (commandStack && !commandStack.__readonlyWrapped) {
-                    const originalExecute = commandStack.execute.bind(commandStack);
-                    commandStack.execute = (command, ctx) => {
-                        if (isReadOnly.value) {
-                            return;
-                        }
-                        return originalExecute(command, ctx);
-                    };
-                    commandStack.__readonlyWrapped = true;
-                }
-
-                const palette = modeler.get("palette");
-                if (palette && palette._container) {
-                    palette._container.style.display = "none";
-                }
-
-                const contextPad = modeler.get("contextPad");
-                if (contextPad && !contextPad.__readonlyWrapped) {
-                    const originalGetEntries = contextPad.getEntries.bind(contextPad);
-                    contextPad.getEntries = (element) => {
-                        if (!isReadOnly.value) {
-                            return originalGetEntries(element);
-                        }
-                        const entries = originalGetEntries(element) || {};
-                        if (entries["info.view"]) {
-                            return { "info.view": entries["info.view"] };
-                        }
-                        return {};
-                    };
-                    contextPad.__readonlyWrapped = true;
-                }
-            };
-
-            onMounted(async () => {
-                document.addEventListener("click", handleDocumentClick);
-                if (!aiEnabled.value) {
-                    sidebarMode.value = "edit";
-                }
-                // ------------------------------------------------------------
-                // Criação do BPMN Modeler
-                //
-                // Cenários suportados:
-                //  1) Bundle local (npm/esbuild): expõe window.createBpmnModeler()
-                //     -> inclui bpmn-js + bpmn-js-create-append-anything no mesmo arquivo.
-                //  2) CDN (fallback): expõe window.BpmnJS / window.BpmnJS.Modeler e (opcionalmente)
-                //     window.BpmnJSCreateAppendAnything (UMD)
-                // ------------------------------------------------------------
-
-                const canUseBundleFactory = (typeof window.createBpmnModeler === "function");
-
-                // Fallback CDN (caso você ainda esteja usando bpmn-modeler.production.min.js)
-                const BpmnModelerCdn =
-                    (window.BpmnJS && window.BpmnJS.Modeler) ? window.BpmnJS.Modeler
-                        : window.BpmnJS;
-
-                if (!canUseBundleFactory && !BpmnModelerCdn) {
-                    console.error("[bpmn-editor] BPMN Modeler não carregou. Verifique se /Bpmn/bpmn-bundle.js está sendo carregado (ou o CDN bpmn-modeler.production.min.js).");
-                    toast.showToast("Falha ao carregar BPMN Modeler.", "error");
-                    return;
-                }
-
-                let modeler = null;
-
-                if (canUseBundleFactory) {
-                    // Bundle: o próprio factory já injeta CreateAppendAnythingModule
-                    modeler = window.createBpmnModeler({
-                        container: bpmnCanvasRef.value,
-                        keyboard: { bindTo: window },
-                        additionalModules: [customTranslateModule]
-                    });
-                } else {
-                    // ------------------------------------------------------------
-                    // (Fallback) Resolve o módulo bpmn-js-create-append-anything via UMD (se existir)
-                    // ------------------------------------------------------------
-                    let createAppendAnythingModule =
-                        window.BpmnJSCreateAppendAnything ||
-                        window.bpmnJSCreateAppendAnything ||
-                        window.createAppendAnything ||
-                        window.createAppendAnythingModule ||
-                        null;
-
-                    if (createAppendAnythingModule && createAppendAnythingModule.default) {
-                        createAppendAnythingModule = createAppendAnythingModule.default;
-                    }
-
-                    if (!createAppendAnythingModule) {
-                        console.warn("[bpmn-editor] bpmn-js-create-append-anything não carregado; a opção '...' pode ficar indisponível.");
-                    }
-
-                    modeler = new BpmnModelerCdn({
-                        container: bpmnCanvasRef.value,
-                        keyboard: { bindTo: window },
-                        additionalModules: [
-                            customTranslateModule,
-                            ...(createAppendAnythingModule ? [createAppendAnythingModule] : [])
-                        ]
-                    });
-                }
-
-                modelerRef.value = modeler;
-
-                const __disposePopupSheet = installPopupMenuAsRightSheet(bpmnCanvasRef.value);
-
-                // Keep popup menu (\"...\") anchored where the user clicked
-                const __disposePopupPosFix = installPopupMenuPositionFix(modeler, () => bpmnCanvasRef.value);
-                window.__BPMN_DISPOSE_POPUP_POS_FIX__ = __disposePopupPosFix;
-                // Diagnóstico: confirme no console se os serviços necessários ao menu "..."
-                // estão disponíveis (popupMenu / bpmnReplace). Deixe apenas como log.
-                try {
-                    console.log("[bpmn-editor] services", {
-                        palette: !!modeler.get("palette"),
-                        contextPad: !!modeler.get("contextPad"),
-                        popupMenu: !!modeler.get("popupMenu"),
-                        bpmnReplace: !!modeler.get("bpmnReplace")
-                    });
-                } catch (e) {
-                    console.warn("[bpmn-editor] não foi possível ler services", e);
-                }
-
-
-
-                // Force-translate tooltips already painted in the DOM
-                const __disposeTooltipI18n = installUiTooltipTranslator(modeler);
-                // Diagnóstico / status de i18n
-                try {
-                    const params = new URLSearchParams(window.location.search || "");
-                    const translate = modeler.get("translate");
-                    const testKey = "Activate the global connect tool";
-                    const testValue = translate(testKey);
-                    const ok = (translate("Connect") === "Conectar") || (testValue !== testKey);
-
-                    window.__BPMN_I18N__ = { ok, testKey, testValue };
-
-                    const el = document.getElementById("bpmnI18nStatus");
-                    if (el) {
-                        el.style.display = params.has("debugTranslate") ? "block" : "none";
-                        el.textContent = ok
-                            ? "i18n OK: " + testValue
-                            : "i18n NÃO aplicado (ainda em inglês): " + testValue;
-                    }
-
-                    if (params.has("debugTranslate")) {
-                        console.log("[bpmn-i18n] test:", { testKey, testValue, ok });
-                    }
-                } catch (e) {
-                    try { console.warn("[bpmn-i18n] falha no diagnóstico", e); } catch { }
-                }
-
-                registerInfoContextPad(modeler);
-                applyReadOnlyGuards(modeler);
-
-                modeler.on("selection.changed", (event) => {
-                    const selection = event.newSelection || [];
-                    selectedIds.value = selection.map((element) => element.id);
-                    selectedId.value = selection.length === 1 ? selection[0].id : null;
-                    selectedElement.value = selection.length === 1 ? selection[0] : null;
-                });
-
-                modeler.on("element.changed", (event) => {
-                    if (!selectedElement.value || selectedElement.value.id !== event.element.id) return;
-                    selectedElement.value = event.element;
-                });
-
-                await modeler.importXML(EMPTY_BPMN_XML);
-                modeler.get("canvas").zoom("fit-viewport", "auto");
-                setProcessDescriptionFromModeler();
-                load();
-                nextTick(resizeAiPrompt);
-            });
-
-            onBeforeUnmount(() => {
-                document.removeEventListener("click", handleDocumentClick);
-                try { __disposePopupSheet && __disposePopupSheet(); } catch (e) { }
-
-                try { if (window.__BPMN_DISPOSE_POPUP_POS_FIX__) window.__BPMN_DISPOSE_POPUP_POS_FIX__(); } catch (e) { }
-                try { delete window.__BPMN_DISPOSE_POPUP_POS_FIX__; } catch (e) { }
-            });
-
-            return {
-                saving,
-                aiEnabled,
-                isReadOnly,
-                mode,
-                addType,
-                modelName,
-                processDescription,
-                sidebarMode,
-                aiPrompt,
-                aiPromptRef,
-                processDescriptionRef,
-                showShortcuts,
-                shortcutsRef,
-                shortcutsButtonRef,
-                aiGenerating,
-                aiStepMessage,
-                subtitleText,
-                selectedIds,
-                infoEditor,
-                infoViewer,
-                infoPanelName,
-                infoEditorRef,
-                canEditSelectedInfo,
-                setMode,
-                beginAdd,
-                sendAiPrompt,
-                onProcessDescriptionInput,
-                formatProcessDescription,
-                openInfoEditorFromSelection,
-                openInfoViewerFromSelection,
-                closeInfoEditor,
-                requestCloseInfoEditor,
-                closeInfoViewer,
-                saveInfoEditor,
-                onEditorInput,
-                formatInfoEditor,
-                toggleShortcuts,
-                save,
-                handleBack,
-                deleteSelected,
-                zoomIn,
-                zoomOut,
-                recenterCanvas,
-                exportAsImage,
-                exportAsPdf,
-                bpmnCanvasRef
-            };
-        }
-    }).mount("#bpmnApp");
-})();
+
+.canvas-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 5;
+}
+
+.canvas-shortcuts {
+    position: absolute;
+    top: 16px;
+    right: 64px;
+    background: #ffffff;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    min-width: 200px;
+    z-index: 6;
+}
+
+    .canvas-shortcuts h4 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        color: #1f2a37;
+        font-weight: 400;
+    }
+
+    .canvas-shortcuts ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        color: #4b5563;
+    }
+
+    .canvas-shortcuts li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .canvas-shortcuts span {
+        font-family: "Source Sans Pro", "Roboto", sans-serif;
+        font-weight: 400;
+        color: #2f80ed;
+        background: #eef4ff;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 13px;
+    }
+
+    .canvas-shortcuts strong {
+        font-weight: 400;
+        color: #1f2a37;
+    }
+
+.bpmn-canvas .djs-container {
+    border-radius: 14px;
+    background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.svg {
+    min-width: 100%;
+    min-height: 100%;
+    display: block;
+    background: linear-gradient(#f2f5f9 1px, transparent 1px), linear-gradient(90deg, #f2f5f9 1px, transparent 1px);
+    background-size: 24px 24px;
+    cursor: grab;
+}
+
+    .svg.is-panning,
+    .svg.is-panning * {
+        cursor: grabbing !important;
+    }
+
+    .svg.is-shift-select,
+    .svg.is-shift-select * {
+        cursor: crosshair !important;
+    }
+
+.selection-rect {
+    fill: rgba(47, 128, 237, 0.16);
+    stroke: rgba(47, 128, 237, 0.8);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    pointer-events: none;
+}
+
+.edge {
+    fill: none;
+    stroke: rgba(47,128,237,.75);
+    stroke-width: 2;
+    cursor: pointer;
+}
+
+    .edge.selected {
+        stroke: rgba(47,128,237,1);
+        stroke-width: 2.5;
+    }
+
+    .edge.preview {
+        stroke-dasharray: 6 6;
+        opacity: .8;
+    }
+
+.edge-delete {
+    cursor: pointer;
+}
+
+.edge-delete-bg {
+    fill: #f7f8fa;
+    stroke: #d1d6de;
+    stroke-width: 1;
+}
+
+.edge-delete:hover .edge-delete-bg {
+    fill: #e4e8ee;
+}
+
+.edge-delete .menu-icon {
+    font-size: 16px;
+    color: #3b4a5a;
+}
+
+.nodes .node rect {
+    fill: #ffffff;
+    stroke: rgba(16, 24, 40, 0.20);
+    stroke-width: 1.5;
+}
+
+.nodes .node circle {
+    fill: #ffffff;
+    stroke: rgba(16, 24, 40, 0.20);
+    stroke-width: 2;
+}
+
+    .nodes .node circle.startEvent {
+        stroke-width: 2;
+    }
+
+    .nodes .node circle.endEvent {
+        stroke-width: 4;
+    }
+
+.nodes .node polygon {
+    fill: #ffffff;
+    stroke: rgba(16, 24, 40, 0.20);
+    stroke-width: 2;
+}
+
+.nodes .node.selected rect,
+.nodes .node.selected circle,
+.nodes .node.selected polygon {
+    stroke: rgba(47,128,237,1);
+    stroke-width: 1;
+}
+
+.nodes .node.selected .node-menu .menu-shell,
+.nodes .node.selected .node-menu .menu-item-bg {
+    stroke: #d1d6de;
+}
+
+.nodes .node .connector {
+    fill: #2f80ed;
+    stroke: #ffffff;
+    stroke-width: 2;
+    opacity: 0;
+    cursor: crosshair;
+}
+
+.nodes .node:hover .connector,
+.nodes .node.selected .connector {
+    opacity: 1;
+}
+
+.node-menu {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nodes .node.selected .node-menu {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.node-menu .menu-shell {
+    fill: #ffffff;
+    stroke: #d1d6de;
+    stroke-width: 1;
+}
+
+.node-menu .menu-item {
+    cursor: pointer;
+}
+
+.node-menu .menu-item-bg {
+    fill: #f7f8fa;
+    stroke: #d1d6de;
+    stroke-width: 1;
+}
+
+.node-menu .menu-item:hover .menu-item-bg {
+    fill: #e4e8ee;
+}
+
+.node-menu .menu-icon-wrapper {
+    pointer-events: none;
+}
+
+.node-menu .menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+    color: #3b4a5a;
+}
+
+.djs-context-pad .entry.context-pad-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .djs-context-pad .entry.context-pad-icon::before {
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 16px;
+        line-height: 1;
+        color: #344054;
+    }
+
+.djs-context-pad .entry.context-pad-icon--edit::before {
+    content: "\f044";
+}
+
+.djs-context-pad .entry.context-pad-icon--view::before {
+    content: "\f06e";
+}
+
+.djs-context-pad .entry.bpmn-icon-ellipsis::before,
+.djs-palette .entry.bpmn-icon-ellipsis::before,
+.djs-popup .entry.bpmn-icon-ellipsis::before {
+    content: "⋯";
+    font-family: "Source Sans Pro", "Roboto", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.node-title {
+    font-size: 12px;
+    font-weight: 400;
+    fill: #0b1b3f;
+    user-select: none;
+    cursor: text;
+}
+
+.node-name-input-wrap {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+    .node-name-input-wrap.centered {
+        justify-content: center;
+    }
+
+.node-name-input {
+    width: 100%;
+    border: 1px solid #cdd7e5;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #0b1b3f;
+    outline: none;
+}
+
+    .node-name-input.centered {
+        text-align: center;
+    }
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.modal-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 16px;
+    width: min(720px, 92vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e3e8ef;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.modal-body {
+    padding: 16px 20px 20px;
+    overflow: auto;
+}
+
+.rich-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    background: #f7f9fc;
+    margin-bottom: 12px;
+}
+
+.rich-toolbar--compact {
+    padding: 6px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.toolbar-btn {
+    border: none;
+    background: #ffffff;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #3b4a5a;
+    box-shadow: inset 0 0 0 1px #d9e1eb;
+}
+
+    .toolbar-btn:hover {
+        background: #eef2f7;
+    }
+
+.toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: #d9e1eb;
+    margin: 0 2px;
+}
+
+.toolbar-color {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #d9e1eb;
+    padding: 0;
+    background: #ffffff;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px #d9e1eb;
+}
+
+.rich-editor {
+    min-height: 200px;
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 16px;
+    line-height: 1.5;
+    outline: none;
+    scrollbar-width: thin;
+    scrollbar-color: #b5c2d1 transparent;
+}
+
+.rich-editor--compact {
+    min-height: 140px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.rich-editor::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rich-editor::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.rich-editor::-webkit-scrollbar-thumb {
+    background-color: #b5c2d1;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+    .rich-editor::-webkit-scrollbar-thumb:hover {
+        background-color: #99a8bb;
+    }
+
+.rich-viewer {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #1b1f2a;
+}
+
+.rich-viewer--boxed {
+    min-height: 200px;
+    border: 1px solid #d9e1eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.empty-info {
+    margin: 0;
+    color: #6c7a89;
+    font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .layout--with-sheet {
+        grid-template-columns: 1fr;
+    }
+
+    .canvas {
+        height: 70vh;
+    }
+}
+
+/* =========================================================
+   BPMN.io — Fonte Roboto (SVG + Labels)
+   ========================================================= */
+
+/* Base do SVG */
+.bpmn-canvas svg {
+    font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+}
+
+    /* Todos os textos SVG */
+    .bpmn-canvas svg text,
+    .bpmn-canvas svg tspan {
+        font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+        font-weight: 400;
+    }
+
+/* Labels do BPMN (nomes de tarefas, eventos, gateways) */
+.bpmn-canvas .djs-label,
+.bpmn-canvas .djs-direct-editing-content,
+.bpmn-canvas .djs-visual text {
+    font-family: Roboto, Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif !important;
+}
+
+/* Texto durante edição inline */
+.bpmn-canvas .djs-direct-editing-content {
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* Opcional: melhorar legibilidade */
+.bpmn-canvas svg text {
+    fill: #0b1b3f;
+    text-rendering: geometricPrecision;
+}
+
+/* =========================================================
+   RESERVAR ESPAÇO NO CANVAS QUANDO O SHEET ABRIR
+   (não deixa o popup sobrepor o canvas)
+   ========================================================= */
+
+:root {
+    --bpmn-sheet-gap: 18px;
+    --bpmn-sheet-width: var(--sidebar-width);
+}
+
+/* classe aplicada via JS quando existe popup aberto */
+.canvas.bpmn-sheet-open {
+    /* reserva espaço do lado direito pro sheet */
+    padding-right: calc(var(--bpmn-sheet-width) + var(--bpmn-sheet-gap)) !important;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   SHEET: popup fixo à direita
+   ========================================================= */
+
+.bpmn-sheet-popup {
+    position: fixed !important;
+    right: var(--bpmn-sheet-gap) !important;
+    left: auto !important;
+    top: var(--bpmn-sheet-top) !important;
+    height: var(--bpmn-sheet-height) !important;
+    max-height: var(--bpmn-sheet-height) !important;
+    width: var(--bpmn-sheet-width) !important;
+    transform: none !important;
+    transform-origin: left top !important;
+    background: #fff !important;
+    border: 1px solid #d9e1eb !important;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18) !important;
+    overflow: hidden !important; /* scroll vai ficar no body/lista */
+    z-index: 9990 !important;
+}
+
+/* =========================================================
+   FAZER O CONTEÚDO DO POPUP USAR 100% DA ALTURA
+   (escopa só no sheet, pra não quebrar outros popups)
+   ========================================================= */
+
+.bpmn-sheet-popup {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+    /* header fixo */
+    .bpmn-sheet-popup .djs-popup-header {
+        flex: 0 0 auto !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: #fff !important;
+        z-index: 1 !important;
+        border-bottom: 1px solid #e3e8ef !important;
+    }
+
+    /* body cresce e vira área rolável */
+    .bpmn-sheet-popup .djs-popup-body {
+        flex: 1 1 auto !important;
+        min-height: 0 !important; /* chave p/ overflow em flex */
+        overflow: auto !important; /* scroll aqui */
+    }
+
+    /* OVERRIDE do inline max-height: 280px */
+    .bpmn-sheet-popup .djs-popup-results {
+        margin: 0 !important;
+        padding: 10px 12px 12px 12px !important;
+        list-style: none !important;
+        max-height: none !important; /* mata o 280px */
+        height: auto !important;
+        overflow: visible !important; /* scroll fica no .djs-popup-body */
+        padding-right: 12px !important;
+    }
+
+
+
