@@ -459,7 +459,8 @@
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
             const params = new URLSearchParams(window.location.search || "");
-            const isReadOnly = ref(params.get("mode") !== "edit");
+            const modeParam = (params.get("mode") || "").toLowerCase();
+            const isReadOnly = ref(modeParam === "view" || modeParam === "readonly");
             const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
 
             const saving = ref(false);
