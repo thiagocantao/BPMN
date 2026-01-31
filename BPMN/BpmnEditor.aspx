@@ -257,10 +257,9 @@
       </div>
     </div>
   </div>
-
-  <script src="https://unpkg.com/bpmn-js@17.0.2/dist/bpmn-modeler.production.min.js"></script>
-  <script src="https://unpkg.com/bpmn-js-create-append-anything@0.7.0/dist/bpmn-js-create-append-anything.umd.js"></script>
-  <script src="./vue.global.prod.js"></script>
+  <!-- Bundle local com bpmn-js + create-append-anything (gerado via npm/esbuild) -->
+  <script src="/Bpmn/bpmn-bundle.js"></script>
+<script src="./vue.global.prod.js"></script>
   <!-- Cache-buster para garantir que o browser carregue a última versão do JS -->
   <script src="/Bpmn/bpmn-editor.js?v=<%= DateTime.UtcNow.Ticks %>"></script>
 </form>
