@@ -306,7 +306,61 @@
         "Activities": "Atividades",
         "Events": "Eventos",
         "Gateways": "Gateways",
-        "Data Objects": "Objetos de dados"
+        "Data Objects": "Objetos de dados",
+        // Gateways e atividades 
+        "Event-based gateway": "Gateway baseado em evento",
+        "Tasks": "Tarefas",
+        "Sub-processes": "Subprocessos",
+        "Create element": "Criar elemento",
+        "Event sub-process": "Subprocesso de evento",
+        "Sub-process (collapsed)": "Subprocesso recolhido",
+        "Sub-process (expanded)": "Subprocesso expandido",
+        "Ad-hoc sub-process (collapsed)": "Subprocesso ad hoc recolhido",
+        "Ad-hoc sub-process (expanded)": "Subprocesso ad hoc expandido",
+        // Start events
+        "Message start event": "Evento de início de mensagem",
+        "Timer start event": "Evento de início temporizado",
+        "Conditional start event": "Evento de início condicional",
+        "Signal start event": "Evento de início de sinal",
+        // Intermediate events
+        "Message intermediate catch event": "Evento intermediário de mensagem (captura)",
+        "Message intermediate throw event": "Evento intermediário de mensagem (lançamento)",
+        "Timer intermediate catch event": "Evento intermediário temporizado",
+        "Conditional intermediate catch event": "Evento intermediário condicional",
+        "Escalation intermediate throw event": "Evento intermediário de escalonamento (lançamento)",
+        "Link intermediate catch event": "Evento intermediário de link (captura)",
+        "Link intermediate throw event": "Evento intermediário de link (lançamento)",
+        "Compensation intermediate throw event": "Evento intermediário de compensação (lançamento)",
+        "Signal intermediate catch event": "Evento intermediário de sinal (captura)",
+        "Signal intermediate throw event": "Evento intermediário de sinal (lançamento)",
+        // End events
+        "Message end event": "Evento de fim de mensagem",
+        "Escalation end event": "Evento de fim de escalonamento",
+        "Error end event": "Evento de fim de erro",
+        "Cancel end event": "Evento de fim de cancelamento",
+        "Compensation end event": "Evento de fim de compensação",
+        "Signal end event": "Evento de fim de sinal",
+        "Terminate end event": "Evento de fim de término",
+        // Boundary events
+        "Message boundary event": "Evento de borda de mensagem",
+        "Timer boundary event": "Evento de borda temporizado",
+        "Escalation boundary event": "Evento de borda de escalonamento",
+        "Conditional boundary event": "Evento de borda condicional",
+        "Error boundary event": "Evento de borda de erro",
+        "Cancel boundary event": "Evento de borda de cancelamento",
+        "Signal boundary event": "Evento de borda de sinal",
+        "Compensation boundary event": "Evento de borda de compensação",
+        // Boundary events (non-interrupting) 
+        "Message boundary event (non-interrupting)": "Evento de borda de mensagem (não interruptivo)",
+        "Timer boundary event (non-interrupting)": "Evento de borda temporizado (não interruptivo)",
+        "Escalation boundary event (non-interrupting)": "Evento de borda de escalonamento (não interruptivo)",
+        "Conditional boundary event (non-interrupting)": "Evento de borda condicional (não interruptivo)",
+        "Signal boundary event (non-interrupting)": "Evento de borda de sinal (não interruptivo)",
+        // Dados e participantes 
+        "Data": "Dados",
+        "Participants": "Participantes",
+        "Expanded pool/participant": "Pool/participante expandido",
+        "Empty pool/participant": "Pool/participante vazio"
     };
 
     const typeTranslations = {
