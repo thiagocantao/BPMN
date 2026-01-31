@@ -360,36 +360,10 @@
         "Data": "Dados",
         "Participants": "Participantes",
         "Expanded pool/participant": "Pool/participante expandido",
-        "Empty pool/participant": "Pool/participante vazio"
+        "Empty pool/participant": "Pool/participante vazio",
+        "Append element": "Adicionar elemento"
     };
 
-    const typeTranslations = {
-        Event: "Evento",
-        Task: "Tarefa",
-        Gateway: "Gateway",
-        "Start Event": "Evento de início",
-        "End Event": "Evento de fim",
-        "Intermediate Throw Event": "Evento intermediário (lançamento)",
-        "Intermediate Catch Event": "Evento intermediário (captura)",
-        "Boundary Event": "Evento de borda",
-        "User Task": "Tarefa do usuário",
-        "Service Task": "Tarefa de serviço",
-        "Script Task": "Tarefa de script",
-        "Business Rule Task": "Tarefa de regra de negócio",
-        "Manual Task": "Tarefa manual",
-        "Send Task": "Tarefa de envio",
-        "Receive Task": "Tarefa de recebimento",
-        "Call Activity": "Atividade de chamada",
-        "Sub Process": "Subprocesso",
-        "Transaction": "Transação",
-        "Event Sub Process": "Subprocesso de evento",
-        "Ad-hoc Sub Process": "Subprocesso ad hoc",
-        "Exclusive Gateway": "Gateway exclusivo",
-        "Inclusive Gateway": "Gateway inclusivo",
-        "Parallel Gateway": "Gateway paralelo",
-        "Event based Gateway": "Gateway baseado em evento",
-        "Complex Gateway": "Gateway complexo"
-    };
 
     const customTranslate = (template, replacements) => {
         replacements = replacements || {};
