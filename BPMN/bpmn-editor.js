@@ -1149,11 +1149,22 @@
                 if (!aiEnabled.value) {
                     sidebarMode.value = "edit";
                 }
+                const createAppendAnythingModule =
+                    window.BpmnJSCreateAppendAnything ||
+                    window.bpmnJSCreateAppendAnything ||
+                    window.createAppendAnything ||
+                    window.createAppendAnythingModule ||
+                    null;
+                if (!createAppendAnythingModule) {
+                    console.warn("[bpmn-editor] bpmn-js-create-append-anything não carregado; a opção de criação pode ficar indisponível.");
+                }
+
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
                     keyboard: { bindTo: window },
                     additionalModules: [
-                        customTranslateModule
+                        customTranslateModule,
+                        ...(createAppendAnythingModule ? [createAppendAnythingModule] : [])
                     ]
                 });
                 modelerRef.value = modeler;
