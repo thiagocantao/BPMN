@@ -804,6 +804,16 @@ body {
     content: "\f06e";
 }
 
+.djs-context-pad .entry.bpmn-icon-ellipsis::before,
+.djs-palette .entry.bpmn-icon-ellipsis::before,
+.djs-popup .entry.bpmn-icon-ellipsis::before {
+    content: "⋯";
+    font-family: "Source Sans Pro", "Roboto", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1;
+}
+
 .node-title {
     font-size: 12px;
     font-weight: 400;
