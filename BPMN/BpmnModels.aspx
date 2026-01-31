@@ -15,10 +15,10 @@
       <header class="topbar">
         <div>
           <h1 class="title">Modelos BPMN</h1>
-          <p class="subtitle">Selecione um modelo para editar ou crie um novo</p>
+          <p class="subtitle">Selecione um fluxo para editar ou visualizar</p>
         </div>
         <div class="actions">
-          <button type="button" class="btn btn--primary" @click="createNew">+ Novo modelo</button>
+          <button type="button" class="btn btn--primary" @click="createNew">+ Novo fluxo</button>
           <button type="button" class="btn btn--ghost" @click="refresh">Atualizar</button>
         </div>
       </header>
@@ -26,9 +26,8 @@
       <section class="card">
         <div class="table">
           <div class="tr th">
-            <div>ID</div>
             <div>Nome</div>
-            <div>Atualizado</div>
+            <div>Automação</div>
             <div>Ações</div>
           </div>
 
@@ -36,19 +35,17 @@
             <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
           </div>
 
-          <div v-for="m in models" :key="m.Id" class="tr">
-            <div><strong>{{ m.Id }}</strong></div>
-            <div>{{ m.Name }}</div>
-            <div class="muted">{{ formatDate(m.UpdatedAt) }}</div>
+          <div v-for="m in models" :key="m.CodigoFluxo" class="tr">
+            <div>{{ m.NomeFluxo }}</div>
+            <div>
+              <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
+            </div>
             <div class="row-actions">
-              <button type="button" class="icon-button" @click="view(m.Id)" aria-label="Visualizar">
+              <button type="button" class="icon-button" @click="view(m.CodigoFluxo)" aria-label="Visualizar">
                 <i class="fa-regular fa-eye"></i>
               </button>
-              <button type="button" class="icon-button" @click="edit(m.Id)" aria-label="Editar">
+              <button type="button" class="icon-button" @click="edit(m.CodigoFluxo)" aria-label="Editar">
                 <i class="fa-solid fa-pencil"></i>
-              </button>
-              <button type="button" class="icon-button icon-button--danger" @click="remove(m.Id)" aria-label="Excluir">
-                <i class="fa-regular fa-trash-can"></i>
               </button>
             </div>
           </div>
@@ -154,36 +151,15 @@
                 };
 
                 const createNew = () => {
-                    const name = prompt("Nome do novo modelo:", "Novo processo");
-                    if (!name) return;
-
-                    PageMethods.CreateModel(
-                        name,
-                        (newId) => { window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + newId + "&mode=edit"; },
-                        (err) => { console.error(err); toast.showToast("Erro ao criar modelo.", "error"); }
-                    );
+                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=-1&mode=edit";
                 };
 
                 const view = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=view";
                 const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=edit";
 
-                const remove = (id) => {
-                    if (!confirm("Excluir este modelo?")) return;
-                    PageMethods.DeleteModel(
-                        id,
-                        () => refresh(),
-                        (err) => { console.error(err); toast.showToast("Erro ao excluir.", "error"); }
-                    );
-                };
-
-                const formatDate = (iso) => {
-                    try { return new Date(iso).toLocaleString("pt-BR"); }
-                    catch { return iso; }
-                };
-
                 refresh();
 
-                return { loading, models, refresh, createNew, view, edit, remove, formatDate };
+                return { loading, models, refresh, createNew, view, edit };
             }
         }).mount("#app");
     </script>
