@@ -459,7 +459,8 @@
         setup() {
             const modelId = window.__BPMN_MODEL_ID__ || 0;
             const params = new URLSearchParams(window.location.search || "");
-            const isReadOnly = ref(params.get("mode") !== "edit");
+            const modeParam = (params.get("mode") || "").toLowerCase();
+            const isReadOnly = ref(modeParam === "view" || modeParam === "readonly");
             const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
 
             const saving = ref(false);
@@ -1148,11 +1149,22 @@
                 if (!aiEnabled.value) {
                     sidebarMode.value = "edit";
                 }
+                const createAppendAnythingModule =
+                    window.BpmnJSCreateAppendAnything ||
+                    window.bpmnJSCreateAppendAnything ||
+                    window.createAppendAnything ||
+                    window.createAppendAnythingModule ||
+                    null;
+                if (!createAppendAnythingModule) {
+                    console.warn("[bpmn-editor] bpmn-js-create-append-anything não carregado; a opção de criação pode ficar indisponível.");
+                }
+
                 const modeler = new BpmnJS({
                     container: bpmnCanvasRef.value,
                     keyboard: { bindTo: window },
                     additionalModules: [
-                        customTranslateModule
+                        customTranslateModule,
+                        ...(createAppendAnythingModule ? [createAppendAnythingModule] : [])
                     ]
                 });
                 modelerRef.value = modeler;
