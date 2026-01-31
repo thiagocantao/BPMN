@@ -1087,9 +1087,6 @@ body {
     box-sizing: border-box;
 }
 
-.canvas.bpmn-sheet-open .bpmn-canvas {
-    width: calc(100% - var(--bpmn-sheet-width) - var(--bpmn-sheet-gap));
-}
 
 /* =========================================================
    SHEET: popup fixo à direita
@@ -1149,5 +1146,4 @@ body {
         overflow: visible !important; /* scroll fica no .djs-popup-body */
         padding-right: 12px !important;
     }
-
 
