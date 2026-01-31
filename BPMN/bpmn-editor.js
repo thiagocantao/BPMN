@@ -462,6 +462,7 @@
         if (!canvasEl) return () => { };
 
         const root = document.documentElement;
+        const canvasWrapper = canvasEl.closest(".canvas");
 
         const updateVars = () => {
             try {
@@ -480,6 +481,12 @@
         };
 
         // aplica classe e força "desarmar" left/top/transform inline do bpmn-js
+        const updateCanvasShift = () => {
+            if (!canvasWrapper) return;
+            const hasSheet = !!document.querySelector(".djs-popup.bpmn-sheet-popup");
+            canvasWrapper.classList.toggle("bpmn-sheet-open", hasSheet);
+        };
+
         const patchPopup = (popup) => {
             if (!popup || popup.__sheetPatched) return;
 
@@ -495,6 +502,7 @@
             popup.style.transformOrigin = "left top";
 
             popup.__sheetPatched = true;
+            updateCanvasShift();
         };
 
         updateVars();
@@ -504,6 +512,7 @@
             updateVars();
             const popups = document.querySelectorAll(".djs-popup");
             popups.forEach(patchPopup);
+            updateCanvasShift();
         });
 
         obs.observe(document.body, { childList: true, subtree: true });
@@ -518,12 +527,16 @@
         // patch imediato se já existir
         try {
             document.querySelectorAll(".djs-popup").forEach(patchPopup);
+            updateCanvasShift();
         } catch { }
 
         return () => {
             try { obs.disconnect(); } catch { }
             window.removeEventListener("resize", onResize);
             window.removeEventListener("scroll", onScroll);
+            if (canvasWrapper) {
+                canvasWrapper.classList.remove("bpmn-sheet-open");
+            }
         };
     };
 
