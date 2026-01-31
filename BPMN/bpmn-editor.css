@@ -1087,6 +1087,7 @@ body {
     box-sizing: border-box;
 }
 
+
 /* =========================================================
    SHEET: popup fixo à direita
    ========================================================= */
@@ -1145,6 +1146,4 @@ body {
         overflow: visible !important; /* scroll fica no .djs-popup-body */
         padding-right: 12px !important;
     }
-
-
 
