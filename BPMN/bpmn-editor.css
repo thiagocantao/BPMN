@@ -544,7 +544,7 @@ body {
 
 .canvas {
     padding: 0;
-    overflow: hidden;
+    overflow: visible;
     height: calc(100vh - 140px);
     position: relative;
 }
@@ -553,6 +553,15 @@ body {
     width: 100%;
     height: 100%;
     min-height: 100%;
+}
+
+.bpmn-canvas,
+.bpmn-canvas .djs-container {
+    overflow: visible;
+}
+
+.bpmn-canvas .djs-popup {
+    z-index: 8;
 }
 
 .canvas-controls {
@@ -802,6 +811,16 @@ body {
 
 .djs-context-pad .entry.context-pad-icon--view::before {
     content: "\f06e";
+}
+
+.djs-context-pad .entry.bpmn-icon-ellipsis::before,
+.djs-palette .entry.bpmn-icon-ellipsis::before,
+.djs-popup .entry.bpmn-icon-ellipsis::before {
+    content: "⋯";
+    font-family: "Source Sans Pro", "Roboto", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .node-title {
