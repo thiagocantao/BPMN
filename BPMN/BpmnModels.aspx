@@ -205,6 +205,14 @@
 
         const { createApp, ref, computed } = Vue;
 
+        const setScrollbarWidth = () => {
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+            document.documentElement.style.setProperty("--scrollbar-width", `${scrollbarWidth}px`);
+        };
+
+        setScrollbarWidth();
+        window.addEventListener("resize", setScrollbarWidth);
+
         createApp({
             setup() {
                 const loading = ref(false);

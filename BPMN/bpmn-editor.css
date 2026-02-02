@@ -199,19 +199,15 @@ body {
     flex: 1;
 }
 
-    .models-table .table-body {
+.models-table .table-body {
         display: grid;
         gap: 8px;
         flex: 1;
         max-height: 0;
         overflow-y: auto;
-        padding-right: 4px;
         max-height: calc(100vh - 210px);
+        scrollbar-gutter: stable;
     }
-
-        .models-table .table-body .tr {
-            margin-right: 4px;
-        }
 
     .models-table .tr {
         grid-template-columns: minmax(0, 1fr) 150px 120px;
@@ -231,6 +227,10 @@ body {
 
     .models-table .tr.th > div:last-child {
         text-align: center;
+    }
+
+    .models-table .tr.th {
+        padding-right: var(--scrollbar-width, 0px);
     }
 
     .models-table .row-actions {
