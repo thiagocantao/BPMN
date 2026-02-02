@@ -24,14 +24,16 @@ public partial class BpmnModels : System.Web.UI.Page
         listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
         listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
         var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
 
-        string sql = @"
+        string sql = string.Format(@"
             SELECT f.CodigoFluxo,
                    f.NomeFluxo,
                    f.IndicaAutomacao
               FROM Fluxos AS f
-             WHERE CodigoEntidade = 111
-               AND DataDesativacao IS NULL";
+             WHERE CodigoEntidade = {2}
+               AND DataDesativacao IS NULL", db, own, cd.getInfoSistema("CodigoEntidade").ToString());
 
         DataSet ds = cd.getDataSet(sql);
         var list = new List<BpmnModelListItem>();
@@ -44,7 +46,7 @@ public partial class BpmnModels : System.Web.UI.Page
                 {
                     CodigoFluxo = Convert.ToInt32(r["CodigoFluxo"]),
                     NomeFluxo = Convert.ToString(r["NomeFluxo"]),
-                    IndicaAutomacao = Convert.ToBoolean(r["IndicaAutomacao"])
+                    IndicaAutomacao = Convert.ToString(r["IndicaAutomacao"]) == "S"
                 });
             }
         }
