@@ -239,6 +239,7 @@ body {
 
 .models-layout--with-sheet {
     grid-template-columns: minmax(0, 1fr) calc(var(--sidebar-width) + 200px);
+    align-items: stretch;
 }
 
 .tr {
@@ -296,8 +297,8 @@ body {
 
 .versions-sheet {
     gap: 14px;
-    min-height: calc(100vh - 140px);
-    position: relative;
+    height: 100%;
+    min-height: 0;
 }
 
 .versions-sheet-header {
@@ -359,6 +360,7 @@ body {
     gap: 8px;
     flex: 1;
     min-height: 0;
+    align-content: start;
     overflow-y: auto;
     padding-right: 4px;
 }
