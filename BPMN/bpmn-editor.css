@@ -199,7 +199,7 @@ body {
     flex: 1;
 }
 
-.models-table .table-body {
+    .models-table .table-body {
         display: grid;
         gap: 8px;
         flex: 1;
@@ -545,6 +545,7 @@ body {
 .info-sheet-actions--bottom {
     margin-top: auto;
     justify-content: flex-end;
+    padding-top: 25px;
 }
 
 .info-sheet-name {
