@@ -229,6 +229,15 @@ body {
         text-align: center;
     }
 
+    .models-table .tr.th > div:last-child {
+        text-align: center;
+    }
+
+    .models-table .row-actions {
+        justify-content: center;
+        justify-self: center;
+    }
+
 .models-layout {
     display: grid;
     grid-template-columns: 1fr;
