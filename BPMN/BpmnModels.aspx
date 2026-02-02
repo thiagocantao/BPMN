@@ -24,10 +24,10 @@
       </header>
 
       <section class="card">
-        <div class="table">
+        <div class="table models-table">
           <div class="tr th">
-            <div>Nome</div>
-            <div>Automação</div>
+            <div class="cell-name">Nome</div>
+            <div class="cell-automation">Automação</div>
             <div>Ações</div>
           </div>
 
@@ -36,8 +36,8 @@
           </div>
 
           <div v-for="m in models" :key="m.CodigoFluxo" class="tr">
-            <div>{{ m.NomeFluxo }}</div>
-            <div>
+            <div class="cell-name">{{ m.NomeFluxo }}</div>
+            <div class="cell-automation">
               <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
             </div>
             <div class="row-actions">
