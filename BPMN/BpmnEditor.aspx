@@ -67,7 +67,12 @@
           <h3>Processo</h3>
           <label class="field">
             <span>Nome</span>
-            <input class="input" v-model="modelName" :disabled="isReadOnly" />
+            <div class="field-row">
+              <input class="input" v-model="modelName" :disabled="isReadOnly" />
+              <span class="automation-indicator" :class="{ 'is-automation': isAutomation }">
+                {{ automationLabel }}
+              </span>
+            </div>
           </label>
 
           <div class="field">

@@ -33,6 +33,8 @@ public partial class BpmnEditor : System.Web.UI.Page
         public int Id { get; set; }
         public string Name { get; set; }
         public string ModelXml { get; set; }
+        public string Description { get; set; }
+        public bool IsAutomation { get; set; }
     }
 
     public class AiResultDto
@@ -96,9 +98,14 @@ public partial class BpmnEditor : System.Web.UI.Page
         var own = cd.getDbOwner();
 
         string sql = string.Format(@"
-            SELECT Id, Name, ModelJson AS ModelXml
-              FROM [{0}].[{1}].BpmnModel
-             WHERE Id = {2};
+            SELECT w.CodigoWorkflow,
+                   f.NomeFluxo,
+                   w.TextoXMLBPMN,
+                   f.DescricaoBPMN,
+                   f.IndicaAutomacao
+              FROM [{0}].[{1}].Workflows w INNER JOIN
+                   [{0}].[{1}].Fluxos f ON f.CodigoFluxo = w.CodigoFluxo
+             WHERE w.CodigoWorkflow = {2};
         ", db, own, id);
 
         DataSet ds = cd.getDataSet(sql);
@@ -110,19 +117,22 @@ public partial class BpmnEditor : System.Web.UI.Page
 
         return new BpmnModelDto
         {
-            Id = Convert.ToInt32(r["Id"]),
-            Name = Convert.ToString(r["Name"]),
-            ModelXml = Convert.ToString(r["ModelXml"])
+            Id = Convert.ToInt32(r["CodigoWorkflow"]),
+            Name = Convert.ToString(r["NomeFluxo"]),
+            ModelXml = Convert.ToString(r["TextoXMLBPMN"]),
+            Description = Convert.ToString(r["DescricaoBPMN"]),
+            IsAutomation = Convert.ToString(r["IndicaAutomacao"]) == "S"
         };
     }
 
     [WebMethod(EnableSession = true)]
-    public static void SaveModel(int id, string name, string modelXml)
+    public static void SaveModel(int id, string name, string modelXml, string description)
     {
         if (id <= 0) throw new Exception("Id inválido.");
         name = (name ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
+        description = (description ?? "").Trim();
 
         OrderedDictionary listaParametrosDados = new OrderedDictionary();
         listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
@@ -132,18 +142,28 @@ public partial class BpmnEditor : System.Web.UI.Page
         var db = cd.getDbName();
         var own = cd.getDbOwner();
 
-        string sql = string.Format(@"
-            UPDATE [{0}].[{1}].BpmnModel
-               SET Name = '{2}',
-                   ModelJson = '{3}',
-                   UpdatedAt = SYSUTCDATETIME()
-             WHERE Id = {4};
-        ", db, own, EscapeSql(name), EscapeSql(modelXml), id);
+        string sqlWorkflow = string.Format(@"
+            UPDATE [{0}].[{1}].Workflows
+               SET TextoXMLBPMN = '{2}'
+             WHERE CodigoWorkflow = {3};
+        ", db, own, EscapeSql(modelXml), id);
 
-        int afetados = 0;
-        cd.execSQL(sql, ref afetados);
+        string sqlFluxo = string.Format(@"
+            UPDATE f
+               SET f.NomeFluxo = '{2}',
+                   f.DescricaoBPMN = '{3}'
+              FROM [{0}].[{1}].Fluxos f INNER JOIN
+                   [{0}].[{1}].Workflows w ON w.CodigoFluxo = f.CodigoFluxo
+             WHERE w.CodigoWorkflow = {4};
+        ", db, own, EscapeSql(name), EscapeSql(description), id);
 
-        if (afetados <= 0)
+        int afetadosWorkflow = 0;
+        cd.execSQL(sqlWorkflow, ref afetadosWorkflow);
+
+        int afetadosFluxo = 0;
+        cd.execSQL(sqlFluxo, ref afetadosFluxo);
+
+        if (afetadosWorkflow <= 0)
             throw new Exception("Nenhum registro foi atualizado.");
     }
 

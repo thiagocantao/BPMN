@@ -752,6 +752,7 @@
 
             const modelName = ref("");
             const processDescription = ref("");
+            const isAutomation = ref(false);
             const sidebarMode = ref("edit");
             const aiPrompt = ref("");
             const aiPromptRef = ref(null);
@@ -782,6 +783,7 @@
             const aiStepIndex = ref(0);
             const aiStepMessage = computed(() => aiSteps[aiStepIndex.value]);
             const subtitleText = computed(() => (isReadOnly.value ? "Somente leitura" : "Arraste, conecte e salve"));
+            const automationLabel = computed(() => (isAutomation.value ? "Automação: Sim" : "Automação: Não"));
             let aiStepTimer = null;
 
             const resizeAiPrompt = () => {
@@ -935,6 +937,16 @@
                 });
             };
 
+            const setProcessDescription = (html) => {
+                processDescription.value = html || "";
+                nextTick(() => {
+                    if (processDescriptionRef.value) {
+                        processDescriptionRef.value.innerHTML = processDescription.value;
+                    }
+                    syncProcessDescriptionToModeler();
+                });
+            };
+
             const syncProcessDescriptionToModeler = () => {
                 const modeler = modelerRef.value;
                 const process = getProcessDefinition(modeler);
@@ -1024,19 +1036,20 @@
                     modelId,
                     (dto) => {
                         modelName.value = dto.Name;
+                        isAutomation.value = Boolean(dto.IsAutomation);
 
                         const xml = dto.ModelXml || EMPTY_BPMN_XML;
                         modelerRef.value.importXML(xml)
                             .then(() => {
                                 modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                setProcessDescriptionFromModeler();
+                                setProcessDescription(dto.Description || "");
                             })
                             .catch((err) => {
                                 console.error(err);
                                 toast.showToast("XML inválido no banco. Carregando vazio.", "error");
                                 modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                    setProcessDescriptionFromModeler();
+                                    setProcessDescription(dto.Description || "");
                                 });
                             });
                     },
@@ -1055,11 +1068,13 @@
                 saving.value = true;
                 syncProcessDescriptionToModeler();
                 const xml = await getCurrentXml();
+                const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
 
                 PageMethods.SaveModel(
                     modelId,
                     modelName.value || "Processo",
                     xml,
+                    description,
                     () => { saving.value = false; toast.showToast("Salvo com sucesso.", "success"); },
                     (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao salvar.", "error"); }
                 );
@@ -1598,10 +1613,12 @@
                 addType,
                 modelName,
                 processDescription,
+                isAutomation,
                 sidebarMode,
                 aiPrompt,
                 aiPromptRef,
                 processDescriptionRef,
+                automationLabel,
                 showShortcuts,
                 shortcutsRef,
                 shortcutsButtonRef,
