@@ -876,6 +876,22 @@
                 showShortcuts.value = false;
             };
 
+            const isEditableTarget = (target) => {
+                if (!target) return false;
+                if (target.isContentEditable) return true;
+                const tagName = target.tagName;
+                return tagName === "INPUT" || tagName === "TEXTAREA";
+            };
+
+            const handleShortcutKeydown = (event) => {
+                if (!event.ctrlKey) return;
+                const key = (event.key || "").toLowerCase();
+                if (key !== "c" && key !== "v") return;
+                if (isEditableTarget(event.target)) return;
+                event.preventDefault();
+                event.stopPropagation();
+            };
+
             const handleDocumentClick = (event) => {
                 if (!showShortcuts.value) return;
                 const target = event.target;
@@ -1428,6 +1444,7 @@
 
             onMounted(async () => {
                 document.addEventListener("click", handleDocumentClick);
+                document.addEventListener("keydown", handleShortcutKeydown);
                 if (!aiEnabled.value) {
                     sidebarMode.value = "edit";
                 }
@@ -1565,6 +1582,7 @@
 
             onBeforeUnmount(() => {
                 document.removeEventListener("click", handleDocumentClick);
+                document.removeEventListener("keydown", handleShortcutKeydown);
                 try { __disposePopupSheet && __disposePopupSheet(); } catch (e) { }
 
                 try { if (window.__BPMN_DISPOSE_POPUP_POS_FIX__) window.__BPMN_DISPOSE_POPUP_POS_FIX__(); } catch (e) { }
