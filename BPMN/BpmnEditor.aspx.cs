@@ -53,6 +53,12 @@ public partial class BpmnEditor : System.Web.UI.Page
         return (s ?? "").Replace("'", "''");
     }
 
+    private static string NormalizeXmlForStorage(string modelXml)
+    {
+        if (string.IsNullOrWhiteSpace(modelXml)) return modelXml;
+        return Regex.Replace(modelXml, @"^\s*<\?xml[^>]*\?>\s*", "", RegexOptions.IgnoreCase);
+    }
+
     private static bool HasDateValue(object value)
     {
         return value != null && value != DBNull.Value;
@@ -125,12 +131,13 @@ public partial class BpmnEditor : System.Web.UI.Page
     {
         var db = cd.getDbName();
         var own = cd.getDbOwner();
+        var normalizedXml = NormalizeXmlForStorage(modelXml);
 
         string sqlWorkflow = string.Format(@"
             UPDATE [{0}].[{1}].Workflows
-               SET TextoXMLBPMN = '{2}'
+               SET TextoXMLBPMN = N'{2}'
              WHERE CodigoWorkflow = {3};
-        ", db, own, EscapeSql(modelXml), codigoWorkflow);
+        ", db, own, EscapeSql(normalizedXml), codigoWorkflow);
 
         int afetadosWorkflow = 0;
         cd.execSQL(sqlWorkflow, ref afetadosWorkflow);
@@ -310,13 +317,14 @@ public partial class BpmnEditor : System.Web.UI.Page
         cd.execSQL(sqlRevokePrevious, ref afetadosRevogacao);
 
         string usuario = (HttpContext.Current.Session["NomeUsuario"] ?? "").ToString();
+        var normalizedXml = NormalizeXmlForStorage(modelXml);
         string sqlPublish = string.Format(@"
             UPDATE [{0}].[{1}].Workflows
-               SET TextoXMLBPMN = '{2}',
+               SET TextoXMLBPMN = N'{2}',
                    DataPublicacao = GETDATE(),
                    UsuarioPublicacao = '{3}'
              WHERE CodigoWorkflow = {4};
-        ", db, own, EscapeSql(modelXml), EscapeSql(usuario), id);
+        ", db, own, EscapeSql(normalizedXml), EscapeSql(usuario), id);
 
         int afetadosPublish = 0;
         cd.execSQL(sqlPublish, ref afetadosPublish);
