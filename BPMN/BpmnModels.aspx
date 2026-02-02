@@ -106,6 +106,9 @@
                   <button v-if="canEditWorkflow(item)" type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
                     <i class="fa-solid fa-pencil"></i>
                   </button>
+                  <button v-else type="button" class="icon-button" @click="viewWorkflow(item.CodigoWorkflow)" aria-label="Somente consulta">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
                 </div>
               </div>
 
@@ -281,6 +284,10 @@
                     window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=edit";
                 };
 
+                const viewWorkflow = (codigoWorkflow) => {
+                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=view";
+                };
+
                 const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";
 
                 const isAutomationFlow = (item) => {
@@ -320,6 +327,7 @@
                     closeVersionsSheet,
                     createVersion,
                     editWorkflow,
+                    viewWorkflow,
                     canEditWorkflow
                 };
             }

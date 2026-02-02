@@ -22,6 +22,7 @@
       // Id vem do QueryString
       window.__BPMN_MODEL_ID__ = <%= ModelId %>;
       window.__BPMN_AI_ENABLED__ = <%= HasOpenAiKey.ToString().ToLowerInvariant() %>;
+      window.__BPMN_READ_ONLY__ = <%= IsReadOnly.ToString().ToLowerInvariant() %>;
   </script>
 
   <div id="bpmnApp" class="page">
