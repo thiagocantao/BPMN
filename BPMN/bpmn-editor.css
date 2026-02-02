@@ -568,6 +568,13 @@ body {
     width: fit-content;
 }
 
+.sidebar-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
     .sidebar-toggle button {
         border: none;
         background: transparent;
@@ -749,6 +756,10 @@ body {
     padding: 6px 10px;
     border-radius: 999px;
     white-space: nowrap;
+}
+
+.sidebar-top .automation-indicator {
+    margin-left: auto;
 }
 
     .automation-indicator.is-automation {
