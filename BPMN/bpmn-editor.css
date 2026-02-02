@@ -319,8 +319,8 @@ body {
     border: 1px solid #d4dbe6;
     background: #fff;
     color: #5a6b7b;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
     display: inline-flex;
     align-items: center;
@@ -347,12 +347,31 @@ body {
     gap: 12px;
 }
 
+.versions-sheet .btn {
+    height: 44px;
+}
+
+.versions-table .table-body {
+    display: grid;
+    gap: 8px;
+    max-height: calc(100vh - 420px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
 .versions-table .table-body .tr {
     font-size: 12px;
 }
 
 .versions-table .tr {
     grid-template-columns: 90px 110px 110px 110px 70px;
+}
+
+.versions-table .tr > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .icon-button {
@@ -508,7 +527,7 @@ body {
 
 .info-sheet-name {
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 400;
     color: #1b1f2a;
     background: #f5f7fa;
     border-radius: 999px !important;
