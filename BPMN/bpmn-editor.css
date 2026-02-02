@@ -64,6 +64,36 @@ body {
     flex-wrap: wrap;
 }
 
+.search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    border: 1px solid #d7dee8;
+    background: #fff;
+    height: 44px;
+    padding: 0 16px 0 44px;
+    font-size: 14px;
+    min-width: 260px;
+    box-shadow: 0 6px 16px rgba(31, 43, 55, 0.08);
+    border-radius: 999px !important;
+}
+
+.search-input:focus {
+    outline: 2px solid rgba(47, 128, 237, 0.2);
+    outline-offset: 2px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    color: #6c7a89;
+    font-size: 14px;
+    pointer-events: none;
+}
+
 .divider {
     width: 1px;
     height: 26px;

@@ -14,12 +14,14 @@
     <div id="app" class="page">
       <header class="topbar">
         <div>
-          <h1 class="title">Modelos BPMN</h1>
+          <h1 class="title">Fluxos</h1>
           <p class="subtitle">Selecione um fluxo para editar ou visualizar</p>
         </div>
         <div class="actions">
-          <button type="button" class="btn btn--primary" @click="createNew">+ Novo fluxo</button>
-          <button type="button" class="btn btn--ghost" @click="refresh">Atualizar</button>
+          <div class="search-field">
+            <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+            <input type="text" class="search-input" placeholder="Pesquisar fluxo..." v-model="searchTerm" />
+          </div>
         </div>
       </header>
 
@@ -36,7 +38,7 @@
               <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
             </div>
 
-            <div v-for="m in models" :key="m.CodigoFluxo" class="tr">
+            <div v-for="m in filteredModels" :key="m.CodigoFluxo" class="tr">
               <div class="cell-name">{{ m.NomeFluxo }}</div>
               <div class="cell-automation">
                 <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
@@ -51,7 +53,7 @@
               </div>
             </div>
 
-            <div v-if="!loading && models.length === 0" class="tr">
+            <div v-if="!loading && filteredModels.length === 0" class="tr">
               <div class="muted" style="grid-column: 1 / -1;">Nenhum modelo encontrado.</div>
             </div>
           </div>
@@ -137,12 +139,13 @@
 
         const toast = createToastManager();
 
-        const { createApp, ref } = Vue;
+        const { createApp, ref, computed } = Vue;
 
         createApp({
             setup() {
                 const loading = ref(false);
                 const models = ref([]);
+                const searchTerm = ref("");
 
                 const refresh = () => {
                     loading.value = true;
@@ -152,16 +155,20 @@
                     );
                 };
 
-                const createNew = () => {
-                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=-1&mode=edit";
-                };
-
                 const view = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=view";
                 const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=edit";
 
+                const filteredModels = computed(() => {
+                    const term = searchTerm.value.trim().toLowerCase();
+                    if (!term) return models.value;
+                    return models.value.filter((model) =>
+                        (model.NomeFluxo || "").toLowerCase().includes(term)
+                    );
+                });
+
                 refresh();
 
-                return { loading, models, refresh, createNew, view, edit };
+                return { loading, models, searchTerm, filteredModels, refresh, view, edit };
             }
         }).mount("#app");
     </script>
