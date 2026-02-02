@@ -43,9 +43,13 @@
           Exportar como imagem
           <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>
         </button>
-        <button type="button" class="btn btn--primary" @click="save" :disabled="saving || isReadOnly" v-if="!isReadOnly">
+        <button type="button" class="btn btn--primary" @click="save" :disabled="saving || publishing || !canSave" v-if="canSave">
           {{ saving ? 'Salvando...' : 'Salvar' }}
           <i class="fa fa-check btn__icon" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn--primary" @click="publish" :disabled="saving || publishing || !canPublish" v-if="canPublish">
+          {{ publishing ? 'Publicando...' : 'Publicar' }}
+          <i class="fa fa-upload btn__icon" aria-hidden="true"></i>
         </button>
       </div>
     </header>
@@ -68,7 +72,7 @@
           <label class="field">
             <span>Nome</span>
             <div class="field-row">
-              <input class="input" v-model="modelName" :disabled="isReadOnly" />
+              <input class="input" v-model="modelName" :disabled="!canEditName" />
               <span class="automation-indicator" :class="{ 'is-automation': isAutomation }">
                 {{ automationLabel }}
               </span>
@@ -159,6 +163,17 @@
           </button>
           <button type="button" class="icon-button" title="Re-centralizar" aria-label="Re-centralizar" @click="recenterCanvas">
             <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
+          </button>
+          <button
+            v-if="showShortcutsButton"
+            ref="shortcutsButtonRef"
+            type="button"
+            class="icon-button"
+            title="Atalhos do teclado"
+            aria-label="Atalhos do teclado"
+            @click="toggleShortcuts"
+          >
+            <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
           </button>
         </div>
         <div v-if="showShortcuts" ref="shortcutsRef" class="canvas-shortcuts" role="dialog" aria-label="Atalhos do teclado">

@@ -739,20 +739,22 @@
 
     createApp({
         setup() {
-            const modelId = window.__BPMN_MODEL_ID__ || 0;
+            const modelId = ref(window.__BPMN_MODEL_ID__ || 0);
             const params = new URLSearchParams(window.location.search || "");
             const modeParam = (params.get("mode") || "").toLowerCase();
             const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
-            const isReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
-            const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
+            const requestedReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
 
             const saving = ref(false);
+            const publishing = ref(false);
             const mode = ref("select");
             const addType = ref(null);
 
             const modelName = ref("");
             const processDescription = ref("");
             const isAutomation = ref(false);
+            const hasPublication = ref(false);
+            const hasRevocation = ref(false);
             const sidebarMode = ref("edit");
             const aiPrompt = ref("");
             const aiPromptRef = ref(null);
@@ -782,6 +784,16 @@
             ];
             const aiStepIndex = ref(0);
             const aiStepMessage = computed(() => aiSteps[aiStepIndex.value]);
+            const isAutomationPublished = computed(() => isAutomation.value && hasPublication.value && !hasRevocation.value);
+            const isAutomationReadOnly = computed(() => isAutomation.value && (!hasPublication.value || hasRevocation.value));
+            const isReadOnly = computed(() => requestedReadOnly.value || isAutomationReadOnly.value);
+            const isDiagramLocked = computed(() => isReadOnly.value || isAutomationPublished.value);
+            const canSave = computed(() => !isReadOnly.value);
+            const canPublish = computed(() => !isReadOnly.value && !isAutomation.value && !hasPublication.value);
+            const canEditName = computed(() => !isReadOnly.value && !isAutomationPublished.value);
+            const showShortcutsButton = computed(() => !isReadOnly.value);
+            const shouldBlockCopyPaste = computed(() => isReadOnly.value);
+            const aiEnabled = computed(() => Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
             const subtitleText = computed(() => (isReadOnly.value ? "Somente leitura" : "Arraste, conecte e salve"));
             const automationLabel = computed(() => (isAutomation.value ? "Automação: Sim" : "Automação: Não"));
             let aiStepTimer = null;
@@ -887,6 +899,7 @@
             };
 
             const handleShortcutKeydown = (event) => {
+                if (!shouldBlockCopyPaste.value) return;
                 if (!event.ctrlKey) return;
                 const key = (event.key || "").toLowerCase();
                 if (key !== "c" && key !== "v") return;
@@ -1033,10 +1046,12 @@
 
             const load = () => {
                 PageMethods.GetModel(
-                    modelId,
+                    modelId.value,
                     (dto) => {
                         modelName.value = dto.Name;
                         isAutomation.value = Boolean(dto.IsAutomation);
+                        hasPublication.value = Boolean(dto.HasPublication);
+                        hasRevocation.value = Boolean(dto.HasRevocation);
 
                         const xml = dto.ModelXml || EMPTY_BPMN_XML;
                         modelerRef.value.importXML(xml)
@@ -1061,9 +1076,13 @@
             };
 
             const save = async () => {
-                if (isReadOnly.value) {
+                if (!canSave.value) {
                     toast.showToast("Modo somente leitura. Clique em editar para salvar alterações.", "error");
                     return;
+                }
+                if (!isAutomation.value && hasPublication.value) {
+                    const confirmed = window.confirm("Ao salvar um fluxo já publicado, será criada uma nova versão. Confirma?");
+                    if (!confirmed) return;
                 }
                 saving.value = true;
                 syncProcessDescriptionToModeler();
@@ -1071,12 +1090,49 @@
                 const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
 
                 PageMethods.SaveModel(
-                    modelId,
+                    modelId.value,
                     modelName.value || "Processo",
                     xml,
                     description,
-                    () => { saving.value = false; toast.showToast("Salvo com sucesso.", "success"); },
+                    (newId) => {
+                        saving.value = false;
+                        if (typeof newId === "number" && newId > 0 && newId !== modelId.value) {
+                            modelId.value = newId;
+                            hasPublication.value = false;
+                            hasRevocation.value = false;
+                            toast.showToast("Nova versão criada. Agora você pode salvar e publicar.", "success");
+                            return;
+                        }
+                        toast.showToast("Salvo com sucesso.", "success");
+                    },
                     (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao salvar.", "error"); }
+                );
+            };
+
+            const publish = async () => {
+                if (!canPublish.value) return;
+                publishing.value = true;
+                syncProcessDescriptionToModeler();
+                const xml = await getCurrentXml();
+                const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+
+                PageMethods.PublishModel(
+                    modelId.value,
+                    modelName.value || "Processo",
+                    xml,
+                    description,
+                    () => {
+                        publishing.value = false;
+                        hasPublication.value = true;
+                        hasRevocation.value = false;
+                        toast.showToast("Publicado com sucesso.", "success");
+                    },
+                    (err) => {
+                        console.error(err);
+                        publishing.value = false;
+                        const message = (err && err.get_message) ? err.get_message() : "Erro ao publicar.";
+                        toast.showToast(message, "error");
+                    }
                 );
             };
 
@@ -1139,7 +1195,7 @@
             });
 
             const beginAdd = (type) => {
-                if (isReadOnly.value) return;
+                if (isDiagramLocked.value) return;
                 addType.value = type;
                 mode.value = "select";
                 const modeler = modelerRef.value;
@@ -1173,7 +1229,7 @@
             };
 
             const setMode = (m) => {
-                if (isReadOnly.value) return;
+                if (isDiagramLocked.value) return;
                 mode.value = m;
                 addType.value = null;
 
@@ -1211,7 +1267,7 @@
             };
 
             const deleteSelected = () => {
-                if (isReadOnly.value) return;
+                if (isDiagramLocked.value) return;
                 const modeler = modelerRef.value;
                 if (!modeler) return;
                 const selection = modeler.get("selection").get();
@@ -1422,39 +1478,44 @@
                 contextPad.registerProvider(provider);
             };
 
-            const applyReadOnlyGuards = (modeler) => {
-                if (!modeler || !isReadOnly.value) return;
+            const applyDiagramGuards = (modeler) => {
+                if (!modeler) return;
                 const commandStack = modeler.get("commandStack");
-                if (commandStack && !commandStack.__readonlyWrapped) {
+                if (commandStack && !commandStack.__diagramGuardWrapped) {
                     const originalExecute = commandStack.execute.bind(commandStack);
                     commandStack.execute = (command, ctx) => {
-                        if (isReadOnly.value) {
+                        if (isDiagramLocked.value) {
                             return;
                         }
                         return originalExecute(command, ctx);
                     };
-                    commandStack.__readonlyWrapped = true;
-                }
-
-                const palette = modeler.get("palette");
-                if (palette && palette._container) {
-                    palette._container.style.display = "none";
+                    commandStack.__diagramGuardWrapped = true;
                 }
 
                 const contextPad = modeler.get("contextPad");
-                if (contextPad && !contextPad.__readonlyWrapped) {
+                if (contextPad && !contextPad.__diagramGuardWrapped) {
                     const originalGetEntries = contextPad.getEntries.bind(contextPad);
                     contextPad.getEntries = (element) => {
-                        if (!isReadOnly.value) {
+                        if (!isDiagramLocked.value) {
                             return originalGetEntries(element);
                         }
                         const entries = originalGetEntries(element) || {};
-                        if (entries["info.view"]) {
-                            return { "info.view": entries["info.view"] };
+                        if (isReadOnly.value) {
+                            if (entries["info.view"]) {
+                                return { "info.view": entries["info.view"] };
+                            }
+                            return {};
                         }
-                        return {};
+                        const allowed = {};
+                        if (entries["info.edit"]) {
+                            allowed["info.edit"] = entries["info.edit"];
+                        }
+                        if (entries["info.view"]) {
+                            allowed["info.view"] = entries["info.view"];
+                        }
+                        return allowed;
                     };
-                    contextPad.__readonlyWrapped = true;
+                    contextPad.__diagramGuardWrapped = true;
                 }
             };
 
@@ -1575,13 +1636,24 @@
                 }
 
                 registerInfoContextPad(modeler);
-                applyReadOnlyGuards(modeler);
+                applyDiagramGuards(modeler);
+
+                const palette = modeler.get("palette");
+                const updatePaletteVisibility = () => {
+                    if (!palette || !palette._container) return;
+                    palette._container.style.display = isDiagramLocked.value ? "none" : "";
+                };
+                updatePaletteVisibility();
+                watch(isDiagramLocked, () => updatePaletteVisibility());
 
                 modeler.on("selection.changed", (event) => {
                     const selection = event.newSelection || [];
                     selectedIds.value = selection.map((element) => element.id);
                     selectedId.value = selection.length === 1 ? selection[0].id : null;
                     selectedElement.value = selection.length === 1 ? selection[0] : null;
+                    if (isDiagramLocked.value && !isReadOnly.value && selectedElement.value && !selectedElement.value.isRoot) {
+                        openInfoEditor(selectedElement.value);
+                    }
                 });
 
                 modeler.on("element.changed", (event) => {
@@ -1607,8 +1679,13 @@
 
             return {
                 saving,
+                publishing,
                 aiEnabled,
                 isReadOnly,
+                canSave,
+                canPublish,
+                canEditName,
+                showShortcutsButton,
                 mode,
                 addType,
                 modelName,
@@ -1646,6 +1723,7 @@
                 formatInfoEditor,
                 toggleShortcuts,
                 save,
+                publish,
                 handleBack,
                 deleteSelected,
                 zoomIn,
