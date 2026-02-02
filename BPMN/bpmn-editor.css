@@ -229,6 +229,17 @@ body {
     text-align: center;
 }
 
+.models-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.models-layout--with-sheet {
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+}
+
 .tr {
     display: grid;
     grid-template-columns: 90px 1fr 220px 220px;
@@ -254,6 +265,87 @@ body {
     justify-content: flex-end;
     flex-wrap: wrap;
     max-width: 106px;
+}
+
+.row-actions--wide {
+    max-width: 220px;
+}
+
+.row-action-button {
+    border: 1px solid #555555;
+    background: #fff;
+    color: #555555;
+    height: 32px;
+    border-radius: 6px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.row-action-button:hover {
+    background: #eef2f7;
+    border-color: #cdd7e5;
+}
+
+.versions-sheet {
+    gap: 14px;
+}
+
+.versions-sheet-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.versions-sheet-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.sheet-subtitle {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #6c7a89;
+}
+
+.sheet-close-button {
+    border: 1px solid #d4dbe6;
+    background: #fff;
+    color: #5a6b7b;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sheet-close-button:hover {
+    background: #eef2f7;
+}
+
+.versions-sheet-divider {
+    height: 1px;
+    width: 100%;
+    background: #e5ebf2;
+}
+
+.versions-sheet-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.versions-table .tr {
+    grid-template-columns: 90px 110px 110px 110px 70px;
 }
 
 .icon-button {

@@ -25,39 +25,105 @@
         </div>
       </header>
 
-      <section class="card">
-        <div class="table models-table">
-          <div class="tr th">
-            <div class="cell-name">Nome</div>
-            <div class="cell-automation">Automação</div>
-            <div>Ações</div>
-          </div>
-
-          <div class="table-body">
-            <div v-if="loading" class="tr">
-              <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
+      <section class="models-layout" :class="{ 'models-layout--with-sheet': versionsSheet.open }">
+        <div class="card">
+          <div class="table models-table">
+            <div class="tr th">
+              <div class="cell-name">Nome</div>
+              <div class="cell-automation">Automação</div>
+              <div>Ações</div>
             </div>
 
-            <div v-for="m in filteredModels" :key="m.CodigoFluxo" class="tr">
-              <div class="cell-name">{{ m.NomeFluxo }}</div>
-              <div class="cell-automation">
-                <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
+            <div class="table-body">
+              <div v-if="loading" class="tr">
+                <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
               </div>
-              <div class="row-actions">
-                <button type="button" class="icon-button" @click="view(m.CodigoFluxo)" aria-label="Visualizar">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
-                <button type="button" class="icon-button" @click="edit(m.CodigoFluxo)" aria-label="Editar">
-                  <i class="fa-solid fa-pencil"></i>
-                </button>
-              </div>
-            </div>
 
-            <div v-if="!loading && filteredModels.length === 0" class="tr">
-              <div class="muted" style="grid-column: 1 / -1;">Nenhum modelo encontrado.</div>
+              <div v-for="m in filteredModels" :key="m.CodigoFluxo" class="tr">
+                <div class="cell-name">{{ m.NomeFluxo }}</div>
+                <div class="cell-automation">
+                  <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
+                </div>
+                <div class="row-actions row-actions--wide">
+                  <button type="button" class="row-action-button" @click="openVersionsSheet(m)" aria-label="Ver versões">
+                    <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    Ver versões
+                  </button>
+                  <button type="button" class="row-action-button" @click="createVersion(m.CodigoFluxo)" aria-label="Nova versão">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Nova versão
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="!loading && filteredModels.length === 0" class="tr">
+                <div class="muted" style="grid-column: 1 / -1;">Nenhum modelo encontrado.</div>
+              </div>
             </div>
           </div>
         </div>
+
+        <aside v-if="versionsSheet.open" class="info-sheet card versions-sheet">
+          <div class="versions-sheet-header">
+            <button type="button" class="sheet-close-button" @click="closeVersionsSheet" aria-label="Fechar">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <div>
+              <h3>{{ versionsSheet.title }}</h3>
+              <p class="sheet-subtitle">Gerencie versões e edite metadados.</p>
+            </div>
+          </div>
+          <div class="versions-sheet-divider"></div>
+
+          <div class="versions-sheet-toolbar">
+            <div class="info-sheet-name">
+              Automação: {{ versionsSheet.automationLabel }}
+            </div>
+            <button type="button" class="btn btn--primary" @click="createVersion(versionsSheet.flowId)" :disabled="!versionsSheet.flowId">
+              Nova versão
+              <i class="fa fa-plus btn__icon" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="table versions-table">
+            <div class="tr th">
+              <div>Versão</div>
+              <div>Criação</div>
+              <div>Publicação</div>
+              <div>Revogação</div>
+              <div>Ações</div>
+            </div>
+
+            <div class="table-body">
+              <div v-if="versionsSheet.loading" class="tr">
+                <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
+              </div>
+
+              <div v-for="item in versionsSheet.items" :key="item.CodigoWorkflow" class="tr">
+                <div>{{ item.VersaoWorkflow }}</div>
+                <div>{{ item.DataCriacao }}</div>
+                <div>{{ item.DataPublicacao }}</div>
+                <div>{{ item.DataRevogacao }}</div>
+                <div class="row-actions">
+                  <button type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
+                    <i class="fa-solid fa-pencil"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="!versionsSheet.loading && versionsSheet.items.length === 0" class="tr">
+                <div class="muted" style="grid-column: 1 / -1;">Nenhuma versão encontrada.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-sheet-actions info-sheet-actions--bottom">
+            <button type="button" class="btn btn--ghost" @click="closeVersionsSheet">
+              Fechar
+              <i class="fa fa-close btn__icon" aria-hidden="true"></i>
+            </button>
+          </div>
+        </aside>
       </section>
     </div>
 
@@ -158,6 +224,57 @@
                 const view = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=view";
                 const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=edit";
 
+                const versionsSheet = ref({
+                    open: false,
+                    loading: false,
+                    flowId: null,
+                    title: "",
+                    automationLabel: "Não",
+                    items: []
+                });
+
+                const openVersionsSheet = (model) => {
+                    versionsSheet.value.open = true;
+                    versionsSheet.value.loading = true;
+                    versionsSheet.value.flowId = model.CodigoFluxo;
+                    versionsSheet.value.title = `Versões • ${model.NomeFluxo || ""}`;
+                    versionsSheet.value.automationLabel = model.IndicaAutomacao ? "Sim" : "Não";
+                    versionsSheet.value.items = [];
+
+                    PageMethods.ListWorkflowVersions(
+                        model.CodigoFluxo,
+                        (result) => {
+                            const items = result || [];
+                            versionsSheet.value.items = items;
+                            if (items.length > 0 && items[0].NomeFluxo) {
+                                versionsSheet.value.title = `Versões • ${items[0].NomeFluxo}`;
+                            }
+                            if (items.length > 0 && items[0].IndicaAutomacao) {
+                                versionsSheet.value.automationLabel = items[0].IndicaAutomacao === "S" ? "Sim" : "Não";
+                            }
+                            versionsSheet.value.loading = false;
+                        },
+                        (err) => {
+                            console.error(err);
+                            toast.showToast("Erro ao carregar versões.", "error");
+                            versionsSheet.value.loading = false;
+                        }
+                    );
+                };
+
+                const closeVersionsSheet = () => {
+                    versionsSheet.value.open = false;
+                };
+
+                const createVersion = (id) => {
+                    if (!id) return;
+                    edit(id);
+                };
+
+                const editWorkflow = (codigoWorkflow) => {
+                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=edit";
+                };
+
                 const filteredModels = computed(() => {
                     const term = searchTerm.value.trim().toLowerCase();
                     if (!term) return models.value;
@@ -168,7 +285,20 @@
 
                 refresh();
 
-                return { loading, models, searchTerm, filteredModels, refresh, view, edit };
+                return {
+                    loading,
+                    models,
+                    searchTerm,
+                    filteredModels,
+                    refresh,
+                    view,
+                    edit,
+                    versionsSheet,
+                    openVersionsSheet,
+                    closeVersionsSheet,
+                    createVersion,
+                    editWorkflow
+                };
             }
         }).mount("#app");
     </script>
