@@ -56,15 +56,20 @@
 
     <section class="layout" :class="{ 'layout--with-sheet': infoEditor.show || infoViewer.show }">
       <aside class="sidebar card">
-        <div v-if="aiEnabled" class="sidebar-toggle" role="group" aria-label="Modo do painel">
-          <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">
-            Editar
-            <i class="fa fa-pen btn__icon" aria-hidden="true"></i>
-          </button>
-          <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">
-            IA
-            <i class="fa fa-robot btn__icon" aria-hidden="true"></i>
-          </button>
+        <div class="sidebar-top">
+          <div v-if="aiEnabled && !isAutomation" class="sidebar-toggle" role="group" aria-label="Modo do painel">
+            <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">
+              Editar
+              <i class="fa fa-pen btn__icon" aria-hidden="true"></i>
+            </button>
+            <button type="button" :class="{ active: sidebarMode === 'ai' }" @click="sidebarMode = 'ai'">
+              IA
+              <i class="fa fa-robot btn__icon" aria-hidden="true"></i>
+            </button>
+          </div>
+          <span class="automation-indicator" :class="{ 'is-automation': isAutomation }">
+            {{ automationLabel }}
+          </span>
         </div>
 
         <div v-if="sidebarMode === 'edit' || !aiEnabled" class="sidebar-edit">
@@ -73,9 +78,6 @@
             <span>Nome</span>
             <div class="field-row">
               <input class="input" v-model="modelName" :disabled="!canEditName" />
-              <span class="automation-indicator" :class="{ 'is-automation': isAutomation }">
-                {{ automationLabel }}
-              </span>
             </div>
           </label>
 
@@ -155,9 +157,6 @@
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
         <div class="canvas-controls" role="group" aria-label="Controles de zoom">
-          <button type="button" class="icon-button" title="Reorganizar fluxo" aria-label="Reorganizar fluxo" @click="reorganizeLayout" :disabled="isDiagramLocked">
-            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
-          </button>
           <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
           </button>

@@ -793,7 +793,7 @@
             const canEditName = computed(() => !isReadOnly.value && !isAutomationPublished.value);
             const showShortcutsButton = computed(() => !isReadOnly.value);
             const shouldBlockCopyPaste = computed(() => isReadOnly.value);
-            const aiEnabled = computed(() => Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
+            const aiEnabled = computed(() => Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value && !isAutomation.value);
             const subtitleText = computed(() => (isReadOnly.value ? "Somente leitura" : "Arraste, conecte e salve"));
             const automationLabel = computed(() => (isAutomation.value ? "Automação: Sim" : "Automação: Não"));
             let aiStepTimer = null;
