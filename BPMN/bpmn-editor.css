@@ -190,6 +190,7 @@ body {
 .table {
     display: grid;
     gap: 8px;
+
 }
 
 .models-table {
