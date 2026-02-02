@@ -21,7 +21,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 100vh;
 }
 
 .topbar {
@@ -82,11 +81,11 @@ body {
     border-radius: 999px !important;
 }
 
-.search-input:focus {
-    outline: none;
-    border-color: #2f80ed;
-    box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.2);
-}
+    .search-input:focus {
+        outline: none;
+        border-color: #2f80ed;
+        box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.2);
+    }
 
 .search-icon {
     position: absolute;
@@ -200,34 +199,35 @@ body {
     flex: 1;
 }
 
-.models-table .table-body {
-    display: grid;
-    gap: 8px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 4px;
-}
+    .models-table .table-body {
+        display: grid;
+        gap: 8px;
+        flex: 1;
+        max-height: 0;
+        overflow-y: auto;
+        padding-right: 4px;
+        max-height: calc(100vh - 210px);
+    }
 
-.models-table .table-body .tr {
-    margin-right: 4px;
-}
+        .models-table .table-body .tr {
+            margin-right: 4px;
+        }
 
-.models-table .tr {
-    grid-template-columns: minmax(0, 1fr) 150px 120px;
-}
+    .models-table .tr {
+        grid-template-columns: minmax(0, 1fr) 150px 120px;
+    }
 
-.models-table .cell-name {
-    display: flex;
-    justify-content: flex-start;
-    text-align: left;
-}
+    .models-table .cell-name {
+        display: flex;
+        justify-content: flex-start;
+        text-align: left;
+    }
 
-.models-table .cell-automation {
-    display: flex;
-    justify-content: center;
-    text-align: center;
-}
+    .models-table .cell-automation {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+    }
 
 .models-layout {
     display: grid;
@@ -288,10 +288,10 @@ body {
     white-space: nowrap;
 }
 
-.row-action-button:hover {
-    background: #eef2f7;
-    border-color: #cdd7e5;
-}
+    .row-action-button:hover {
+        background: #eef2f7;
+        border-color: #cdd7e5;
+    }
 
 .versions-sheet {
     gap: 14px;
@@ -303,10 +303,10 @@ body {
     gap: 12px;
 }
 
-.versions-sheet-header h3 {
-    margin: 0;
-    font-size: 16px;
-}
+    .versions-sheet-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
 
 .sheet-subtitle {
     margin: 4px 0 0;
@@ -327,9 +327,9 @@ body {
     cursor: pointer;
 }
 
-.sheet-close-button:hover {
-    background: #eef2f7;
-}
+    .sheet-close-button:hover {
+        background: #eef2f7;
+    }
 
 .versions-sheet-divider {
     height: 1px;
