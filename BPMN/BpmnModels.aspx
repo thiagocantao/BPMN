@@ -103,7 +103,7 @@
                 <div>{{ item.DataPublicacao }}</div>
                 <div>{{ item.DataRevogacao }}</div>
                 <div class="row-actions">
-                  <button type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
+                  <button v-if="canEditWorkflow(item)" type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
                     <i class="fa-solid fa-pencil"></i>
                   </button>
                 </div>
@@ -281,6 +281,22 @@
                     window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=edit";
                 };
 
+                const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";
+
+                const isAutomationFlow = (item) => {
+                    if (item && typeof item.IndicaAutomacao !== "undefined") {
+                        return item.IndicaAutomacao === "S" || item.IndicaAutomacao === true;
+                    }
+                    return versionsSheet.value.automationLabel === "Sim";
+                };
+
+                const canEditWorkflow = (item) => {
+                    if (!isAutomationFlow(item)) {
+                        return true;
+                    }
+                    return hasValue(item.DataPublicacao) && !hasValue(item.DataRevogacao);
+                };
+
                 const filteredModels = computed(() => {
                     const term = searchTerm.value.trim().toLowerCase();
                     if (!term) return models.value;
@@ -303,7 +319,8 @@
                     openVersionsSheet,
                     closeVersionsSheet,
                     createVersion,
-                    editWorkflow
+                    editWorkflow,
+                    canEditWorkflow
                 };
             }
         }).mount("#app");
