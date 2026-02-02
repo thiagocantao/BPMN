@@ -238,7 +238,7 @@ body {
 }
 
 .models-layout--with-sheet {
-    grid-template-columns: minmax(0, 1fr) calc(var(--sidebar-width) + 245px);
+    grid-template-columns: minmax(0, 1fr) calc(var(--sidebar-width) + 200px);
 }
 
 .tr {
@@ -296,6 +296,8 @@ body {
 
 .versions-sheet {
     gap: 14px;
+    min-height: calc(100vh - 140px);
+    position: relative;
 }
 
 .versions-sheet-header {
@@ -355,25 +357,33 @@ body {
 .versions-table .table-body {
     display: grid;
     gap: 8px;
-    max-height: calc(100vh - 396px);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding-right: 4px;
 }
 
-    .versions-table .table-body .tr {
-        font-size: 12px;
-    }
+.versions-table {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.versions-table .table-body .tr {
+    font-size: 12px;
+}
 
 .versions-table .tr {
     grid-template-columns: 90px 110px 110px 110px 70px;
 }
 
-    .versions-table .tr > div {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
+.versions-table .tr > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
 
 .icon-button {
     border: 1px solid #555555;
@@ -522,7 +532,7 @@ body {
 }
 
 .info-sheet-actions--bottom {
-    margin-top: 12px;
+    margin-top: auto;
     justify-content: flex-end;
 }
 
