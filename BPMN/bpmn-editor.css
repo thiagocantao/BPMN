@@ -728,6 +728,34 @@ body {
         font-weight: 400;
     }
 
+.field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .field-row .input {
+        flex: 1;
+        min-width: 0;
+    }
+
+.automation-indicator {
+    font-size: 11px;
+    font-weight: 600;
+    color: #5a6b7b;
+    background: #f5f7fa;
+    border: 1px solid #d9e1eb;
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+    .automation-indicator.is-automation {
+        color: #0f5132;
+        background: #d1e7dd;
+        border-color: #badbcc;
+    }
+
 .input {
     border: 1px solid #d9e1eb;
     border-radius: 10px;
