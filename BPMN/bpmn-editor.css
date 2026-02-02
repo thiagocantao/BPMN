@@ -158,6 +158,22 @@ body {
     gap: 8px;
 }
 
+.models-table {
+    gap: 12px;
+}
+
+.models-table .table-body {
+    display: grid;
+    gap: 8px;
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.models-table .table-body .tr {
+    margin-right: 4px;
+}
+
 .models-table .tr {
     grid-template-columns: minmax(0, 1fr) 150px 120px;
 }
