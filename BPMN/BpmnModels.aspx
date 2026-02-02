@@ -47,11 +47,9 @@
                 <div class="row-actions row-actions--wide">
                   <button type="button" class="row-action-button" @click="openVersionsSheet(m)" aria-label="Ver versões">
                     <i class="fa-solid fa-list" aria-hidden="true"></i>
-                    Ver versões
                   </button>
                   <button type="button" class="row-action-button" @click="createVersion(m.CodigoFluxo)" aria-label="Nova versão">
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                    Nova versão
                   </button>
                 </div>
               </div>
