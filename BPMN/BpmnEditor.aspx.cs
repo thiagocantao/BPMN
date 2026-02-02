@@ -15,12 +15,17 @@ public partial class BpmnEditor : System.Web.UI.Page
 {
     protected int ModelId = 0;
     protected bool HasOpenAiKey = false;
+    protected bool IsReadOnly = false;
 
     protected void Page_Load(object sender, EventArgs e)
     {
         int id;
         ModelId = int.TryParse(Request.QueryString["id"], out id) ? id : 0;
         HasOpenAiKey = !string.IsNullOrWhiteSpace(GetOpenAiApiKey());
+
+        var mode = (Request.QueryString["mode"] ?? "").ToLowerInvariant();
+        var requestedReadOnly = mode == "view" || mode == "readonly";
+        IsReadOnly = requestedReadOnly || !CanEditWorkflow(ModelId);
     }
 
     public class BpmnModelDto
@@ -39,6 +44,44 @@ public partial class BpmnEditor : System.Web.UI.Page
     private static string EscapeSql(string s)
     {
         return (s ?? "").Replace("'", "''");
+    }
+
+    private static bool HasDateValue(object value)
+    {
+        return value != null && value != DBNull.Value;
+    }
+
+    private static bool CanEditWorkflow(int codigoWorkflow)
+    {
+        if (codigoWorkflow <= 0) return true;
+
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
+
+        string sql = string.Format(@"
+            SELECT f.IndicaAutomacao,
+                   w.DataPublicacao,
+                   w.DataRevogacao
+              FROM Workflows w INNER JOIN
+                   Fluxos f ON f.CodigoFluxo = w.CodigoFluxo
+             WHERE w.CodigoWorkflow = {2};
+        ", db, own, codigoWorkflow);
+
+        DataSet ds = cd.getDataSet(sql);
+        if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            return false;
+
+        var row = ds.Tables[0].Rows[0];
+        var isAutomation = Convert.ToString(row["IndicaAutomacao"]) == "S";
+        if (!isAutomation) return true;
+
+        var hasPublication = HasDateValue(row["DataPublicacao"]);
+        var hasRevocation = HasDateValue(row["DataRevogacao"]);
+        return hasPublication && !hasRevocation;
     }
 
     [WebMethod(EnableSession = true)]

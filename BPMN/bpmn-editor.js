@@ -742,7 +742,8 @@
             const modelId = window.__BPMN_MODEL_ID__ || 0;
             const params = new URLSearchParams(window.location.search || "");
             const modeParam = (params.get("mode") || "").toLowerCase();
-            const isReadOnly = ref(modeParam === "view" || modeParam === "readonly");
+            const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
+            const isReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
             const aiEnabled = ref(Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value);
 
             const saving = ref(false);
