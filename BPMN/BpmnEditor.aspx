@@ -145,16 +145,6 @@
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
         <div class="canvas-controls" role="group" aria-label="Controles de zoom">
-          <button
-            ref="shortcutsButtonRef"
-            type="button"
-            class="icon-button"
-            title="Atalhos do teclado"
-            aria-label="Atalhos do teclado"
-            @click="toggleShortcuts"
-          >
-            <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
-          </button>
           <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
           </button>
