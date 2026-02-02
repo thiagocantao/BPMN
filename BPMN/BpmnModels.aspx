@@ -31,27 +31,29 @@
             <div>Ações</div>
           </div>
 
-          <div v-if="loading" class="tr">
-            <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
-          </div>
-
-          <div v-for="m in models" :key="m.CodigoFluxo" class="tr">
-            <div class="cell-name">{{ m.NomeFluxo }}</div>
-            <div class="cell-automation">
-              <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
+          <div class="table-body">
+            <div v-if="loading" class="tr">
+              <div class="muted" style="grid-column: 1 / -1;">Carregando...</div>
             </div>
-            <div class="row-actions">
-              <button type="button" class="icon-button" @click="view(m.CodigoFluxo)" aria-label="Visualizar">
-                <i class="fa-regular fa-eye"></i>
-              </button>
-              <button type="button" class="icon-button" @click="edit(m.CodigoFluxo)" aria-label="Editar">
-                <i class="fa-solid fa-pencil"></i>
-              </button>
-            </div>
-          </div>
 
-          <div v-if="!loading && models.length === 0" class="tr">
-            <div class="muted" style="grid-column: 1 / -1;">Nenhum modelo encontrado.</div>
+            <div v-for="m in models" :key="m.CodigoFluxo" class="tr">
+              <div class="cell-name">{{ m.NomeFluxo }}</div>
+              <div class="cell-automation">
+                <input type="checkbox" class="checkbox" :checked="m.IndicaAutomacao" disabled />
+              </div>
+              <div class="row-actions">
+                <button type="button" class="icon-button" @click="view(m.CodigoFluxo)" aria-label="Visualizar">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+                <button type="button" class="icon-button" @click="edit(m.CodigoFluxo)" aria-label="Editar">
+                  <i class="fa-solid fa-pencil"></i>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="!loading && models.length === 0" class="tr">
+              <div class="muted" style="grid-column: 1 / -1;">Nenhum modelo encontrado.</div>
+            </div>
           </div>
         </div>
       </section>
