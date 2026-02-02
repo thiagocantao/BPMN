@@ -155,6 +155,9 @@
       <main class="canvas card">
         <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
         <div class="canvas-controls" role="group" aria-label="Controles de zoom">
+          <button type="button" class="icon-button" title="Reorganizar fluxo" aria-label="Reorganizar fluxo" @click="reorganizeLayout" :disabled="isDiagramLocked">
+            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+          </button>
           <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
           </button>

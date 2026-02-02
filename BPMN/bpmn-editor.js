@@ -1270,6 +1270,127 @@
                 modeler.get("canvas").zoom("fit-viewport", "auto");
             };
 
+            const reorganizeLayout = () => {
+                if (isDiagramLocked.value) return;
+                const modeler = modelerRef.value;
+                if (!modeler) return;
+
+                const elementRegistry = modeler.get("elementRegistry");
+                const modeling = modeler.get("modeling");
+                const canvas = modeler.get("canvas");
+
+                const flowNodes = elementRegistry.filter((element) => {
+                    if (!element || element.waypoints || element.labelTarget) return false;
+                    if (!element.businessObject || typeof element.businessObject.$instanceOf !== "function") return false;
+                    return element.businessObject.$instanceOf("bpmn:FlowNode");
+                });
+
+                if (!flowNodes.length) {
+                    toast.showToast("Não há elementos para reorganizar.", "error");
+                    return;
+                }
+
+                const nodeById = new Map(flowNodes.map((node) => [node.id, node]));
+                const incomingCounts = new Map(flowNodes.map((node) => [node.id, 0]));
+                const outgoingMap = new Map(flowNodes.map((node) => [node.id, []]));
+
+                const sequenceFlows = elementRegistry.filter(
+                    (element) => element.businessObject && element.businessObject.$type === "bpmn:SequenceFlow"
+                );
+
+                sequenceFlows.forEach((flow) => {
+                    const source = flow.businessObject.sourceRef;
+                    const target = flow.businessObject.targetRef;
+                    if (!source || !target) return;
+                    if (!nodeById.has(source.id) || !nodeById.has(target.id)) return;
+                    outgoingMap.get(source.id).push(target.id);
+                    incomingCounts.set(target.id, (incomingCounts.get(target.id) || 0) + 1);
+                });
+
+                const levels = new Map();
+                const queue = [];
+                incomingCounts.forEach((count, id) => {
+                    if (count === 0) {
+                        levels.set(id, 0);
+                        queue.push(id);
+                    }
+                });
+
+                while (queue.length) {
+                    const currentId = queue.shift();
+                    const currentLevel = levels.get(currentId) || 0;
+                    const targets = outgoingMap.get(currentId) || [];
+                    targets.forEach((targetId) => {
+                        const nextLevel = currentLevel + 1;
+                        const existingLevel = levels.get(targetId);
+                        if (existingLevel === undefined || nextLevel > existingLevel) {
+                            levels.set(targetId, nextLevel);
+                        }
+                        const nextCount = (incomingCounts.get(targetId) || 0) - 1;
+                        incomingCounts.set(targetId, nextCount);
+                        if (nextCount === 0) {
+                            queue.push(targetId);
+                        }
+                    });
+                }
+
+                let maxLevel = 0;
+                levels.forEach((level) => {
+                    if (level > maxLevel) maxLevel = level;
+                });
+
+                flowNodes.forEach((node) => {
+                    if (!levels.has(node.id)) {
+                        levels.set(node.id, maxLevel + 1);
+                    }
+                });
+
+                const maxWidth = Math.max(...flowNodes.map((node) => node.width || 0));
+                const maxHeight = Math.max(...flowNodes.map((node) => node.height || 0));
+                const columnWidth = maxWidth + 160;
+                const rowHeight = maxHeight + 80;
+                const viewbox = canvas.viewbox();
+                const startX = viewbox.x + 80;
+                const startY = viewbox.y + 80;
+
+                const levelGroups = new Map();
+                flowNodes.forEach((node) => {
+                    const level = levels.get(node.id) || 0;
+                    if (!levelGroups.has(level)) levelGroups.set(level, []);
+                    levelGroups.get(level).push(node);
+                });
+
+                Array.from(levelGroups.values()).forEach((nodes) => {
+                    nodes.sort((a, b) => (a.y - b.y) || (a.x - b.x));
+                });
+
+                Array.from(levelGroups.keys()).sort((a, b) => a - b).forEach((level) => {
+                    const nodes = levelGroups.get(level) || [];
+                    nodes.forEach((node, index) => {
+                        const targetX = startX + level * columnWidth;
+                        const targetY = startY + index * rowHeight;
+                        const delta = {
+                            x: targetX - node.x,
+                            y: targetY - node.y
+                        };
+                        if (delta.x !== 0 || delta.y !== 0) {
+                            modeling.moveShape(node, delta);
+                        }
+                    });
+                });
+
+                sequenceFlows.forEach((flow) => {
+                    try {
+                        modeling.layoutConnection(flow);
+                    } catch (err) {
+                        console.warn("Não foi possível reorganizar a conexão:", err);
+                    }
+                });
+
+                modeler.get("canvas").zoom("fit-viewport", "auto");
+                toast.showToast("Fluxo reorganizado.");
+            };
+
             const deleteSelected = () => {
                 if (isDiagramLocked.value) return;
                 const modeler = modelerRef.value;
@@ -1686,6 +1807,7 @@
                 publishing,
                 aiEnabled,
                 isReadOnly,
+                isDiagramLocked,
                 canSave,
                 canPublish,
                 canEditName,
@@ -1733,6 +1855,7 @@
                 zoomIn,
                 zoomOut,
                 recenterCanvas,
+                reorganizeLayout,
                 exportAsImage,
                 exportAsPdf,
                 bpmnCanvasRef
