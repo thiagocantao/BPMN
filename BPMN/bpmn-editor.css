@@ -158,6 +158,22 @@ body {
     gap: 8px;
 }
 
+.models-table .tr {
+    grid-template-columns: minmax(0, 1fr) 150px 120px;
+}
+
+.models-table .cell-name {
+    display: flex;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.models-table .cell-automation {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+
 .tr {
     display: grid;
     grid-template-columns: 90px 1fr 220px 220px;
@@ -1146,4 +1162,3 @@ body {
         overflow: visible !important; /* scroll fica no .djs-popup-body */
         padding-right: 12px !important;
     }
-
