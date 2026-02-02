@@ -237,7 +237,7 @@ body {
 }
 
 .models-layout--with-sheet {
-    grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+    grid-template-columns: minmax(0, 1fr) calc(var(--sidebar-width) + 200px);
 }
 
 .tr {
@@ -301,6 +301,7 @@ body {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    justify-content: space-between;
 }
 
     .versions-sheet-header h3 {
@@ -325,6 +326,8 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    margin-left: auto;
+    order: 2;
 }
 
     .sheet-close-button:hover {
@@ -342,6 +345,10 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.versions-table .table-body .tr {
+    font-size: 12px;
 }
 
 .versions-table .tr {
@@ -504,7 +511,7 @@ body {
     font-weight: 700;
     color: #1b1f2a;
     background: #f5f7fa;
-    border-radius: 10px;
+    border-radius: 999px !important;
     padding: 8px 10px;
 }
 
