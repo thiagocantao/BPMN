@@ -941,7 +941,10 @@
             const setProcessDescriptionFromModeler = () => {
                 const modeler = modelerRef.value;
                 const process = getProcessDefinition(modeler);
-                const html = process?.$attrs?.processDescriptionHtml ?? "";
+                if (process?.$attrs?.processDescriptionHtml) {
+                    delete process.$attrs.processDescriptionHtml;
+                }
+                const html = "";
                 processDescription.value = html;
                 nextTick(() => {
                     if (processDescriptionRef.value) {
@@ -965,8 +968,9 @@
                 const process = getProcessDefinition(modeler);
                 if (!process) return;
                 const html = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
-                const attrs = ensureAttrs(process);
-                attrs.processDescriptionHtml = html;
+                if (process.$attrs?.processDescriptionHtml) {
+                    delete process.$attrs.processDescriptionHtml;
+                }
                 processDescription.value = html;
             };
 
