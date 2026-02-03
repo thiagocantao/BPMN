@@ -126,6 +126,10 @@
           </div>
         </aside>
       </section>
+
+      <button type="button" class="fab-button" @click="createNewFlow" aria-label="Criar novo fluxo">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+      </button>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -288,6 +292,10 @@
                     window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=view";
                 };
 
+                const createNewFlow = () => {
+                    window.location.href = "/Bpmn/BpmnEditor.aspx";
+                };
+
                 const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";
 
                 const isAutomationFlow = (item) => {
@@ -328,7 +336,8 @@
                     createVersion,
                     editWorkflow,
                     viewWorkflow,
-                    canEditWorkflow
+                    canEditWorkflow,
+                    createNewFlow
                 };
             }
         }).mount("#app");

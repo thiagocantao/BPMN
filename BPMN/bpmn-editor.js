@@ -789,7 +789,7 @@
             const isReadOnly = computed(() => requestedReadOnly.value || isAutomationReadOnly.value);
             const isDiagramLocked = computed(() => isReadOnly.value || isAutomationPublished.value);
             const canSave = computed(() => !isReadOnly.value);
-            const canPublish = computed(() => !isReadOnly.value && !isAutomation.value && !hasPublication.value);
+            const canPublish = computed(() => !isReadOnly.value && !isAutomation.value && !hasPublication.value && modelId.value > 0);
             const canEditName = computed(() => !isReadOnly.value && !isAutomationPublished.value);
             const showShortcutsButton = computed(() => !isReadOnly.value);
             const shouldBlockCopyPaste = computed(() => isReadOnly.value);
@@ -1082,6 +1082,10 @@
             const save = async () => {
                 if (!canSave.value) {
                     toast.showToast("Modo somente leitura. Clique em editar para salvar alterações.", "error");
+                    return;
+                }
+                if (modelId.value <= 0) {
+                    toast.showToast("A inclusão de novos fluxos ainda não foi implementada.", "error");
                     return;
                 }
                 if (!isAutomation.value && hasPublication.value) {
@@ -1789,7 +1793,9 @@
                 await modeler.importXML(EMPTY_BPMN_XML);
                 modeler.get("canvas").zoom("fit-viewport", "auto");
                 setProcessDescriptionFromModeler();
-                load();
+                if (modelId.value > 0) {
+                    load();
+                }
                 nextTick(resizeAiPrompt);
             });
 
