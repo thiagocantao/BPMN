@@ -284,10 +284,15 @@ public partial class BpmnEditor : System.Web.UI.Page
         var normalizedXml = NormalizeXmlForStorage(modelXml);
 
         string sqlWorkflow = string.Format(@"
+            DECLARE @NextVersion INT;
+            SELECT @NextVersion = ISNULL(MAX(VersaoWorkflow), 0) + 1
+              FROM [{0}].[{1}].Workflows
+             WHERE CodigoFluxo = {2};
+
             INSERT INTO [{0}].[{1}].Workflows
                 (CodigoFluxo, VersaoWorkflow, VersaoFormatoXML, DataCriacao, IdentificadorUsuarioCriacao, IndicaBPMN, TextoXMLBPMN)
             VALUES
-                ({2}, 1, '001.1.029', GETDATE(), {3}, 'S', N'{4}');
+                ({2}, @NextVersion, '001.1.029', GETDATE(), {3}, 'S', N'{4}');
             SELECT CAST(SCOPE_IDENTITY() AS INT) AS CodigoWorkflow;
         ", db, own, codigoFluxo, userValue, EscapeSql(normalizedXml));
 
@@ -516,8 +521,20 @@ public partial class BpmnEditor : System.Web.UI.Page
             var db = cd.getDbName();
             var own = cd.getDbOwner();
             string sqlCreateDraft = string.Format(@"
-                INSERT INTO [{0}].[{1}].Workflows (CodigoFluxo, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao)
-                SELECT CodigoFluxo, TextoXMLBPMN, NULL, NULL, NULL
+                DECLARE @CodigoFluxo INT;
+                DECLARE @NextVersion INT;
+
+                SELECT @CodigoFluxo = CodigoFluxo
+                  FROM [{0}].[{1}].Workflows
+                 WHERE CodigoWorkflow = {2};
+
+                SELECT @NextVersion = ISNULL(MAX(VersaoWorkflow), 0) + 1
+                  FROM [{0}].[{1}].Workflows
+                 WHERE CodigoFluxo = @CodigoFluxo;
+
+                INSERT INTO [{0}].[{1}].Workflows
+                    (CodigoFluxo, VersaoWorkflow, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao)
+                SELECT CodigoFluxo, @NextVersion, TextoXMLBPMN, NULL, NULL, NULL
                   FROM [{0}].[{1}].Workflows
                  WHERE CodigoWorkflow = {2};
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
