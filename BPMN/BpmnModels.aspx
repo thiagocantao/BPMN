@@ -48,7 +48,7 @@
                   <button type="button" class="row-action-button" @click="openVersionsSheet(m)" aria-label="Ver versões">
                     <i class="fa-solid fa-list" aria-hidden="true"></i>
                   </button>
-                  <button type="button" class="row-action-button" @click="createVersion(m.CodigoFluxo)" aria-label="Nova versão">
+                  <button type="button" class="row-action-button" @click="createVersion(m.CodigoFluxo, m.IndicaAutomacao)" aria-label="Nova versão">
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
                   </button>
                 </div>
@@ -77,7 +77,7 @@
             <div class="info-sheet-name">
               Automação: {{ versionsSheet.automationLabel }}
             </div>
-            <button type="button" class="btn btn--primary" @click="createVersion(versionsSheet.flowId)" :disabled="!versionsSheet.flowId">
+            <button type="button" class="btn btn--primary" @click="createVersion(versionsSheet.flowId, versionsSheet.isAutomation)" :disabled="!versionsSheet.flowId">
               Nova versão
               <i class="fa fa-plus btn__icon" aria-hidden="true"></i>
             </button>
@@ -253,6 +253,7 @@
                     flowId: null,
                     title: "",
                     automationLabel: "Não",
+                    isAutomation: false,
                     items: []
                 });
 
@@ -262,6 +263,7 @@
                     versionsSheet.value.flowId = model.CodigoFluxo;
                     versionsSheet.value.title = `Versões • ${model.NomeFluxo || ""}`;
                     versionsSheet.value.automationLabel = model.IndicaAutomacao ? "Sim" : "Não";
+                    versionsSheet.value.isAutomation = Boolean(model.IndicaAutomacao);
                     versionsSheet.value.items = [];
 
                     PageMethods.ListWorkflowVersions(
@@ -274,6 +276,7 @@
                             }
                             if (items.length > 0 && items[0].IndicaAutomacao) {
                                 versionsSheet.value.automationLabel = items[0].IndicaAutomacao === "S" ? "Sim" : "Não";
+                                versionsSheet.value.isAutomation = items[0].IndicaAutomacao === "S";
                             }
                             versionsSheet.value.loading = false;
                         },
@@ -289,9 +292,13 @@
                     versionsSheet.value.open = false;
                 };
 
-                const createVersion = (codigoFluxo) => {
+                const createVersion = (codigoFluxo, isAutomation) => {
                     if (!codigoFluxo) return;
-                    edit(codigoFluxo, codigoFluxo);
+                    if (isAutomation) {
+                        toast.showToast("Fluxo automatizado: edite a versão publicada.", "error");
+                        return;
+                    }
+                    window.location.href = buildEditorUrl(codigoFluxo, 0, "edit");
                 };
 
                 const editWorkflow = (codigoWorkflow) => {
