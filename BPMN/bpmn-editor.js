@@ -1052,34 +1052,74 @@
             };
 
             const load = () => {
-                PageMethods.GetModel(
-                    modelId.value,
-                    (dto) => {
-                        modelName.value = dto.Name;
-                        isAutomation.value = Boolean(dto.IsAutomation);
-                        hasPublication.value = Boolean(dto.HasPublication);
-                        hasRevocation.value = Boolean(dto.HasRevocation);
+                if (modelId.value > 0) {
+                    PageMethods.GetModel(
+                        modelId.value,
+                        (dto) => {
+                            modelName.value = dto.Name;
+                            isAutomation.value = Boolean(dto.IsAutomation);
+                            hasPublication.value = Boolean(dto.HasPublication);
+                            hasRevocation.value = Boolean(dto.HasRevocation);
 
-                        const xml = dto.ModelXml || EMPTY_BPMN_XML;
-                        modelerRef.value.importXML(xml)
-                            .then(() => {
-                                modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                setProcessDescription(dto.Description || "");
-                            })
-                            .catch((err) => {
-                                console.error(err);
-                                toast.showToast("XML inválido no banco. Carregando vazio.", "error");
-                                modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
+                            const xml = dto.ModelXml || EMPTY_BPMN_XML;
+                            modelerRef.value.importXML(xml)
+                                .then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                     setProcessDescription(dto.Description || "");
+                                })
+                                .catch((err) => {
+                                    console.error(err);
+                                    toast.showToast("XML inválido no banco. Carregando vazio.", "error");
+                                    modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
+                                        modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                        setProcessDescription(dto.Description || "");
+                                    });
                                 });
-                            });
-                    },
-                    (err) => {
+                        },
+                        (err) => {
+                            console.error(err);
+                            toast.showToast("Erro ao carregar modelo.", "error");
+                        }
+                    );
+                    return;
+                }
+
+                if (flowId.value > 0) {
+                    PageMethods.GetFlowInfo(
+                        flowId.value,
+                        (dto) => {
+                            modelName.value = dto.Name || "";
+                            isAutomation.value = Boolean(dto.IsAutomation);
+                            hasPublication.value = false;
+                            hasRevocation.value = false;
+
+                            modelerRef.value.importXML(EMPTY_BPMN_XML)
+                                .then(() => {
+                                    modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                    setProcessDescription(dto.Description || "");
+                                })
+                                .catch((err) => {
+                                    console.error(err);
+                                    toast.showToast("Erro ao carregar diagrama vazio.", "error");
+                                });
+                        },
+                        (err) => {
+                            console.error(err);
+                            toast.showToast("Erro ao carregar informações do fluxo.", "error");
+                        }
+                    );
+                    return;
+                }
+
+                modelerRef.value.importXML(EMPTY_BPMN_XML)
+                    .then(() => {
+                        modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                        setProcessDescription("");
+                    })
+                    .catch((err) => {
                         console.error(err);
-                        toast.showToast("Erro ao carregar modelo.", "error");
-                    }
-                );
+                        toast.showToast("Erro ao carregar diagrama vazio.", "error");
+                    });
             };
 
             const save = async () => {
@@ -1097,6 +1137,28 @@
                     syncProcessDescriptionToModeler();
                     const xml = await getCurrentXml();
                     const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+
+                    if (flowId.value > 0) {
+                        PageMethods.CreateWorkflowForFlow(
+                            flowId.value,
+                            trimmedName,
+                            xml,
+                            description,
+                            (newId) => {
+                                saving.value = false;
+                                if (typeof newId === "number" && newId > 0) {
+                                    modelId.value = newId;
+                                    hasPublication.value = false;
+                                    hasRevocation.value = false;
+                                    toast.showToast("Nova versão criada. Agora você pode salvar e publicar.", "success");
+                                    return;
+                                }
+                                toast.showToast("Erro ao criar versão.", "error");
+                            },
+                            (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao criar versão.", "error"); }
+                        );
+                        return;
+                    }
 
                     PageMethods.CreateModel(
                         trimmedName,
@@ -1822,9 +1884,7 @@
                 await modeler.importXML(EMPTY_BPMN_XML);
                 modeler.get("canvas").zoom("fit-viewport", "auto");
                 setProcessDescriptionFromModeler();
-                if (modelId.value > 0) {
-                    load();
-                }
+                load();
                 nextTick(resizeAiPrompt);
             });
 
