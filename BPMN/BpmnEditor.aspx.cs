@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Services;
+using System.Web.SessionState;
 using System.Xml.Linq;
 
 public partial class BpmnEditor : System.Web.UI.Page
@@ -110,8 +111,12 @@ public partial class BpmnEditor : System.Web.UI.Page
         };
     }
 
-    private static void UpdateFluxoDetails(CdadosUtil cd, int codigoWorkflow, string name, string description)
+    private static void UpdateFluxoDetails(int codigoWorkflow, string name, string description)
     {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
         var db = cd.getDbName();
         var own = cd.getDbOwner();
         string sqlFluxo = string.Format(@"
@@ -127,8 +132,12 @@ public partial class BpmnEditor : System.Web.UI.Page
         cd.execSQL(sqlFluxo, ref afetadosFluxo);
     }
 
-    private static void UpdateWorkflowXml(CdadosUtil cd, int codigoWorkflow, string modelXml)
+    private static void UpdateWorkflowXml(int codigoWorkflow, string modelXml)
     {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
         var db = cd.getDbName();
         var own = cd.getDbOwner();
         var normalizedXml = NormalizeXmlForStorage(modelXml);
@@ -148,9 +157,14 @@ public partial class BpmnEditor : System.Web.UI.Page
 
     private static string GetCurrentUserIdentifierSqlValue()
     {
-        var session = HttpContext.Current.Session;
-        var raw = session["IdentificadorUsuario"] ?? session["CodigoUsuario"] ?? session["NomeUsuario"];
-        var value = raw == null ? "" : raw.ToString();
+        HttpSessionState session = HttpContext.Current.Session;
+
+        object raw =
+            session["IdentificadorUsuario"] ??
+            session["CodigoUsuario"] ??
+            session["NomeUsuario"];
+
+        string value = raw == null ? "" : raw.ToString();
 
         if (string.IsNullOrWhiteSpace(value))
             return "NULL";
@@ -159,11 +173,16 @@ public partial class BpmnEditor : System.Web.UI.Page
         if (int.TryParse(value, out numericValue))
             return numericValue.ToString();
 
-        return string.Format("'{0}'", EscapeSql(value));
+        return "'" + EscapeSql(value) + "'";
     }
 
-    private static int CreateFluxo(CdadosUtil cd, string name, bool isAutomation)
+
+    private static int CreateFluxo(string name, bool isAutomation)
     {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
         var db = cd.getDbName();
         var own = cd.getDbOwner();
         var codigoEntidade = cd.getInfoSistema("CodigoEntidade").ToString();
@@ -187,8 +206,12 @@ public partial class BpmnEditor : System.Web.UI.Page
         return codigoFluxo;
     }
 
-    private static int CreateWorkflow(CdadosUtil cd, int codigoFluxo, string modelXml)
+    private static int CreateWorkflow(int codigoFluxo, string modelXml)
     {
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
         var db = cd.getDbName();
         var own = cd.getDbOwner();
         var userValue = GetCurrentUserIdentifierSqlValue();
@@ -297,14 +320,9 @@ public partial class BpmnEditor : System.Web.UI.Page
 
         ValidateBpmnXml(modelXml);
 
-        OrderedDictionary listaParametrosDados = new OrderedDictionary();
-        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
-        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
-        var cd = CdadosUtil.GetCdados(listaParametrosDados);
-
-        var codigoFluxo = CreateFluxo(cd, name, false);
-        var codigoWorkflow = CreateWorkflow(cd, codigoFluxo, modelXml);
-        UpdateFluxoDetails(cd, codigoWorkflow, name, description);
+        var codigoFluxo = CreateFluxo(name, false);
+        var codigoWorkflow = CreateWorkflow(codigoFluxo, modelXml);
+        UpdateFluxoDetails(codigoWorkflow, name, description);
         return codigoWorkflow;
     }
 
@@ -328,11 +346,11 @@ public partial class BpmnEditor : System.Web.UI.Page
         listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
         var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-        UpdateFluxoDetails(cd, id, name, description);
+        UpdateFluxoDetails(id, name, description);
 
         if (meta.IsAutomation && meta.HasPublication && !meta.HasRevocation)
         {
-            UpdateWorkflowXml(cd, id, modelXml);
+            UpdateWorkflowXml(id, modelXml);
             return id;
         }
 
@@ -341,7 +359,7 @@ public partial class BpmnEditor : System.Web.UI.Page
             var db = cd.getDbName();
             var own = cd.getDbOwner();
             string sqlCreateDraft = string.Format(@"
-                INSERT INTO [{0}].[{1}].Workflows (CodigoFluxo, TextoXMLBPMN, DataPublicacao, DataRevogacao, UsuarioPublicacao)
+                INSERT INTO [{0}].[{1}].Workflows (CodigoFluxo, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao)
                 SELECT CodigoFluxo, TextoXMLBPMN, NULL, NULL, NULL
                   FROM [{0}].[{1}].Workflows
                  WHERE CodigoWorkflow = {2};
@@ -355,11 +373,11 @@ public partial class BpmnEditor : System.Web.UI.Page
             int newId = Convert.ToInt32(dsNew.Tables[0].Rows[0]["NewId"]);
             if (newId <= 0) throw new Exception("Falha ao criar nova versão.");
 
-            UpdateWorkflowXml(cd, newId, modelXml);
+            UpdateWorkflowXml(newId, modelXml);
             return newId;
         }
 
-        UpdateWorkflowXml(cd, id, modelXml);
+        UpdateWorkflowXml(id, modelXml);
         return id;
     }
 
@@ -385,7 +403,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
         var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-        UpdateFluxoDetails(cd, id, name, description);
+        UpdateFluxoDetails(id, name, description);
 
         var db = cd.getDbName();
         var own = cd.getDbOwner();
@@ -408,9 +426,9 @@ public partial class BpmnEditor : System.Web.UI.Page
             UPDATE [{0}].[{1}].Workflows
                SET TextoXMLBPMN = N'{2}',
                    DataPublicacao = GETDATE(),
-                   UsuarioPublicacao = '{3}'
+                   IdentificadorUsuarioPublicacao = {3}
              WHERE CodigoWorkflow = {4};
-        ", db, own, EscapeSql(normalizedXml), EscapeSql(usuario), id);
+        ", db, own, EscapeSql(normalizedXml), cd.getInfoSistema("IDUsuarioLogado"), id);
 
         int afetadosPublish = 0;
         cd.execSQL(sqlPublish, ref afetadosPublish);
@@ -423,14 +441,15 @@ public partial class BpmnEditor : System.Web.UI.Page
     {
         try
         {
-            var doc = XDocument.Parse(modelXml);
+            XDocument doc = XDocument.Parse(modelXml);
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
 
-            var process = doc.Descendants(bpmn + "process").FirstOrDefault();
+            XElement process = doc.Descendants(bpmn + "process").FirstOrDefault();
             if (process == null)
                 throw new Exception("XML não contém um processo BPMN válido.");
 
-            var flowNodes = process.Elements()
+            // Flow nodes (event/task/gateway/subProcess/callActivity)
+            List<XElement> flowNodes = process.Elements()
                 .Where(el => el.Name.Namespace == bpmn)
                 .Where(el =>
                     el.Name.LocalName.EndsWith("Event", StringComparison.OrdinalIgnoreCase) ||
@@ -440,86 +459,152 @@ public partial class BpmnEditor : System.Web.UI.Page
                     el.Name.LocalName.Equals("callActivity", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            var flowNodeIds = flowNodes
-                .Select(el => (string)el.Attribute("id"))
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // HashSet de IDs dos nós
+            HashSet<string> flowNodeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (XElement el in flowNodes)
+            {
+                XAttribute idAttr = el.Attribute("id");
+                if (idAttr == null) continue;
 
-            var startEvents = process.Elements(bpmn + "startEvent").ToList();
+                string id = idAttr.Value;
+                if (!string.IsNullOrWhiteSpace(id))
+                    flowNodeIds.Add(id);
+            }
+
+            List<XElement> startEvents = process.Elements(bpmn + "startEvent").ToList();
             if (startEvents.Count != 1)
                 throw new Exception("O processo deve conter exatamente um evento de início.");
 
-            var endEvents = process.Elements(bpmn + "endEvent").ToList();
+            List<XElement> endEvents = process.Elements(bpmn + "endEvent").ToList();
             if (endEvents.Count < 1)
                 throw new Exception("O processo deve conter pelo menos um evento de fim.");
 
-            var sequenceFlows = process.Elements(bpmn + "sequenceFlow").ToList();
+            List<XElement> sequenceFlows = process.Elements(bpmn + "sequenceFlow").ToList();
             if (sequenceFlows.Count == 0)
                 throw new Exception("O processo deve conter ao menos um fluxo de sequência.");
 
-            var edges = sequenceFlows
-                .Select(flow => new
-                {
-                    Source = (string)flow.Attribute("sourceRef"),
-                    Target = (string)flow.Attribute("targetRef")
-                })
-                .ToList();
-
-            foreach (var edge in edges)
+            // Edges
+            List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
+            foreach (XElement flow in sequenceFlows)
             {
-                if (string.IsNullOrWhiteSpace(edge.Source) || string.IsNullOrWhiteSpace(edge.Target))
+                string source = (string)flow.Attribute("sourceRef");
+                string target = (string)flow.Attribute("targetRef");
+                edges.Add(Tuple.Create(source, target));
+            }
+
+            foreach (Tuple<string, string> edge in edges)
+            {
+                string source = edge.Item1;
+                string target = edge.Item2;
+
+                if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(target))
                     throw new Exception("Há um fluxo de sequência com origem ou destino vazio.");
-                if (!flowNodeIds.Contains(edge.Source) || !flowNodeIds.Contains(edge.Target))
+
+                if (!flowNodeIds.Contains(source) || !flowNodeIds.Contains(target))
                     throw new Exception("Há um fluxo de sequência com origem ou destino inexistente.");
             }
 
-            var startId = (string)startEvents[0].Attribute("id");
+            string startId = (string)startEvents[0].Attribute("id");
             if (string.IsNullOrWhiteSpace(startId))
                 throw new Exception("Evento de início sem identificador.");
 
-            var endIds = endEvents
-                .Select(end => (string)end.Attribute("id"))
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // HashSet de IDs de fim
+            HashSet<string> endIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (XElement end in endEvents)
+            {
+                string id = (string)end.Attribute("id");
+                if (!string.IsNullOrWhiteSpace(id))
+                    endIds.Add(id);
+            }
             if (endIds.Count == 0)
                 throw new Exception("Evento de fim sem identificador.");
 
-            var adjacency = edges
-                .GroupBy(edge => edge.Source)
-                .ToDictionary(group => group.Key, group => group.Select(edge => edge.Target).ToList(), StringComparer.OrdinalIgnoreCase);
+            // adjacency[source] -> list of targets
+            Dictionary<string, List<string>> adjacency =
+                new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var queue = new Queue<string>();
+            foreach (Tuple<string, string> edge in edges)
+            {
+                string source = edge.Item1;
+                string target = edge.Item2;
+
+                List<string> list;
+                if (!adjacency.TryGetValue(source, out list))
+                {
+                    list = new List<string>();
+                    adjacency[source] = list;
+                }
+                list.Add(target);
+            }
+
+            // BFS reachability
+            HashSet<string> visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Queue<string> queue = new Queue<string>();
             queue.Enqueue(startId);
             visited.Add(startId);
 
             while (queue.Count > 0)
             {
-                var current = queue.Dequeue();
-                if (!adjacency.TryGetValue(current, out var targets)) continue;
-                foreach (var target in targets)
+                string current = queue.Dequeue();
+
+                List<string> targets;
+                if (!adjacency.TryGetValue(current, out targets))
+                    continue;
+
+                for (int i = 0; i < targets.Count; i++)
                 {
+                    string target = targets[i];
                     if (visited.Add(target))
                         queue.Enqueue(target);
                 }
             }
 
-            if (!visited.Overlaps(endIds))
+            // visited overlaps endIds
+            bool reachesEnd = false;
+            foreach (string endId in endIds)
+            {
+                if (visited.Contains(endId))
+                {
+                    reachesEnd = true;
+                    break;
+                }
+            }
+            if (!reachesEnd)
                 throw new Exception("O fluxo deve terminar em um evento de fim.");
 
-            var outgoingBySource = edges
-                .GroupBy(edge => edge.Source)
-                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+            // outgoingBySource
+            Dictionary<string, int> outgoingBySource =
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var gateway in process.Elements(bpmn + "exclusiveGateway"))
+            foreach (Tuple<string, string> edge in edges)
             {
-                var gatewayId = (string)gateway.Attribute("id");
-                if (string.IsNullOrWhiteSpace(gatewayId)) continue;
-                if (!outgoingBySource.TryGetValue(gatewayId, out var count) || count < 2)
+                string source = edge.Item1;
+                int count;
+                if (!outgoingBySource.TryGetValue(source, out count))
+                    outgoingBySource[source] = 1;
+                else
+                    outgoingBySource[source] = count + 1;
+            }
+
+            foreach (XElement gateway in process.Elements(bpmn + "exclusiveGateway"))
+            {
+                string gatewayId = (string)gateway.Attribute("id");
+                if (string.IsNullOrWhiteSpace(gatewayId))
+                    continue;
+
+                int count;
+                if (!outgoingBySource.TryGetValue(gatewayId, out count) || count < 2)
                     throw new Exception("Gateway exclusivo deve ter no mínimo duas saídas.");
             }
 
-            var disconnected = flowNodeIds.Where(id => !visited.Contains(id)).ToList();
+            // disconnected nodes (flowNodeIds not visited)
+            List<string> disconnected = new List<string>();
+            foreach (string id in flowNodeIds)
+            {
+                if (!visited.Contains(id))
+                    disconnected.Add(id);
+            }
+
             if (disconnected.Count > 0)
                 throw new Exception("Existem elementos desconectados no fluxo.");
         }
