@@ -1089,7 +1089,7 @@ body {
 }
 
 .djs-context-pad .entry.context-pad-icon--view::before {
-    content: "\f06e";
+    content: "\f002";
 }
 
 .djs-context-pad .entry.bpmn-icon-ellipsis::before,
