@@ -1087,7 +1087,33 @@
                     return;
                 }
                 if (modelId.value <= 0) {
-                    toast.showToast("A inclusão de novos fluxos ainda não foi implementada.", "error");
+                    const trimmedName = (modelName.value || "").trim();
+                    if (!trimmedName) {
+                        toast.showToast("Informe o nome do fluxo para salvar.", "error");
+                        return;
+                    }
+                    saving.value = true;
+                    syncProcessDescriptionToModeler();
+                    const xml = await getCurrentXml();
+                    const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+
+                    PageMethods.CreateModel(
+                        trimmedName,
+                        xml,
+                        description,
+                        (newId) => {
+                            saving.value = false;
+                            if (typeof newId === "number" && newId > 0) {
+                                modelId.value = newId;
+                                hasPublication.value = false;
+                                hasRevocation.value = false;
+                                toast.showToast("Fluxo criado com sucesso.", "success");
+                                return;
+                            }
+                            toast.showToast("Erro ao criar fluxo.", "error");
+                        },
+                        (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao criar fluxo.", "error"); }
+                    );
                     return;
                 }
                 if (!isAutomation.value && hasPublication.value) {
