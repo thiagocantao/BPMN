@@ -234,8 +234,18 @@
                     );
                 };
 
-                const view = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=view";
-                const edit = (id) => window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + id + "&mode=edit";
+                const buildEditorUrl = (codigoFluxo, codigoWorkflow, mode) => {
+                    const params = new URLSearchParams();
+                    params.set("CF", codigoFluxo || 0);
+                    params.set("CW", codigoWorkflow || 0);
+                    if (mode) {
+                        params.set("mode", mode);
+                    }
+                    return "/Bpmn/BpmnEditor.aspx?" + params.toString();
+                };
+
+                const view = (codigoWorkflow, codigoFluxo) => window.location.href = buildEditorUrl(codigoFluxo, codigoWorkflow, "view");
+                const edit = (codigoWorkflow, codigoFluxo) => window.location.href = buildEditorUrl(codigoFluxo, codigoWorkflow, "edit");
 
                 const versionsSheet = ref({
                     open: false,
@@ -279,21 +289,21 @@
                     versionsSheet.value.open = false;
                 };
 
-                const createVersion = (id) => {
-                    if (!id) return;
-                    edit(id);
+                const createVersion = (codigoFluxo) => {
+                    if (!codigoFluxo) return;
+                    edit(codigoFluxo, codigoFluxo);
                 };
 
                 const editWorkflow = (codigoWorkflow) => {
-                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=edit";
+                    window.location.href = buildEditorUrl(versionsSheet.value.flowId, codigoWorkflow, "edit");
                 };
 
                 const viewWorkflow = (codigoWorkflow) => {
-                    window.location.href = "/Bpmn/BpmnEditor.aspx?id=" + codigoWorkflow + "&mode=view";
+                    window.location.href = buildEditorUrl(versionsSheet.value.flowId, codigoWorkflow, "view");
                 };
 
                 const createNewFlow = () => {
-                    window.location.href = "/Bpmn/BpmnEditor.aspx";
+                    window.location.href = buildEditorUrl(0, 0);
                 };
 
                 const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";

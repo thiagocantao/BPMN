@@ -17,14 +17,17 @@ using System.Xml.Linq;
 
 public partial class BpmnEditor : System.Web.UI.Page
 {
+    protected int FlowId = 0;
     protected int ModelId = 0;
     protected bool HasOpenAiKey = false;
     protected bool IsReadOnly = false;
 
     protected void Page_Load(object sender, EventArgs e)
     {
-        int id;
-        ModelId = int.TryParse(Request.QueryString["id"], out id) ? id : 0;
+        int codigoFluxo;
+        int codigoWorkflow;
+        FlowId = int.TryParse(Request.QueryString["CF"], out codigoFluxo) ? codigoFluxo : 0;
+        ModelId = int.TryParse(Request.QueryString["CW"], out codigoWorkflow) ? codigoWorkflow : 0;
         HasOpenAiKey = !string.IsNullOrWhiteSpace(GetOpenAiApiKey());
 
         var mode = (Request.QueryString["mode"] ?? "").ToLowerInvariant();
