@@ -1703,8 +1703,16 @@
                 const commandStack = modeler.get("commandStack");
                 if (commandStack && !commandStack.__diagramGuardWrapped) {
                     const originalExecute = commandStack.execute.bind(commandStack);
+                    const moveCommands = new Set([
+                        "shape.move",
+                        "elements.move",
+                        "connection.move",
+                        "connection.layout",
+                        "connection.updateWaypoints",
+                        "label.move"
+                    ]);
                     commandStack.execute = (command, ctx) => {
-                        if (isDiagramLocked.value) {
+                        if (isDiagramLocked.value && !moveCommands.has(command)) {
                             return;
                         }
                         return originalExecute(command, ctx);
