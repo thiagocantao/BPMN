@@ -788,6 +788,8 @@
             const isAutomationPublished = computed(() => isAutomation.value && hasPublication.value && !hasRevocation.value);
             const isAutomationReadOnly = computed(() => isAutomation.value && (!hasPublication.value || hasRevocation.value));
             const isReadOnly = computed(() => requestedReadOnly.value || isAutomationReadOnly.value);
+            const isViewMode = computed(() => modeParam === "view");
+            const canMoveInView = computed(() => isReadOnly.value && isViewMode.value);
             const isDiagramLocked = computed(() => isReadOnly.value || isAutomationPublished.value);
             const canSave = computed(() => !isReadOnly.value);
             const canPublish = computed(() => !isReadOnly.value && !isAutomation.value && !hasPublication.value && modelId.value > 0);
