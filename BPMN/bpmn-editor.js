@@ -1881,9 +1881,6 @@
                     selectedIds.value = selection.map((element) => element.id);
                     selectedId.value = selection.length === 1 ? selection[0].id : null;
                     selectedElement.value = selection.length === 1 ? selection[0] : null;
-                    if (isDiagramLocked.value && !isReadOnly.value && selectedElement.value && !selectedElement.value.isRoot) {
-                        openInfoEditor(selectedElement.value);
-                    }
                 });
 
                 modeler.on("element.changed", (event) => {
