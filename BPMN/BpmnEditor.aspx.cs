@@ -223,23 +223,12 @@ public partial class BpmnEditor : System.Web.UI.Page
 
     private static string GetCurrentUserIdentifierSqlValue()
     {
-        HttpSessionState session = HttpContext.Current.Session;
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-        object raw =
-            session["IdentificadorUsuario"] ??
-            session["CodigoUsuario"] ??
-            session["NomeUsuario"];
-
-        string value = raw == null ? "" : raw.ToString();
-
-        if (string.IsNullOrWhiteSpace(value))
-            return "NULL";
-
-        int numericValue;
-        if (int.TryParse(value, out numericValue))
-            return numericValue.ToString();
-
-        return "'" + EscapeSql(value) + "'";
+        return cd.getInfoSistema("IDUsuarioLogado").ToString();
     }
 
 
@@ -516,6 +505,8 @@ public partial class BpmnEditor : System.Web.UI.Page
             return id;
         }
 
+        string usuario = GetCurrentUserIdentifierSqlValue();
+
         if (!meta.IsAutomation && meta.HasPublication)
         {
             var db = cd.getDbName();
@@ -533,12 +524,12 @@ public partial class BpmnEditor : System.Web.UI.Page
                  WHERE CodigoFluxo = @CodigoFluxo;
 
                 INSERT INTO [{0}].[{1}].Workflows
-                    (CodigoFluxo, VersaoWorkflow, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao)
-                SELECT CodigoFluxo, @NextVersion, TextoXMLBPMN, NULL, NULL, NULL
+                    (CodigoFluxo, VersaoWorkflow, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao, VersaoFormatoXML, DataCriacao, IndicaBPMN)
+                SELECT CodigoFluxo, @NextVersion, TextoXMLBPMN, NULL, NULL, {3}, '001.1.029', GETDATE(), 'S'
                   FROM [{0}].[{1}].Workflows
                  WHERE CodigoWorkflow = {2};
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
-            ", db, own, id);
+            ", db, own, id, usuario); // 
 
             DataSet dsNew = cd.getDataSet(sqlCreateDraft);
             if (dsNew == null || dsNew.Tables.Count == 0 || dsNew.Tables[0].Rows.Count == 0)
@@ -594,7 +585,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         int afetadosRevogacao = 0;
         cd.execSQL(sqlRevokePrevious, ref afetadosRevogacao);
 
-        string usuario = (HttpContext.Current.Session["NomeUsuario"] ?? "").ToString();
+        string usuario = GetCurrentUserIdentifierSqlValue();
         var normalizedXml = NormalizeXmlForStorage(modelXml);
         string sqlPublish = string.Format(@"
             UPDATE [{0}].[{1}].Workflows
@@ -602,7 +593,7 @@ public partial class BpmnEditor : System.Web.UI.Page
                    DataPublicacao = GETDATE(),
                    IdentificadorUsuarioPublicacao = {3}
              WHERE CodigoWorkflow = {4};
-        ", db, own, EscapeSql(normalizedXml), cd.getInfoSistema("IDUsuarioLogado"), id);
+        ", db, own, EscapeSql(normalizedXml), usuario, id);
 
         int afetadosPublish = 0;
         cd.execSQL(sqlPublish, ref afetadosPublish);
