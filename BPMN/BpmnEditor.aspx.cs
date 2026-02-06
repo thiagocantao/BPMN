@@ -155,10 +155,11 @@ public partial class BpmnEditor : System.Web.UI.Page
         if (string.IsNullOrWhiteSpace(value))
             return "NULL";
 
-        if (int.TryParse(value, out var numericValue))
+        int numericValue;
+        if (int.TryParse(value, out numericValue))
             return numericValue.ToString();
 
-        return $"'{EscapeSql(value)}'";
+        return string.Format("'{0}'", EscapeSql(value));
     }
 
     private static int CreateFluxo(CdadosUtil cd, string name, bool isAutomation)
