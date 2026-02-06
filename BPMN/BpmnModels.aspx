@@ -104,7 +104,7 @@
                 <div>{{ item.DataRevogacao }}</div>
                 <div class="row-actions">
                   <button v-if="canEditWorkflow(item)" type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
-                    <i class="fa-solid fa-pencil"></i>
+                    <i :class="getEditIconClass(item)" aria-hidden="true"></i>
                   </button>
                   <button v-else type="button" class="icon-button" @click="viewWorkflow(item.CodigoWorkflow)" aria-label="Somente consulta">
                     <i class="fa-solid fa-eye"></i>
@@ -322,6 +322,15 @@
                     return versionsSheet.value.automationLabel === "Sim";
                 };
 
+                const isRevokedWorkflow = (item) => hasValue(item.DataRevogacao);
+
+                const getEditIconClass = (item) => {
+                    if (!isAutomationFlow(item) && isRevokedWorkflow(item)) {
+                        return "fa-solid fa-copy";
+                    }
+                    return "fa-solid fa-pencil";
+                };
+
                 const canEditWorkflow = (item) => {
                     if (!isAutomationFlow(item)) {
                         return true;
@@ -354,6 +363,7 @@
                     editWorkflow,
                     viewWorkflow,
                     canEditWorkflow,
+                    getEditIconClass,
                     createNewFlow
                 };
             }
