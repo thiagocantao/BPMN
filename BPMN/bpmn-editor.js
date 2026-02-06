@@ -1884,9 +1884,7 @@
                 await modeler.importXML(EMPTY_BPMN_XML);
                 modeler.get("canvas").zoom("fit-viewport", "auto");
                 setProcessDescriptionFromModeler();
-                if (modelId.value > 0) {
-                    load();
-                }
+                load();
                 nextTick(resizeAiPrompt);
             });
 
