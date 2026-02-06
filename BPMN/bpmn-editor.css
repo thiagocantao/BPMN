@@ -108,9 +108,9 @@ body {
     font-weight: 600;
 }
 
-.link:hover {
-    text-decoration: underline;
-}
+    .link:hover {
+        text-decoration: underline;
+    }
 
 .fab-button {
     position: fixed;
@@ -120,7 +120,7 @@ body {
     height: 56px;
     border: none;
     border-radius: 50% !important;
-    background: #2f80ed;
+    background: #7d8e38;
     color: #fff;
     display: inline-flex;
     align-items: center;
@@ -132,20 +132,20 @@ body {
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.fab-button:hover {
-    background: #2569c9;
-    box-shadow: 0 18px 34px rgba(31, 43, 55, 0.25);
-    transform: translateY(-2px);
-}
+    .fab-button:hover {
+        background: #9CBB20;
+        box-shadow: 0 18px 34px rgba(31, 43, 55, 0.25);
+        transform: translateY(-2px);
+    }
 
-.fab-button:active {
-    transform: translateY(0);
-}
+    .fab-button:active {
+        transform: translateY(0);
+    }
 
-.fab-button:focus-visible {
-    outline: 3px solid rgba(47, 128, 237, 0.35);
-    outline-offset: 4px;
-}
+    .fab-button:focus-visible {
+        outline: 3px solid rgba(47, 128, 237, 0.35);
+        outline-offset: 4px;
+    }
 
 .card {
     background: #fff;
@@ -170,7 +170,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 8px;background: #7d8e38;
+    color: #fff;
     min-width: 150px;
     position: relative;
 }
@@ -181,8 +182,7 @@ body {
     }
 
 .btn--primary {
-    background: #7d8e38;
-    color: #fff;
+    
 }
 
     .btn--primary:hover {
