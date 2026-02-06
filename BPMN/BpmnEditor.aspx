@@ -19,8 +19,9 @@
   <asp:ScriptManager ID="sm" runat="server" EnablePageMethods="true" />
 
   <script>
-      // Id vem do QueryString
-      window.__BPMN_MODEL_ID__ = <%= ModelId %>;
+      // CF/CW vêm do QueryString
+      window.__BPMN_FLOW_ID__ = <%= FlowId %>;
+      window.__BPMN_WORKFLOW_ID__ = <%= ModelId %>;
       window.__BPMN_AI_ENABLED__ = <%= HasOpenAiKey.ToString().ToLowerInvariant() %>;
       window.__BPMN_READ_ONLY__ = <%= IsReadOnly.ToString().ToLowerInvariant() %>;
   </script>

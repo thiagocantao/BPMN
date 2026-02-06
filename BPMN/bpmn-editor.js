@@ -739,7 +739,8 @@
 
     createApp({
         setup() {
-            const modelId = ref(window.__BPMN_MODEL_ID__ || 0);
+            const modelId = ref(window.__BPMN_WORKFLOW_ID__ || 0);
+            const flowId = ref(window.__BPMN_FLOW_ID__ || 0);
             const params = new URLSearchParams(window.location.search || "");
             const modeParam = (params.get("mode") || "").toLowerCase();
             const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
@@ -1850,6 +1851,7 @@
                 addType,
                 modelName,
                 processDescription,
+                flowId,
                 isAutomation,
                 sidebarMode,
                 aiPrompt,
