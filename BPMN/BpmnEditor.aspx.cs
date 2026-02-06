@@ -146,6 +146,70 @@ public partial class BpmnEditor : System.Web.UI.Page
             throw new Exception("Nenhum registro foi atualizado.");
     }
 
+    private static string GetCurrentUserIdentifierSqlValue()
+    {
+        var session = HttpContext.Current.Session;
+        var raw = session["IdentificadorUsuario"] ?? session["CodigoUsuario"] ?? session["NomeUsuario"];
+        var value = raw == null ? "" : raw.ToString();
+
+        if (string.IsNullOrWhiteSpace(value))
+            return "NULL";
+
+        if (int.TryParse(value, out var numericValue))
+            return numericValue.ToString();
+
+        return $"'{EscapeSql(value)}'";
+    }
+
+    private static int CreateFluxo(CdadosUtil cd, string name, bool isAutomation)
+    {
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
+        var codigoEntidade = cd.getInfoSistema("CodigoEntidade").ToString();
+        var userValue = GetCurrentUserIdentifierSqlValue();
+        var automacao = isAutomation ? "S" : "N";
+
+        string sqlFluxo = string.Format(@"
+            INSERT INTO [{0}].[{1}].Fluxos
+                (NomeFluxo, CodigoSistemaWf, DataInclusao, IdentificadorUsuarioInclusao, StatusFluxo, CodigoEntidade, IndicaAutomacao)
+            VALUES
+                ('{2}', 1, GETDATE(), {3}, 'A', {4}, '{5}');
+            SELECT CAST(SCOPE_IDENTITY() AS INT) AS CodigoFluxo;
+        ", db, own, EscapeSql(name), userValue, codigoEntidade, automacao);
+
+        DataSet dsFluxo = cd.getDataSet(sqlFluxo);
+        if (dsFluxo == null || dsFluxo.Tables.Count == 0 || dsFluxo.Tables[0].Rows.Count == 0)
+            throw new Exception("Falha ao criar fluxo.");
+
+        int codigoFluxo = Convert.ToInt32(dsFluxo.Tables[0].Rows[0]["CodigoFluxo"]);
+        if (codigoFluxo <= 0) throw new Exception("Falha ao criar fluxo.");
+        return codigoFluxo;
+    }
+
+    private static int CreateWorkflow(CdadosUtil cd, int codigoFluxo, string modelXml)
+    {
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
+        var userValue = GetCurrentUserIdentifierSqlValue();
+        var normalizedXml = NormalizeXmlForStorage(modelXml);
+
+        string sqlWorkflow = string.Format(@"
+            INSERT INTO [{0}].[{1}].Workflows
+                (CodigoFluxo, VersaoWorkflow, VersaoFormatoXML, DataCriacao, IdentificadorUsuarioCriacao, IndicaBPMN, TextoXMLBPMN)
+            VALUES
+                ({2}, 1, '001.1.029', GETDATE(), {3}, 'S', N'{4}');
+            SELECT CAST(SCOPE_IDENTITY() AS INT) AS CodigoWorkflow;
+        ", db, own, codigoFluxo, userValue, EscapeSql(normalizedXml));
+
+        DataSet dsWorkflow = cd.getDataSet(sqlWorkflow);
+        if (dsWorkflow == null || dsWorkflow.Tables.Count == 0 || dsWorkflow.Tables[0].Rows.Count == 0)
+            throw new Exception("Falha ao criar workflow.");
+
+        int codigoWorkflow = Convert.ToInt32(dsWorkflow.Tables[0].Rows[0]["CodigoWorkflow"]);
+        if (codigoWorkflow <= 0) throw new Exception("Falha ao criar workflow.");
+        return codigoWorkflow;
+    }
+
     private static bool CanEditWorkflow(int codigoWorkflow)
     {
         if (codigoWorkflow <= 0) return true;
@@ -220,6 +284,27 @@ public partial class BpmnEditor : System.Web.UI.Page
             HasPublication = HasDateValue(r["DataPublicacao"]),
             HasRevocation = HasDateValue(r["DataRevogacao"])
         };
+    }
+
+    [WebMethod(EnableSession = true)]
+    public static int CreateModel(string name, string modelXml, string description)
+    {
+        name = (name ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
+        if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
+        description = (description ?? "").Trim();
+
+        ValidateBpmnXml(modelXml);
+
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
+
+        var codigoFluxo = CreateFluxo(cd, name, false);
+        var codigoWorkflow = CreateWorkflow(cd, codigoFluxo, modelXml);
+        UpdateFluxoDetails(cd, codigoWorkflow, name, description);
+        return codigoWorkflow;
     }
 
     [WebMethod(EnableSession = true)]
@@ -346,11 +431,12 @@ public partial class BpmnEditor : System.Web.UI.Page
 
             var flowNodes = process.Elements()
                 .Where(el => el.Name.Namespace == bpmn)
-                .Where(el => el.Name.LocalName.EndsWith("Event") ||
-                             el.Name.LocalName.EndsWith("Task") ||
-                             el.Name.LocalName.EndsWith("Gateway") ||
-                             el.Name.LocalName == "subProcess" ||
-                             el.Name.LocalName == "callActivity")
+                .Where(el =>
+                    el.Name.LocalName.EndsWith("Event", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.EndsWith("Task", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.EndsWith("Gateway", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.Equals("subProcess", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.Equals("callActivity", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             var flowNodeIds = flowNodes
