@@ -1714,10 +1714,8 @@
                         "label.move"
                     ]);
                     commandStack.execute = (command, ctx) => {
-                        if (isDiagramLocked.value) {
-                            if (!(canMoveInView.value && moveCommands.has(command))) {
-                                return;
-                            }
+                        if (isDiagramLocked.value && !moveCommands.has(command)) {
+                            return;
                         }
                         return originalExecute(command, ctx);
                     };
