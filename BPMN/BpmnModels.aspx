@@ -103,11 +103,11 @@
                 <div>{{ item.DataPublicacao }}</div>
                 <div>{{ item.DataRevogacao }}</div>
                 <div class="row-actions">
+                  <button type="button" class="icon-button" @click="viewWorkflow(item.CodigoWorkflow)" aria-label="Visualizar">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                  </button>
                   <button v-if="canEditWorkflow(item)" type="button" class="icon-button" @click="editWorkflow(item.CodigoWorkflow)" aria-label="Editar">
                     <i :class="getEditIconClass(item)" aria-hidden="true"></i>
-                  </button>
-                  <button v-else type="button" class="icon-button" @click="viewWorkflow(item.CodigoWorkflow)" aria-label="Somente consulta">
-                    <i class="fa-solid fa-eye"></i>
                   </button>
                 </div>
               </div>
