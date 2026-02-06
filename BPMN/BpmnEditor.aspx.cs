@@ -431,11 +431,12 @@ public partial class BpmnEditor : System.Web.UI.Page
 
             var flowNodes = process.Elements()
                 .Where(el => el.Name.Namespace == bpmn)
-                .Where(el => el.Name.LocalName.EndsWith("Event") ||
-                             el.Name.LocalName.EndsWith("Task") ||
-                             el.Name.LocalName.EndsWith("Gateway") ||
-                             el.Name.LocalName == "subProcess" ||
-                             el.Name.LocalName == "callActivity")
+                .Where(el =>
+                    el.Name.LocalName.EndsWith("Event", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.EndsWith("Task", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.EndsWith("Gateway", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.Equals("subProcess", StringComparison.OrdinalIgnoreCase) ||
+                    el.Name.LocalName.Equals("callActivity", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             var flowNodeIds = flowNodes
