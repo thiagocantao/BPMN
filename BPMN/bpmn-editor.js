@@ -795,7 +795,7 @@
             const shouldBlockCopyPaste = computed(() => isReadOnly.value);
             const aiEnabled = computed(() => Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value && !isAutomation.value);
             const subtitleText = computed(() => (isReadOnly.value
-                ? "Independentemente da regra, os elementos do BPMN poderão ser movimentados e realocados em novas posições dentro do canvas, mesmo em modo somente leitura. Dependendo da regra, ainda não será possível alterar as conexões, excluir ou adicionar novos elementos."
+                ? "Somente Leitura"
                 : "Arraste, conecte e salve"));
             const automationLabel = computed(() => (isAutomation.value ? "Automação: Sim" : "Automação: Não"));
             let aiStepTimer = null;
