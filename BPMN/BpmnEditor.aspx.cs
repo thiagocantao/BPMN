@@ -511,6 +511,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         {
             var db = cd.getDbName();
             var own = cd.getDbOwner();
+            var normalizedXml = NormalizeXmlForStorage(modelXml);
             string sqlCreateDraft = string.Format(@"
                 DECLARE @CodigoFluxo INT;
                 DECLARE @NextVersion INT;
@@ -525,11 +526,11 @@ public partial class BpmnEditor : System.Web.UI.Page
 
                 INSERT INTO [{0}].[{1}].Workflows
                     (CodigoFluxo, VersaoWorkflow, TextoXMLBPMN, DataPublicacao, DataRevogacao, IdentificadorUsuarioPublicacao, VersaoFormatoXML, DataCriacao, IndicaBPMN)
-                SELECT CodigoFluxo, @NextVersion, TextoXMLBPMN, NULL, NULL, {3}, '001.1.029', GETDATE(), 'S'
+                SELECT CodigoFluxo, @NextVersion, N'{4}', NULL, NULL, {3}, '001.1.029', GETDATE(), 'S'
                   FROM [{0}].[{1}].Workflows
                  WHERE CodigoWorkflow = {2};
                 SELECT CAST(SCOPE_IDENTITY() AS INT) AS NewId;
-            ", db, own, id, usuario); // 
+            ", db, own, id, usuario, EscapeSql(normalizedXml));
 
             DataSet dsNew = cd.getDataSet(sqlCreateDraft);
             if (dsNew == null || dsNew.Tables.Count == 0 || dsNew.Tables[0].Rows.Count == 0)
