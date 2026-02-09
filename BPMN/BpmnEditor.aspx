@@ -30,16 +30,12 @@
     <header class="topbar">
       <div class="left">
         <div class="titlewrap">
-          <h1 class="title">Editor BPMN</h1>
+          <h1 class="title">Gráfico do Fluxo</h1>
           <p class="subtitle">{{ subtitleText }}</p>
         </div>
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn--ghost" @click="handleBack">
-          Voltar
-          <i class="fa fa-arrow-left btn__icon" aria-hidden="true"></i>
-        </button>
         <button type="button" class="btn btn--primary" @click="exportAsImage">
           Exportar como imagem
           <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>
@@ -74,7 +70,7 @@
         </div>
 
         <div v-if="sidebarMode === 'edit' || !aiEnabled" class="sidebar-edit">
-          <h3>Processo</h3>
+          <h3>Fluxo</h3>
           <label class="field">
             <span>Nome</span>
             <div class="field-row">
