@@ -1,5 +1,7 @@
 using CDIS;
+using DevExpress.DataProcessing.InMemoryDataProcessor;
 using System;
+using System.Activities.Expressions;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
@@ -13,6 +15,7 @@ using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Services;
 using System.Web.SessionState;
+using System.Windows.Forms;
 using System.Xml.Linq;
 
 public partial class BpmnEditor : System.Web.UI.Page
@@ -27,12 +30,18 @@ public partial class BpmnEditor : System.Web.UI.Page
         int codigoFluxo;
         int codigoWorkflow;
         FlowId = int.TryParse(Request.QueryString["CF"], out codigoFluxo) ? codigoFluxo : 0;
-        ModelId = int.TryParse(Request.QueryString["CW"], out codigoWorkflow) ? codigoWorkflow : 0;
+        ModelId = int.TryParse(Request.QueryString["CWF"], out codigoWorkflow) ? codigoWorkflow : 0;
         HasOpenAiKey = !string.IsNullOrWhiteSpace(GetOpenAiApiKey());
 
         var mode = (Request.QueryString["mode"] ?? "").ToLowerInvariant();
         var requestedReadOnly = mode == "view" || mode == "readonly";
-        IsReadOnly = requestedReadOnly || !CanEditWorkflow(ModelId);
+
+        // ✅ Se existir CIWF na URL (visualização de instância), sempre read-only
+        int ciwfTmp;
+        var hasCiwf = int.TryParse(Request.QueryString["CIWF"], out ciwfTmp) || int.TryParse(Request.QueryString["ciwf"], out ciwfTmp);
+
+        IsReadOnly = requestedReadOnly || hasCiwf || !CanEditWorkflow(ModelId);
+
     }
 
     public class BpmnModelDto
@@ -360,6 +369,76 @@ public partial class BpmnEditor : System.Web.UI.Page
         return hasPublication && !hasRevocation;
     }
 
+
+    public class WorkflowInstanceStepDto
+    {
+        public int CodigoEtapaWf { get; set; }
+        public string IndicaEtapaAtual { get; set; }   // 'S' / 'N'
+        public string Atraso { get; set; }
+        public string ComAtraso { get; set; }          // 'S' / 'N'
+        public string DataInicioEtapa { get; set; }    // formatado
+        public string DataTerminoEtapa { get; set; }   // formatado
+        public string NomeUsuarioFinalizador { get; set; }
+        public string TextoAcao { get; set; }
+    }
+
+    [WebMethod(EnableSession = true)]
+    public static List<WorkflowInstanceStepDto> GetWorkflowInstanceHistory(int cwf, int ciwf)
+    {
+        if (cwf <= 0) throw new Exception("Código do Workflow inválido.");
+        if (ciwf <= 0) throw new Exception("Código da Instância inválido.");
+
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        listaParametrosDados["CodigoEntidade"] = HttpContext.Current.Session["CodigoEntidade"] + "";
+        listaParametrosDados["CodigoUsuario"] = HttpContext.Current.Session["CodigoUsuario"] + "";
+
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        var codigoEntidade = cd.getInfoSistema("CodigoEntidade").ToString();
+        var userValue = GetCurrentUserIdentifierSqlValue();
+
+        // ✅ Histórico da instância (na ordem de execução)
+        string sql = string.Format(@"
+       EXEC [p_brk_obtemHistoricoEtapasInstanciaWf] {0}, {1}, {2}, {3}", codigoEntidade, userValue, cwf, ciwf);
+
+        DataSet ds = cd.getDataSet(sql);
+        var list = new List<WorkflowInstanceStepDto>();
+
+        if (ds == null || ds.Tables.Count == 0) return list;
+
+        foreach (DataRow row in ds.Tables[0].Rows)
+        {
+            list.Add(new WorkflowInstanceStepDto
+            {
+                CodigoEtapaWf = Convert.ToInt32(row["CodigoEtapaWf"]),
+                IndicaEtapaAtual = Convert.ToString(row["TerminoMovimentacao"] ?? "") == "" ? "S" : "N",
+                Atraso = Convert.ToString(row["tempoAtraso"]),
+                ComAtraso = Convert.ToString(row["tempoAtraso"]) == "" ? "N" : "S",
+                DataInicioEtapa = FormatDateSafe(row["InicioMovimentacao"]),
+                DataTerminoEtapa = FormatDateSafe(row["TerminoMovimentacao"]),
+                NomeUsuarioFinalizador = Convert.ToString(row["NomeUsuarioFinalizacao"] ?? ""),
+                TextoAcao = Convert.ToString(row["textoAcaoFinalizacao"] ?? "")
+            });
+        }
+
+        return list;
+    }
+
+    private static string FormatDateSafe(object value)
+    {
+        try
+        {
+            if (value == null || value == DBNull.Value) return "";
+            var dt = Convert.ToDateTime(value);
+            return dt.ToString("dd/MM/yyyy HH:mm");
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
     [WebMethod(EnableSession = true)]
     public static BpmnModelDto GetModel(int id)
     {
@@ -374,7 +453,6 @@ public partial class BpmnEditor : System.Web.UI.Page
         string sql = string.Format(@"
             SELECT w.CodigoWorkflow,
                    f.NomeFluxo,
-                   w.TextoXMLBPMN,
                    f.DescricaoBPMN,
                    f.IndicaAutomacao,
                    w.DataPublicacao,
@@ -395,7 +473,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         {
             Id = Convert.ToInt32(r["CodigoWorkflow"]),
             Name = Convert.ToString(r["NomeFluxo"]),
-            ModelXml = Convert.ToString(r["TextoXMLBPMN"]),
+            ModelXml = null,
             Description = Convert.ToString(r["DescricaoBPMN"]),
             IsAutomation = Convert.ToString(r["IndicaAutomacao"]) == "S",
             HasPublication = HasDateValue(r["DataPublicacao"]),
