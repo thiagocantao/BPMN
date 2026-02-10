@@ -549,11 +549,11 @@ body {
 }
 
 .layout--sidebar-collapsed {
-    grid-template-columns: 0 1fr;
+    grid-template-columns: 32px 1fr;
 }
 
 .layout--with-sheet.layout--sidebar-collapsed {
-    grid-template-columns: 0 1fr var(--sidebar-width);
+    grid-template-columns: 32px 1fr var(--sidebar-width);
 }
 
 .sidebar {
@@ -566,22 +566,22 @@ body {
     border: none;
     box-shadow: none;
     background: transparent;
-    min-width: 0;
+    min-width: 32px;
 }
 
 .sidebar-collapse-handle {
     position: absolute;
-    top: 18px;
-    right: -18px;
-    width: 18px;
+    top: 60px;
+    right: 0;
+    width: 25px;
     height: 44px;
     border: 1px solid #d3d8de;
-    border-left: none;
+    border-right: none;
     background: #eceff3;
     color: #5f6b78;
     font-size: 16px;
     font-weight: 700;
-    border-radius: 0 8px 8px 0 !important;
+    border-radius: 8px 0 0 8px !important;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -598,6 +598,10 @@ body {
 .sidebar-collapse-handle:focus-visible {
     outline: 2px solid rgba(47, 128, 237, 0.35);
     outline-offset: 2px;
+}
+
+.sidebar--collapsed .sidebar-collapse-handle {
+    right: 3px;
 }
 
 .sidebar {
@@ -1368,6 +1372,10 @@ body {
 
     .sidebar-collapse-handle {
         top: 12px;
+        right: 0;
+    }
+
+    .sidebar--collapsed .sidebar-collapse-handle {
         right: 0;
     }
 
