@@ -548,6 +548,67 @@ body {
     grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
 }
 
+.layout--sidebar-collapsed {
+    grid-template-columns: 40px 1fr;
+}
+
+.layout--with-sheet.layout--sidebar-collapsed {
+    grid-template-columns: 40px 1fr var(--sidebar-width);
+}
+
+.sidebar {
+    position: relative;
+    overflow: visible;
+}
+
+.sidebar--collapsed {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    min-width: 40px;
+}
+
+.sidebar-collapse-handle {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 25px;
+    height: 44px;
+    border: 1px solid #d3d8de;
+    border-right: none;
+    background: #eceff3;
+    color: #5f6b78;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 8px 0 0 8px !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+    padding: 0;
+    line-height: 1;
+}
+
+.sidebar-collapse-handle:hover {
+    background: #e2e6ec;
+}
+
+.sidebar-collapse-handle:focus-visible {
+    outline: 2px solid rgba(47, 128, 237, 0.35);
+    outline-offset: 2px;
+}
+
+.sidebar--collapsed .sidebar-collapse-handle {
+    left: 0;
+    right: auto;
+    width: 32px;
+    border-left: none;
+    border-right: 1px solid #d3d8de;
+    border-radius: 0 8px 8px 0 !important;
+}
+
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -1307,6 +1368,21 @@ body {
 
     .layout--with-sheet {
         grid-template-columns: 1fr;
+    }
+
+    .layout--sidebar-collapsed,
+    .layout--with-sheet.layout--sidebar-collapsed {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar-collapse-handle {
+        top: 12px;
+        right: 0;
+    }
+
+    .sidebar--collapsed .sidebar-collapse-handle {
+        left: 0;
+        right: auto;
     }
 
     .canvas {

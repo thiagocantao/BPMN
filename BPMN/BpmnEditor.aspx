@@ -51,8 +51,18 @@
       </div>
     </header>
 
-    <section class="layout" :class="{ 'layout--with-sheet': infoEditor.show || infoViewer.show }">
-      <aside class="sidebar card">
+    <section class="layout" :class="{ 'layout--with-sheet': infoEditor.show || infoViewer.show, 'layout--sidebar-collapsed': sidebarCollapsed }">
+      <aside class="sidebar card" :class="{ 'sidebar--collapsed': sidebarCollapsed }">
+        <button
+          type="button"
+          class="sidebar-collapse-handle"
+          :aria-label="sidebarCollapsed ? 'Abrir painel lateral' : 'Fechar painel lateral'"
+          @click="toggleSidebar"
+        >
+          {{ sidebarCollapsed ? '>' : '<' }}
+        </button>
+
+        <template v-if="!sidebarCollapsed">
         <div class="sidebar-top">
           <div v-if="aiEnabled && !isAutomation" class="sidebar-toggle" role="group" aria-label="Modo do painel">
             <button type="button" :class="{ active: sidebarMode === 'edit' }" @click="sidebarMode = 'edit'">
@@ -149,6 +159,7 @@
             </button>
           </div>
         </div>
+        </template>
       </aside>
 
       <main class="canvas card">
