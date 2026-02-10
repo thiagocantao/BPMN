@@ -567,6 +567,7 @@ body {
     box-shadow: none;
     background: transparent;
     min-width: 40px;
+    border-left: 1px solid #EBEB;
 }
 
 .sidebar-collapse-handle {
@@ -591,14 +592,14 @@ body {
     line-height: 1;
 }
 
-.sidebar-collapse-handle:hover {
-    background: #e2e6ec;
-}
+    .sidebar-collapse-handle:hover {
+        background: #e2e6ec;
+    }
 
-.sidebar-collapse-handle:focus-visible {
-    outline: 2px solid rgba(47, 128, 237, 0.35);
-    outline-offset: 2px;
-}
+    .sidebar-collapse-handle:focus-visible {
+        outline: 2px solid rgba(47, 128, 237, 0.35);
+        outline-offset: 2px;
+    }
 
 .sidebar--collapsed .sidebar-collapse-handle {
     left: 0;
@@ -1370,10 +1371,10 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .layout--sidebar-collapsed,
-    .layout--with-sheet.layout--sidebar-collapsed {
-        grid-template-columns: 1fr;
-    }
+        .layout--sidebar-collapsed,
+        .layout--with-sheet.layout--sidebar-collapsed {
+            grid-template-columns: 1fr;
+        }
 
     .sidebar-collapse-handle {
         top: 12px;
