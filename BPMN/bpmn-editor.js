@@ -391,10 +391,12 @@
 
         // se não tiver no dicionário, devolve a original e loga (pra você completar o mapa)
         if (!translated) {
-            const params = new URLSearchParams(window.location.search || "");
-            if (params.has("debugTranslate")) {
-                console.warn("[bpmn-i18n] missing:", raw);
-            }
+            try {
+                const params = new URLSearchParams(window.location.search || "");
+                if (params.has("debugTranslate")) {
+                    console.warn("[bpmn-i18n] missing:", raw);
+                }
+            } catch (e) { }
             translated = raw;
         }
 
@@ -742,10 +744,32 @@
             const modelId = ref(window.__BPMN_WORKFLOW_ID__ || 0);
             const flowId = ref(window.__BPMN_FLOW_ID__ || 0);
             const params = new URLSearchParams(window.location.search || "");
+            const getQsInsensitive = (key) => {
+                if (!key) return "";
+                const target = String(key).toLowerCase();
+                for (const [k, v] of params.entries()) {
+                    if (String(k).toLowerCase() === target) return v || "";
+                }
+                return "";
+            };
+            const getIntQsInsensitive = (key) => {
+                const v = getQsInsensitive(key);
+                const n = parseInt(v, 10);
+                return Number.isFinite(n) ? n : 0;
+            };
+
+            // ✅ Modo instância (opcional): cwf/ciwf podem não vir
+            const ciwf = ref(getIntQsInsensitive("ciwf"));
+            const cwfFromQs = ref(getIntQsInsensitive("cwf"));
             const modeParam = (params.get("mode") || "").toLowerCase();
             const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
             const requestedReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
 
+
+
+            if (ciwf.value > 0) {
+                requestedReadOnly.value = true;
+            }
             const saving = ref(false);
             const publishing = ref(false);
             const mode = ref("select");
@@ -788,6 +812,372 @@
             const isAutomationPublished = computed(() => isAutomation.value && hasPublication.value && !hasRevocation.value);
             const isAutomationReadOnly = computed(() => isAutomation.value && (!hasPublication.value || hasRevocation.value));
             const isReadOnly = computed(() => requestedReadOnly.value || isAutomationReadOnly.value);
+
+
+
+            const isInstanceView = computed(() => ciwf.value > 0);
+
+            const instanceTraceMap = ref({});          // { [elementId]: stepDto }
+            const instanceTraceOrderedIds = ref([]);   // ids na ordem
+            const instanceCurrentId = ref("");
+
+            const ensureTraceStylesInjected = () => {
+                if (!isInstanceView.value) return;
+                const id = "brisk-trace-style";
+                if (document.getElementById(id)) return;
+
+                const style = document.createElement("style");
+                style.id = id;
+                style.type = "text/css";
+                style.textContent = `
+/* ===== BRISK - Trilha de execução (injetado via JS) ===== */
+
+/* Nós concluídos (somente quem realmente percorreu) */
+.brisk-completed .djs-visual > :nth-child(1) {
+  stroke: #2e7d32 !important;
+  fill: #e8f5e9 !important;
+}
+
+/* Etapa atual (somente o nó) */
+.brisk-active .djs-visual > :nth-child(1) {
+  stroke: #ef6c00 !important;
+  fill: #fff3e0 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.18));
+  animation: briskPulse 1.2s ease-in-out infinite;
+}
+
+/* Conectores percorridos (linha/aresta). ✅ Anima só na aresta (não há animação no marcador da seta) */
+.brisk-flow-completed .djs-visual path {
+  stroke: #2e7d32 !important;
+  stroke-width: 2.6px !important;
+  stroke-linecap: round !important;
+  stroke-dasharray: 7 6;
+  animation: briskFlowDash 1.1s linear infinite;
+}
+
+/* Texto dos conectores (default preto) */
+.djs-connection .djs-label {
+  fill: #000 !important;
+}
+
+/* Texto dos conectores percorridos (verde escuro) */
+.brisk-flow-completed .djs-label {
+  fill: #1b5e20 !important;
+}
+
+@keyframes briskFlowDash { to { stroke-dashoffset: -60; } }
+@keyframes briskPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+/* Tooltip moderno (overlays) */
+.brisk-tooltip{
+  background: rgba(20, 23, 31, 0.94);
+  color: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-width: 220px;
+  max-width: 360px;
+  font: 13px/1.35 Inter, Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  box-shadow: 0 14px 40px rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(8px);
+}
+.brisk-tooltip b{ font-weight: 700; color: #ffd59a; }
+.brisk-tooltip > div{ display:block; padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.djs-overlay.brisk-tooltip, .brisk-tooltip{ pointer-events:none; }
+`;
+                document.head.appendChild(style);
+            };
+
+            const escapeHtml = (s) => {
+                return String(s || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            };
+
+            const clearTraceMarkers = (modeler) => {
+                const canvas = modeler.get("canvas");
+                const elementRegistry = modeler.get("elementRegistry");
+                for (const el of elementRegistry.getAll()) {
+                    canvas.removeMarker(el.id, "brisk-completed");
+                    canvas.removeMarker(el.id, "brisk-active");
+                    canvas.removeMarker(el.id, "brisk-not-visited");
+                    canvas.removeMarker(el.id, "brisk-flow-completed");
+                    canvas.removeMarker(el.id, "brisk-flow-active");
+                }
+            };
+
+            const computePathEdgesBetween = (modeler, fromId, toId) => {
+                const elementRegistry = modeler.get("elementRegistry");
+                const flows = [];
+                for (const el of elementRegistry.getAll()) {
+                    if (el && el.type === "bpmn:SequenceFlow" && el.source && el.target) {
+                        flows.push({ id: el.id, source: el.source.id, target: el.target.id });
+                    }
+                }
+                const adj = new Map();
+                for (const f of flows) {
+                    if (!adj.has(f.source)) adj.set(f.source, []);
+                    adj.get(f.source).push({ next: f.target, flowId: f.id });
+                }
+                const q = [fromId];
+                const prev = new Map();
+                prev.set(fromId, null);
+
+                while (q.length) {
+                    const cur = q.shift();
+                    if (cur === toId) break;
+                    for (const n of (adj.get(cur) || [])) {
+                        if (prev.has(n.next)) continue;
+                        prev.set(n.next, { node: cur, flowId: n.flowId });
+                        q.push(n.next);
+                    }
+                }
+                if (!prev.has(toId)) return [];
+                const edges = [];
+                let cur = toId;
+                while (cur !== fromId) {
+                    const p = prev.get(cur);
+                    if (!p) break;
+                    edges.push(p.flowId);
+                    cur = p.node;
+                }
+                edges.reverse();
+                return edges;
+            };
+
+            const buildInstanceTrace = (modeler, rows) => {
+                const elementRegistry = modeler.get("elementRegistry");
+                const map = {};
+                const ordered = [];
+                let current = "";
+
+                const resolveElementId = (codigoEtapaWf) => {
+                    const n = parseInt(codigoEtapaWf, 10);
+                    if (!Number.isFinite(n) || n <= 0) return "";
+
+                    // padrão do BRISK: "TipoElemento_<CodigoEtapaWf>"
+                    const candidates = [
+                        `Task_${n}`,
+                        `UserTask_${n}`,
+                        `ServiceTask_${n}`,
+                        `CallActivity_${n}`,
+                        `SubProcess_${n}`,
+                        `ExclusiveGateway_${n}`,
+                        `ParallelGateway_${n}`,
+                        `Gateway_${n}`,
+                        `StartEvent_${n}`,
+                        `EndEvent_${n}`
+                    ];
+
+                    for (const id of candidates) {
+                        if (elementRegistry.get(id)) return id;
+                    }
+
+                    // fallback: qualquer coisa que termine com _<n>
+                    const suffix = `_${n}`;
+                    const found = elementRegistry.getAll().find(e =>
+                        e && typeof e.id === "string" &&
+                        e.id.endsWith(suffix) &&
+                        e.type !== "bpmn:SequenceFlow"
+                    );
+                    return found ? found.id : "";
+                };
+
+                (rows || []).forEach(r => {
+                    const elementId = resolveElementId(r.CodigoEtapaWf);
+                    if (!elementId) return;
+
+                    map[elementId] = r;
+                    if (!ordered.includes(elementId)) ordered.push(elementId);
+
+                    if ((r.IndicaEtapaAtual || "").toUpperCase() === "S") current = elementId;
+                });
+
+                return { map, ordered, current };
+            };
+
+            const setupInstanceHoverHints = (modeler) => {
+                const overlays = modeler.get("overlays");
+                const eventBus = modeler.get("eventBus");
+                let lastOverlayId = null;
+
+                const makeHtml = (step) => {
+                    if (!step) return "";
+                    const lines = [];
+                    if (step.DataInicioEtapa) lines.push(`<div><b>Início:</b> ${escapeHtml(step.DataInicioEtapa)}</div>`);
+                    if (step.DataTerminoEtapa) lines.push(`<div><b>Término:</b> ${escapeHtml(step.DataTerminoEtapa)}</div>`);
+                    if (step.TextoAcao) lines.push(`<div><b>Ação:</b> ${escapeHtml(step.TextoAcao)}</div>`);
+                    if (step.NomeUsuarioFinalizador) lines.push(`<div><b>Responsável:</b> ${escapeHtml(step.NomeUsuarioFinalizador)}</div>`);
+                    if ((step.ComAtraso || "").toUpperCase() === "S" && Number(step.Atraso) > 0) {
+                        lines.push(`<div><b>Atraso:</b> ${escapeHtml(String(step.Atraso))}</div>`);
+                    }
+                    return `<div class="brisk-tooltip">${lines.join("")}</div>`;
+                };
+
+                const show = (element) => {
+                    if (!element || !element.id) return;
+                    const step = instanceTraceMap.value[element.id];
+                    if (!step) return;
+
+                    if (lastOverlayId) {
+                        try { overlays.remove({ id: lastOverlayId }); } catch { }
+                        lastOverlayId = null;
+                    }
+
+
+                    // ✅ Tooltip não deve abrir "em cima" do elemento.
+                    // Colocamos ao lado (preferência: direita). Se estiver perto da borda direita do viewport,
+                    // colocamos à esquerda para não cortar.
+                    const TOOLTIP_W = 280;
+                    const PAD = 14;
+
+                    let tooltipPosition = {
+                        top: -Math.round(((element.height || 70) / 2) - 8),
+                        left: Math.round((element.width || 140) + PAD)
+                    };
+
+                    try {
+                        const canvasSvc = modeler.get("canvas");
+                        const vb = canvasSvc && canvasSvc.viewbox ? canvasSvc.viewbox() : null;
+                        if (vb) {
+                            const rightEdge = vb.x + vb.width;
+                            const wouldCutRight = (element.x + (element.width || 0) + TOOLTIP_W + PAD) > rightEdge;
+                            if (wouldCutRight) {
+                                tooltipPosition.left = -Math.max(TOOLTIP_W, 240); // joga para a esquerda
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    lastOverlayId = overlays.add(element.id, {
+                        position: tooltipPosition,
+                        html: makeHtml(step)
+                    });
+                };
+
+                const hide = () => {
+                    if (!lastOverlayId) return;
+                    try { overlays.remove({ id: lastOverlayId }); } catch { }
+                    lastOverlayId = null;
+                };
+
+                eventBus.on("element.hover", (e) => {
+                    if (!isInstanceView.value) return;
+                    const el = e && e.element;
+                    if (!el || !el.type || !String(el.type).startsWith("bpmn:")) return;
+                    if (el.type === "bpmn:SequenceFlow") return;
+                    show(el);
+                });
+
+                eventBus.on("element.out", () => {
+                    if (!isInstanceView.value) return;
+                    hide();
+                });
+
+                eventBus.on("canvas.click", () => {
+                    if (!isInstanceView.value) return;
+                    hide();
+                });
+            };
+
+            const animateInstanceTrace = async (modeler) => {
+                const canvas = modeler.get("canvas");
+                const elementRegistry = modeler.get("elementRegistry");
+
+                clearTraceMarkers(modeler);
+
+                const ordered = instanceTraceOrderedIds.value || [];
+                const current = instanceCurrentId.value || "";
+                // ✅ também destaca o conector do início (StartEvent) até a primeira etapa executada
+                const highlightStartToFirst = () => {
+                    if (!ordered.length) return;
+                    const firstId = ordered[0];
+
+                    const startEvents = elementRegistry.getAll()
+                        .filter(e => e && e.type === "bpmn:StartEvent");
+
+                    for (const se of startEvents) {
+                        const edges = computePathEdgesBetween(modeler, se.id, firstId);
+                        if (edges && edges.length) {
+                            for (const fid of edges) canvas.addMarker(fid, "brisk-flow-completed");
+                            return;
+                        }
+                    }
+                };
+
+                highlightStartToFirst();
+
+                const delayMs = 260;
+
+
+                for (let i = 0; i < ordered.length; i++) {
+                    const id = ordered[i];
+                    if (!id) continue;
+
+                    canvas.addMarker(id, "brisk-completed");
+
+                    if (i > 0) {
+                        const prevId = ordered[i - 1];
+                        const edges = computePathEdgesBetween(modeler, prevId, id);
+                        for (const fid of edges) canvas.addMarker(fid, "brisk-flow-completed");
+                    }
+
+                    await new Promise(r => setTimeout(r, delayMs));
+                }
+                if (current) {
+                    canvas.addMarker(current, "brisk-active");
+                }
+            };
+
+            const loadInstanceHistoryAndApply = () => {
+                if (!isInstanceView.value) return;
+
+                const pm = window.PageMethods || null;
+                if (!pm || typeof pm.GetWorkflowInstanceHistory !== "function") {
+                    console.warn("PageMethods.GetWorkflowInstanceHistory indisponível (ScriptManager?)");
+                    return;
+                }
+
+                // cwf é obrigatório p/ esta feature; se não vier, não tenta adivinhar para não marcar errado
+                const cwf = cwfFromQs.value;
+                if (cwf <= 0 || ciwf.value <= 0) return;
+
+                pm.GetWorkflowInstanceHistory(
+                    cwf,
+                    ciwf.value,
+                    (rows) => {
+                        const modeler = modelerRef.value;
+                        if (!modeler) return;
+
+                        ensureTraceStylesInjected();
+
+                        const built = buildInstanceTrace(modeler, rows || []);
+                        instanceTraceMap.value = built.map || {};
+                        instanceTraceOrderedIds.value = built.ordered || [];
+                        instanceCurrentId.value = built.current || "";
+
+                        // debug opcional: ?debugTrace=1
+                        try {
+                            if (params.has("debugTrace")) {
+                                console.log("[BRISK trace] cwf=", cwf, "ciwf=", ciwf.value);
+                                console.table(rows || []);
+                                console.log("[BRISK trace] built:", built);
+                            }
+                        } catch { }
+
+                        animateInstanceTrace(modeler);
+                        setupInstanceHoverHints(modeler);
+                    },
+                    (err) => {
+                        console.error(err);
+                        try { toast.showToast("Falha ao carregar histórico da instância.", "error"); } catch { }
+                    }
+                );
+            };
+
             const isViewMode = computed(() => modeParam === "view");
             const canMoveInView = computed(() => isReadOnly.value && isViewMode.value);
             const isDiagramLocked = computed(() => isReadOnly.value || isAutomationPublished.value);
@@ -1053,30 +1443,58 @@
                 }
             };
 
+
+            const fetchModelXml = async (id) => {
+                const url = `BpmnModelXml.ashx?id=${encodeURIComponent(id)}`;
+                const resp = await fetch(url, {
+                    method: "GET",
+                    credentials: "same-origin",
+                    cache: "no-store"
+                });
+                if (!resp.ok) {
+                    throw new Error(`Falha ao carregar XML (HTTP ${resp.status})`);
+                }
+                return await resp.text();
+            };
+
+
             const load = () => {
                 if (modelId.value > 0) {
                     PageMethods.GetModel(
                         modelId.value,
-                        (dto) => {
+                        async (dto) => {
                             modelName.value = dto.Name;
                             isAutomation.value = Boolean(dto.IsAutomation);
                             hasPublication.value = Boolean(dto.HasPublication);
                             hasRevocation.value = Boolean(dto.HasRevocation);
 
-                            const xml = dto.ModelXml || EMPTY_BPMN_XML;
-                            modelerRef.value.importXML(xml)
-                                .then(() => {
+                            try {
+                                const xmlText = await fetchModelXml(modelId.value);
+                                const xml = (xmlText && xmlText.trim()) ? xmlText : EMPTY_BPMN_XML;
+
+                                modelerRef.value.importXML(xml)
+                                    .then(() => {
+                                        modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+
+                                        loadInstanceHistoryAndApply();
+                                        setProcessDescription(dto.Description || "");
+                                    })
+                                    .catch((err) => {
+                                        console.error(err);
+                                        toast.showToast("XML inválido no banco. Carregando vazio.", "error");
+                                        modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
+                                            modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                            setProcessDescription(dto.Description || "");
+                                        });
+                                    });
+                            } catch (e) {
+                                console.error(e);
+                                toast.showToast("Erro ao carregar XML do modelo.", "error");
+                                modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                     setProcessDescription(dto.Description || "");
-                                })
-                                .catch((err) => {
-                                    console.error(err);
-                                    toast.showToast("XML inválido no banco. Carregando vazio.", "error");
-                                    modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
-                                        modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
-                                        setProcessDescription(dto.Description || "");
-                                    });
                                 });
+                            }
                         },
                         (err) => {
                             console.error(err);
