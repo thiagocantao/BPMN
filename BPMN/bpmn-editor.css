@@ -549,11 +549,11 @@ body {
 }
 
 .layout--sidebar-collapsed {
-    grid-template-columns: 32px 1fr;
+    grid-template-columns: 40px 1fr;
 }
 
 .layout--with-sheet.layout--sidebar-collapsed {
-    grid-template-columns: 32px 1fr var(--sidebar-width);
+    grid-template-columns: 40px 1fr var(--sidebar-width);
 }
 
 .sidebar {
@@ -566,7 +566,7 @@ body {
     border: none;
     box-shadow: none;
     background: transparent;
-    min-width: 32px;
+    min-width: 40px;
 }
 
 .sidebar-collapse-handle {
@@ -601,7 +601,12 @@ body {
 }
 
 .sidebar--collapsed .sidebar-collapse-handle {
-    right: 3px;
+    left: 0;
+    right: auto;
+    width: 32px;
+    border-left: none;
+    border-right: 1px solid #d3d8de;
+    border-radius: 0 8px 8px 0 !important;
 }
 
 .sidebar {
@@ -1376,7 +1381,8 @@ body {
     }
 
     .sidebar--collapsed .sidebar-collapse-handle {
-        right: 0;
+        left: 0;
+        right: auto;
     }
 
     .canvas {
