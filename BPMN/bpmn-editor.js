@@ -760,7 +760,7 @@
 
             // ✅ Modo instância (opcional): cwf/ciwf podem não vir
             const ciwf = ref(getIntQsInsensitive("ciwf"));
-            const cwfFromQs = ref(getIntQsInsensitive("cwf"));
+            const cwfFromQs = ref(getIntQsInsensitive("cwf") || parseInt(window.__BPMN_WORKFLOW_ID__ || 0, 10) || 0);
             const modeParam = (params.get("mode") || "").toLowerCase();
             const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
             const requestedReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
@@ -773,6 +773,7 @@
             }
 
             if (ciwf.value > 0) {
+                cwfFromQs.value = parseInt(window.__BPMN_WORKFLOW_ID__ || 0, 10) || cwfFromQs.value;
                 requestedReadOnly.value = true;
             }
             const saving = ref(false);

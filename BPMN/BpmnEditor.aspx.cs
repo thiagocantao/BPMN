@@ -24,26 +24,86 @@ public partial class BpmnEditor : System.Web.UI.Page
     protected int ModelId = 0;
     protected bool HasOpenAiKey = false;
     protected bool IsReadOnly = false;
-    protected int InstanceCiwf = 0;
+    protected long InstanceCiwf = 0;
 
     protected void Page_Load(object sender, EventArgs e)
     {
         int codigoFluxo;
         int codigoWorkflow;
         FlowId = int.TryParse(Request.QueryString["CF"], out codigoFluxo) ? codigoFluxo : 0;
-        ModelId = int.TryParse(Request.QueryString["CWF"], out codigoWorkflow) ? codigoWorkflow : 0;
+        ModelId = int.TryParse(Request.QueryString["CWF"], out codigoWorkflow)
+            ? codigoWorkflow
+            : (int.TryParse(Request.QueryString["CW"], out codigoWorkflow) ? codigoWorkflow : 0);
         HasOpenAiKey = !string.IsNullOrWhiteSpace(GetOpenAiApiKey());
 
         var mode = (Request.QueryString["mode"] ?? "").ToLowerInvariant();
         var requestedReadOnly = mode == "view" || mode == "readonly";
 
         // ✅ Se existir CIWF na URL (visualização de instância), sempre read-only
-        int ciwfTmp;
-        var hasCiwf = int.TryParse(Request.QueryString["CIWF"], out ciwfTmp) || int.TryParse(Request.QueryString["ciwf"], out ciwfTmp);
-        InstanceCiwf = hasCiwf ? ciwfTmp : 0;
+        long ciwfTmp;
+        var hasCiwf = long.TryParse(Request.QueryString["CIWF"], out ciwfTmp) || long.TryParse(Request.QueryString["ciwf"], out ciwfTmp);
+
+        if (hasCiwf)
+        {
+            var instanciaInicial = GetInstanciaInicial(ModelId, ciwfTmp);
+            ModelId = instanciaInicial.CodigoWorkflowInicial;
+            InstanceCiwf = instanciaInicial.CodigoInstanciaWfInicial;
+        }
+        else
+        {
+            InstanceCiwf = 0;
+        }
 
         IsReadOnly = requestedReadOnly || hasCiwf || !CanEditWorkflow(ModelId);
 
+    }
+
+    private class InstanciaInicialDto
+    {
+        public int CodigoWorkflowInicial { get; set; }
+        public long CodigoInstanciaWfInicial { get; set; }
+    }
+
+    private static InstanciaInicialDto GetInstanciaInicial(int codigoWorkflow, long codigoInstanciaWf)
+    {
+        if (codigoWorkflow <= 0 || codigoInstanciaWf <= 0)
+        {
+            return new InstanciaInicialDto
+            {
+                CodigoWorkflowInicial = codigoWorkflow,
+                CodigoInstanciaWfInicial = codigoInstanciaWf
+            };
+        }
+
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
+
+        string sql = string.Format(@"
+            SELECT CodigoWorkflowInicial,
+                   CodigoInstanciaWfInicial
+              FROM [{0}].[{1}].[f_wf_GetInstanciaInicial]({2}, {3});
+        ", db, own, codigoWorkflow, codigoInstanciaWf);
+
+        DataSet ds = cd.getDataSet(sql);
+        if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+        {
+            return new InstanciaInicialDto
+            {
+                CodigoWorkflowInicial = codigoWorkflow,
+                CodigoInstanciaWfInicial = codigoInstanciaWf
+            };
+        }
+
+        var row = ds.Tables[0].Rows[0];
+        return new InstanciaInicialDto
+        {
+            CodigoWorkflowInicial = Convert.ToInt32(row["CodigoWorkflowInicial"]),
+            CodigoInstanciaWfInicial = Convert.ToInt64(row["CodigoInstanciaWfInicial"])
+        };
     }
 
     public class BpmnModelDto
