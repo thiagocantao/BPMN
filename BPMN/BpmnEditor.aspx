@@ -24,18 +24,19 @@
       window.__BPMN_WORKFLOW_ID__ = <%= ModelId %>;
       window.__BPMN_AI_ENABLED__ = <%= HasOpenAiKey.ToString().ToLowerInvariant() %>;
       window.__BPMN_READ_ONLY__ = <%= IsReadOnly.ToString().ToLowerInvariant() %>;
+      window.__BPMN_INSTANCE_CIWF__ = <%= InstanceCiwf %>;
   </script>
 
   <div id="bpmnApp" class="page">
     <header class="topbar">
       <div class="left">
         <div class="titlewrap">
-          <h1 class="title">Gráfico do Fluxo</h1>
+          <h1 class="title">{{ headerTitleText }}</h1>
           <p class="subtitle">{{ subtitleText }}</p>
         </div>
       </div>
 
-      <div class="actions">
+      <div class="actions" v-if="showTopbarActions">
         <button type="button" class="btn btn--primary" @click="exportAsImage">
           Exportar como imagem
           <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>

@@ -764,8 +764,13 @@
             const modeParam = (params.get("mode") || "").toLowerCase();
             const serverReadOnly = Boolean(window.__BPMN_READ_ONLY__);
             const requestedReadOnly = ref(serverReadOnly || modeParam === "view" || modeParam === "readonly");
+            const instanceCiwfFromServer = ref(parseInt(window.__BPMN_INSTANCE_CIWF__ || 0, 10) || 0);
+            const headerTitleOverride = ref("");
+            const subtitleOverride = ref("");
 
-
+            if (instanceCiwfFromServer.value > 0 && ciwf.value <= 0) {
+                ciwf.value = instanceCiwfFromServer.value;
+            }
 
             if (ciwf.value > 0) {
                 requestedReadOnly.value = true;
@@ -1179,6 +1184,29 @@
                 );
             };
 
+            const loadWorkflowInstanceInfo = () => {
+                if (!isInstanceView.value || ciwf.value <= 0) return;
+
+                const pm = window.PageMethods || null;
+                if (!pm || typeof pm.GetWorkflowInstanceInfo !== "function") {
+                    console.warn("PageMethods.GetWorkflowInstanceInfo indisponível (ScriptManager?)");
+                    return;
+                }
+
+                pm.GetWorkflowInstanceInfo(
+                    ciwf.value,
+                    (dto) => {
+                        if (!dto) return;
+                        headerTitleOverride.value = dto.NomeInstancia || "Gráfico do Fluxo";
+                        subtitleOverride.value = `Protocolo: ${dto.NumeroProtocolo || ""}`;
+                    },
+                    (err) => {
+                        console.error(err);
+                        try { toast.showToast("Falha ao carregar dados da instância.", "error"); } catch { }
+                    }
+                );
+            };
+
             const isViewMode = computed(() => modeParam === "view");
             const canMoveInView = computed(() => isReadOnly.value && isViewMode.value);
             const isDiagramLocked = computed(() => isReadOnly.value || isAutomationPublished.value);
@@ -1188,9 +1216,15 @@
             const showShortcutsButton = computed(() => !isReadOnly.value);
             const shouldBlockCopyPaste = computed(() => isReadOnly.value);
             const aiEnabled = computed(() => Boolean(window.__BPMN_AI_ENABLED__) && !isReadOnly.value && !isAutomation.value);
-            const subtitleText = computed(() => (isReadOnly.value
-                ? "Somente Leitura"
-                : "Arraste, conecte e salve"));
+            const headerTitleText = computed(() => {
+                if (headerTitleOverride.value) return headerTitleOverride.value;
+                return "Gráfico do Fluxo";
+            });
+            const subtitleText = computed(() => {
+                if (subtitleOverride.value) return subtitleOverride.value;
+                return isReadOnly.value ? "Somente Leitura" : "Arraste, conecte e salve";
+            });
+            const showTopbarActions = computed(() => !isInstanceView.value);
             const automationLabel = computed(() => (isAutomation.value ? "Automação: Sim" : "Automação: Não"));
             let aiStepTimer = null;
 
@@ -1478,6 +1512,7 @@
                                         modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
 
                                         loadInstanceHistoryAndApply();
+                                        loadWorkflowInstanceInfo();
                                         setProcessDescription(dto.Description || "");
                                     })
                                     .catch((err) => {
@@ -1493,6 +1528,7 @@
                                 toast.showToast("Erro ao carregar XML do modelo.", "error");
                                 modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                                    loadWorkflowInstanceInfo();
                                     setProcessDescription(dto.Description || "");
                                 });
                             }
@@ -1535,6 +1571,7 @@
                 modelerRef.value.importXML(EMPTY_BPMN_XML)
                     .then(() => {
                         modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
+                        loadWorkflowInstanceInfo();
                         setProcessDescription("");
                     })
                     .catch((err) => {
@@ -2354,7 +2391,9 @@
                 shortcutsButtonRef,
                 aiGenerating,
                 aiStepMessage,
+                headerTitleText,
                 subtitleText,
+                showTopbarActions,
                 selectedIds,
                 infoEditor,
                 infoViewer,
