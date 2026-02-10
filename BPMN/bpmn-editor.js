@@ -781,6 +781,7 @@
             const hasPublication = ref(false);
             const hasRevocation = ref(false);
             const sidebarMode = ref("edit");
+            const sidebarCollapsed = ref(false);
             const aiPrompt = ref("");
             const aiPromptRef = ref(null);
             const processDescriptionRef = ref(null);
@@ -1785,6 +1786,10 @@
                 modeler.get("canvas").zoom("fit-viewport", "auto");
             };
 
+            const toggleSidebar = () => {
+                sidebarCollapsed.value = !sidebarCollapsed.value;
+            };
+
             const reorganizeLayout = () => {
                 if (isDiagramLocked.value) return;
                 const modeler = modelerRef.value;
@@ -2339,6 +2344,7 @@
                 flowId,
                 isAutomation,
                 sidebarMode,
+                sidebarCollapsed,
                 aiPrompt,
                 aiPromptRef,
                 processDescriptionRef,
@@ -2369,6 +2375,7 @@
                 onEditorInput,
                 formatInfoEditor,
                 toggleShortcuts,
+                toggleSidebar,
                 save,
                 publish,
                 handleBack,
