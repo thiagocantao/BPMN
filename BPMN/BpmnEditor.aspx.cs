@@ -24,6 +24,7 @@ public partial class BpmnEditor : System.Web.UI.Page
     protected int ModelId = 0;
     protected bool HasOpenAiKey = false;
     protected bool IsReadOnly = false;
+    protected int InstanceCiwf = 0;
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -39,6 +40,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         // ✅ Se existir CIWF na URL (visualização de instância), sempre read-only
         int ciwfTmp;
         var hasCiwf = int.TryParse(Request.QueryString["CIWF"], out ciwfTmp) || int.TryParse(Request.QueryString["ciwf"], out ciwfTmp);
+        InstanceCiwf = hasCiwf ? ciwfTmp : 0;
 
         IsReadOnly = requestedReadOnly || hasCiwf || !CanEditWorkflow(ModelId);
 
@@ -369,6 +371,43 @@ public partial class BpmnEditor : System.Web.UI.Page
         return hasPublication && !hasRevocation;
     }
 
+
+    public class WorkflowInstanceInfoDto
+    {
+        public string NomeInstancia { get; set; }
+        public string NumeroProtocolo { get; set; }
+    }
+
+    [WebMethod(EnableSession = true)]
+    public static WorkflowInstanceInfoDto GetWorkflowInstanceInfo(int ciwf)
+    {
+        if (ciwf <= 0) throw new Exception("Código da Instância inválido.");
+
+        OrderedDictionary listaParametrosDados = new OrderedDictionary();
+        listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
+        listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
+        var cd = CdadosUtil.GetCdados(listaParametrosDados);
+        var db = cd.getDbName();
+        var own = cd.getDbOwner();
+
+        string sql = string.Format(@"
+            SELECT NomeInstancia,
+                   NumeroProtocolo
+              FROM [{0}].[{1}].InstanciasWorkflows
+             WHERE CodigoInstanciaWf = {2};
+        ", db, own, ciwf);
+
+        DataSet ds = cd.getDataSet(sql);
+        if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            return null;
+
+        var row = ds.Tables[0].Rows[0];
+        return new WorkflowInstanceInfoDto
+        {
+            NomeInstancia = Convert.ToString(row["NomeInstancia"]),
+            NumeroProtocolo = Convert.ToString(row["NumeroProtocolo"])
+        };
+    }
 
     public class WorkflowInstanceStepDto
     {
