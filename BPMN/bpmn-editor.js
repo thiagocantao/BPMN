@@ -777,6 +777,27 @@
                 requestedReadOnly.value = true;
             }
             const saving = ref(false);
+            // ------------------------------------------------------------
+            // Extrai a mensagem real do erro retornado pelos PageMethods (ASP.NET AJAX)
+            // Assim conseguimos exibir o detalhe vindo do ValidateBpmnXml (ex: "Fluxo inválido: ...")
+            // ------------------------------------------------------------
+            const getPageMethodErrorMessage = (err, fallback) => {
+                try {
+                    if (!err) return fallback || "Erro.";
+                    // Sys.Net.WebServiceError (PageMethods)
+                    if (typeof err.get_message === "function") {
+                        const m = err.get_message();
+                        if (m) return m;
+                    }
+                    // Alguns ambientes retornam 'message' ou '_message'
+                    const m2 = err.message || err.Message || err._message || err._exceptionType;
+                    if (m2) return String(m2);
+                    // às vezes vem uma string
+                    if (typeof err === "string") return err;
+                } catch { /* ignore */ }
+                return fallback || "Erro.";
+            };
+
             const publishing = ref(false);
             const mode = ref("select");
             const addType = ref(null);
@@ -1614,7 +1635,7 @@
                                 }
                                 toast.showToast("Erro ao criar versão.", "error");
                             },
-                            (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao criar versão.", "error"); }
+                            (err) => { console.error(err); saving.value = false; toast.showToast(getPageMethodErrorMessage(err, "Erro ao criar versão."), "error"); }
                         );
                         return;
                     }
@@ -1634,7 +1655,7 @@
                             }
                             toast.showToast("Erro ao criar fluxo.", "error");
                         },
-                        (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao criar fluxo.", "error"); }
+                        (err) => { console.error(err); saving.value = false; toast.showToast(getPageMethodErrorMessage(err, "Erro ao criar fluxo."), "error"); }
                     );
                     return;
                 }
@@ -1663,7 +1684,7 @@
                         }
                         toast.showToast("Salvo com sucesso.", "success");
                     },
-                    (err) => { console.error(err); saving.value = false; toast.showToast("Erro ao salvar.", "error"); }
+                    (err) => { console.error(err); saving.value = false; toast.showToast(getPageMethodErrorMessage(err, "Erro ao salvar."), "error"); }
                 );
             };
 
