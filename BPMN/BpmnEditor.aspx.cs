@@ -625,7 +625,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
 
-        ValidateBpmnXml(modelXml);
+        //ValidateBpmnXml(modelXml);
 
         var codigoFluxo = CreateFluxo(name, false);
         var codigoWorkflow = CreateWorkflow(codigoFluxo, modelXml);
@@ -642,7 +642,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
 
-        ValidateBpmnXml(modelXml);
+        //ValidateBpmnXml(modelXml);
 
         var flowMeta = GetFlowMeta(codigoFluxo);
         if (flowMeta == null) throw new Exception("Fluxo não encontrado.");
