@@ -13,6 +13,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
+  <script src="../scripts/jquery-3.7.1.min.js"></script>
+  <script type="text/javascript">
+
+        var maximizar = false;
+        var modoFullScreen = "div";
+
+        $(document).ready(function () {
+            
+            var iframe = window.parent.document.getElementById("wfTela");
+
+            if (iframe) {
+
+                setFullScreenNBR(false);
+
+            }
+
+        });
+
+        function setFullScreenNBR(maximizar) {
+
+            if (maximizar) {
+
+                window.frameElement.height = "100%";
+
+            } else {
+
+                var alturaDisponivel;
+                var alturaFrame;
+                var alturaEnvioNBR;
+
+                alturaDisponivel = window.outerHeight;
+
+                alturaFrame = alturaDisponivel - 155;
+
+                if (alturaFrame < 705) {
+                    alturaFrame = 705;
+                }
+
+                alturaEnvioNBR = alturaFrame;
+
+                window.frameElement.height = alturaFrame + "px";
+                window.parent.atualizaAlturaFrame(alturaEnvioNBR, false);
+
+            }
+        }
+
+        window.addEventListener("message", function (event) {
+
+            if (event.data && event.data.tipo === "ajustarAltura") {
+                maximizar = event.data.maximizar;
+
+                if (typeof event.data.modoFullScreen !== "undefined") {
+                    modoFullScreen = event.data.modoFullScreen;
+                }
+
+                setFullScreenNBR(maximizar);
+
+            }
+        });
+  </script>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -46,7 +106,7 @@
           {{ saving ? 'Salvando...' : 'Salvar' }}
           <i class="fa fa-check btn__icon" aria-hidden="true"></i>
         </button>
-        <button type="button" class="btn btn--primary" @click="publish" :disabled="saving || publishing || !canPublish" v-if="canPublish">
+        <button type="button" class="brisk-btn-save ng-star-inserted" @click="publish" :disabled="saving || publishing || !canPublish" v-if="canPublish">
           {{ publishing ? 'Publicando...' : 'Publicar' }}
           <i class="fa fa-upload btn__icon" aria-hidden="true"></i>
         </button>
@@ -175,7 +235,7 @@
       </aside>
 
       <main class="canvas card">
-        <div ref="bpmnCanvasRef" class="bpmn-canvas"></div>
+        <div ref="bpmnCanvasRef" class="bpmn-canvas">
         <div class="canvas-controls" role="group" aria-label="Controles de zoom">
           <button type="button" class="icon-button" title="Zoom in" aria-label="Zoom in" @click="zoomIn">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
@@ -197,6 +257,7 @@
           >
             <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
           </button>
+        </div>
         </div>
         <div v-if="showShortcuts" ref="shortcutsRef" class="canvas-shortcuts" role="dialog" aria-label="Atalhos do teclado">
           <h4>Atalhos</h4>
