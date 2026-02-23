@@ -1881,6 +1881,13 @@
                 modeler.get("canvas").zoom("fit-viewport", "auto");
             };
 
+            const recenterCanvasTwice = () => {
+                recenterCanvas();
+                requestAnimationFrame(() => {
+                    recenterCanvas();
+                });
+            };
+
             const toggleSidebar = () => {
                 sidebarCollapsed.value = !sidebarCollapsed.value;
             };
@@ -2411,7 +2418,18 @@
                 setProcessDescriptionFromModeler();
                 load();
                 nextTick(resizeAiPrompt);
+
+                window.__BPMN_RECENTER_CANVAS__ = recenterCanvasTwice;
             });
+
+            watch(
+                () => [sidebarCollapsed.value, infoEditor.show, infoViewer.show],
+                () => {
+                    nextTick(() => {
+                        recenterCanvasTwice();
+                    });
+                }
+            );
 
             onBeforeUnmount(() => {
                 document.removeEventListener("click", handleDocumentClick);
@@ -2420,6 +2438,7 @@
 
                 try { if (window.__BPMN_DISPOSE_POPUP_POS_FIX__) window.__BPMN_DISPOSE_POPUP_POS_FIX__(); } catch (e) { }
                 try { delete window.__BPMN_DISPOSE_POPUP_POS_FIX__; } catch (e) { }
+                try { delete window.__BPMN_RECENTER_CANVAS__; } catch (e) { }
                 try { delete window.maximizeBPMN; } catch (e) { }
             });
 

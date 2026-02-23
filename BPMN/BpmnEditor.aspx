@@ -59,6 +59,11 @@
             }
         }
 
+        function recenterAfterLayoutChange() {
+            if (typeof window.__BPMN_RECENTER_CANVAS__ !== "function") return;
+            window.__BPMN_RECENTER_CANVAS__();
+        }
+
         window.addEventListener("message", function (event) {
 
             if (event.data && event.data.tipo === "ajustarAltura") {
@@ -69,6 +74,7 @@
                 }
 
                 setFullScreenNBR(maximizar);
+                setTimeout(recenterAfterLayoutChange, 0);
 
             }
         });
