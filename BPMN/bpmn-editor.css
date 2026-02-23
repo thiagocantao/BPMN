@@ -541,7 +541,7 @@ body {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
     gap: 16px;
-    min-height: calc(100vh - 140px);
+    min-height: var(--bpmn-layout-min-height, calc(100vh - 140px));
 }
 
 .layout--with-sheet {
