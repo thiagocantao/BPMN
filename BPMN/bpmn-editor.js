@@ -820,6 +820,10 @@
             const hasRevocation = ref(false);
             const sidebarMode = ref("edit");
             const sidebarCollapsed = ref(false);
+            const maximizar = ref(Boolean(window.maximizar));
+            const pageStyle = computed(() => ({
+                height: maximizar.value ? "calc(100% - 40px)" : "calc(100% - 180px)"
+            }));
             const aiPrompt = ref("");
             const aiPromptRef = ref(null);
             const processDescriptionRef = ref(null);
@@ -2427,6 +2431,7 @@
                 headerTitleText,
                 subtitleText,
                 showTopbarActions,
+                pageStyle,
                 selectedIds,
                 infoEditor,
                 infoViewer,
