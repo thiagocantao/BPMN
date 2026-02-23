@@ -584,6 +584,17 @@
         const popupMenu = modeler.get("popupMenu");
         if (!popupMenu || typeof popupMenu.open !== "function") return () => { };
 
+        const safeNumber = (value) => {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : 0;
+        };
+
+        const isPositionLike = (value) => {
+            if (!value || typeof value !== "object") return false;
+            if (value.businessObject || value.di || value.waypoints) return false;
+            return Number.isFinite(Number(value.x)) && Number.isFinite(Number(value.y));
+        };
+
         let lastPointer = null;
 
         const capturePointer = (ev) => {
@@ -665,9 +676,9 @@
                                 y: Math.max(0, lastPointer.clientY - rect.top)
                             };
 
-                        const posIndex = args.findIndex(a => a && typeof a === "object" && "x" in a && "y" in a);
-                        if (posIndex >= 0) {
-                            args[posIndex] = fixedPos;
+                        if (isPositionLike(args[2])) {
+                            // Signature mais comum: open(element, providerId, position, ...)
+                            args[2] = fixedPos;
                         } else {
                             // some open() variants pass a single options object with "position"
                             const optIndex = args.findIndex(a => a && typeof a === "object" && "position" in a && a.position && typeof a.position === "object");
