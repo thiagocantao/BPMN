@@ -93,6 +93,16 @@
             </div>
           </label>
 
+          <label class="field">
+            <span>Descrição curta</span>
+            <textarea
+              class="input"
+              rows="3"
+              v-model="shortDescription"
+              :disabled="isReadOnly"
+            ></textarea>
+          </label>
+
           <div class="field">
             <span>Descrição</span>
             <div class="rich-toolbar rich-toolbar--compact" v-if="!isReadOnly" @mousedown.prevent>

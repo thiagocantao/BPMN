@@ -815,6 +815,7 @@
 
             const modelName = ref("");
             const processDescription = ref("");
+            const shortDescription = ref("");
             const isAutomation = ref(false);
             const hasPublication = ref(false);
             const hasRevocation = ref(false);
@@ -1559,6 +1560,7 @@
                                         loadInstanceHistoryAndApply();
                                         loadWorkflowInstanceInfo();
                                         setProcessDescription(dto.Description || "");
+                                        shortDescription.value = dto.ShortDescription || "";
                                     })
                                     .catch((err) => {
                                         console.error(err);
@@ -1566,6 +1568,7 @@
                                         modelerRef.value.importXML(EMPTY_BPMN_XML).then(() => {
                                             modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                             setProcessDescription(dto.Description || "");
+                                            shortDescription.value = dto.ShortDescription || "";
                                         });
                                     });
                             } catch (e) {
@@ -1575,6 +1578,7 @@
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                     loadWorkflowInstanceInfo();
                                     setProcessDescription(dto.Description || "");
+                                    shortDescription.value = dto.ShortDescription || "";
                                 });
                             }
                         },
@@ -1599,6 +1603,7 @@
                                 .then(() => {
                                     modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                                     setProcessDescription(dto.Description || "");
+                                    shortDescription.value = dto.ShortDescription || "";
                                 })
                                 .catch((err) => {
                                     console.error(err);
@@ -1618,6 +1623,7 @@
                         modelerRef.value.get("canvas").zoom("fit-viewport", "auto");
                         loadWorkflowInstanceInfo();
                         setProcessDescription("");
+                        shortDescription.value = "";
                     })
                     .catch((err) => {
                         console.error(err);
@@ -1640,6 +1646,7 @@
                     syncProcessDescriptionToModeler();
                     const xml = await getCurrentXml();
                     const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+                    const shortDescriptionValue = shortDescription.value || "";
 
                     if (flowId.value > 0) {
                         PageMethods.CreateWorkflowForFlow(
@@ -1647,6 +1654,7 @@
                             trimmedName,
                             xml,
                             description,
+                            shortDescriptionValue,
                             (newId) => {
                                 saving.value = false;
                                 if (typeof newId === "number" && newId > 0) {
@@ -1667,6 +1675,7 @@
                         trimmedName,
                         xml,
                         description,
+                        shortDescriptionValue,
                         (newId) => {
                             saving.value = false;
                             if (typeof newId === "number" && newId > 0) {
@@ -1690,12 +1699,14 @@
                 syncProcessDescriptionToModeler();
                 const xml = await getCurrentXml();
                 const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+                const shortDescriptionValue = shortDescription.value || "";
 
                 PageMethods.SaveModel(
                     modelId.value,
                     modelName.value || "Processo",
                     xml,
                     description,
+                    shortDescriptionValue,
                     (newId) => {
                         saving.value = false;
                         if (typeof newId === "number" && newId > 0 && newId !== modelId.value) {
@@ -1717,12 +1728,14 @@
                 syncProcessDescriptionToModeler();
                 const xml = await getCurrentXml();
                 const description = processDescriptionRef.value ? processDescriptionRef.value.innerHTML : processDescription.value;
+                const shortDescriptionValue = shortDescription.value || "";
 
                 PageMethods.PublishModel(
                     modelId.value,
                     modelName.value || "Processo",
                     xml,
                     description,
+                    shortDescriptionValue,
                     () => {
                         publishing.value = false;
                         hasPublication.value = true;
@@ -2424,6 +2437,7 @@
                 addType,
                 modelName,
                 processDescription,
+                shortDescription,
                 flowId,
                 isAutomation,
                 sidebarMode,
