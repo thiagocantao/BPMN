@@ -27,7 +27,7 @@
       window.__BPMN_INSTANCE_CIWF__ = <%= InstanceCiwf %>;
   </script>
 
-  <div id="bpmnApp" class="page">
+  <div id="bpmnApp" class="page" :style="pageStyle">
     <header class="topbar">
       <div class="left">
         <div class="titlewrap">
