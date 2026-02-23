@@ -821,22 +821,15 @@
             const sidebarMode = ref("edit");
             const sidebarCollapsed = ref(false);
             const maximizar = ref(Boolean(window.maximizar));
-            const setLayoutMinHeight = (isMaximized) => {
-                document.documentElement.style.setProperty(
-                    "--bpmn-layout-min-height",
-                    isMaximized ? "calc(100vh - 80px)" : "calc(100vh - 140px)"
-                );
-            };
             const maximizeBPMN = (isMaximized) => {
                 maximizar.value = Boolean(isMaximized);
                 window.maximizar = maximizar.value;
-                setLayoutMinHeight(maximizar.value);
             };
             const toggleMaximizeBPMN = () => maximizeBPMN(!maximizar.value);
             window.maximizeBPMN = maximizeBPMN;
-            setLayoutMinHeight(maximizar.value);
 
             const pageStyle = computed(() => ({
+                minHeight: maximizar.value ? "calc(100% - 40px)" : "calc(100% - 180px)",
                 height: maximizar.value ? "calc(100% - 40px)" : "calc(100% - 180px)"
             }));
             const aiPrompt = ref("");
