@@ -2363,6 +2363,15 @@
                     selectedIds.value = selection.map((element) => element.id);
                     selectedId.value = selection.length === 1 ? selection[0].id : null;
                     selectedElement.value = selection.length === 1 ? selection[0] : null;
+
+                    const contextPad = modeler.get("contextPad");
+                    if (contextPad) {
+                        if (selection.length === 1 && !selection[0].isRoot) {
+                            contextPad.open(selection[0]);
+                        } else {
+                            contextPad.close();
+                        }
+                    }
                 });
 
                 modeler.on("element.changed", (event) => {
