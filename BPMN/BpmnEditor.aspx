@@ -37,10 +37,7 @@
       </div>
 
       <div class="actions" v-if="showTopbarActions">
-        <button type="button" class="btn btn--ghost" @click="toggleMaximizeBPMN">
-          {{ maximizar ? 'Restaurar tela' : 'Maximizar tela' }}
-          <i :class="maximizar ? 'fa fa-compress btn__icon' : 'fa fa-expand btn__icon'" aria-hidden="true"></i>
-        </button>
+        
         <button type="button" class="btn btn--primary" @click="exportAsImage">
           Exportar como imagem
           <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>
@@ -89,8 +86,18 @@
           <label class="field">
             <span>Nome</span>
             <div class="field-row">
-              <input class="input" v-model="modelName" :disabled="!canEditName" />
+              <input class="input flow-name-input" v-model="modelName" :disabled="!canEditName" />
             </div>
+          </label>
+
+          <label class="field">
+            <span>Descrição curta</span>
+            <textarea
+              class="input short-description-input"
+              rows="3"
+              v-model="shortDescription"
+              :disabled="isReadOnly"
+            ></textarea>
           </label>
 
           <div class="field">
