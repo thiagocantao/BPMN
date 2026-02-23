@@ -37,6 +37,10 @@
       </div>
 
       <div class="actions" v-if="showTopbarActions">
+        <button type="button" class="btn btn--ghost" @click="toggleMaximizeBPMN">
+          {{ maximizar ? 'Restaurar tela' : 'Maximizar tela' }}
+          <i :class="maximizar ? 'fa fa-compress btn__icon' : 'fa fa-expand btn__icon'" aria-hidden="true"></i>
+        </button>
         <button type="button" class="btn btn--primary" @click="exportAsImage">
           Exportar como imagem
           <i class="fa fa-file-export btn__icon" aria-hidden="true"></i>

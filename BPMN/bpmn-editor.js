@@ -829,8 +829,10 @@
             };
             const maximizeBPMN = (isMaximized) => {
                 maximizar.value = Boolean(isMaximized);
+                window.maximizar = maximizar.value;
                 setLayoutMinHeight(maximizar.value);
             };
+            const toggleMaximizeBPMN = () => maximizeBPMN(!maximizar.value);
             window.maximizeBPMN = maximizeBPMN;
             setLayoutMinHeight(maximizar.value);
 
@@ -2446,6 +2448,8 @@
                 subtitleText,
                 showTopbarActions,
                 pageStyle,
+                maximizar,
+                toggleMaximizeBPMN,
                 selectedIds,
                 infoEditor,
                 infoViewer,
