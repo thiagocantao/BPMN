@@ -876,6 +876,19 @@ body {
     font-size: 13px;
 }
 
+.flow-name-input,
+.short-description-input,
+.rich-editor--compact {
+    font-family: "Source Sans Pro", "Roboto", sans-serif;
+}
+
+.flow-name-input:focus,
+.short-description-input:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: #d9e1eb;
+}
+
 .toolbar {
     margin-top: 12px;
     display: flex;
