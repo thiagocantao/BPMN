@@ -112,6 +112,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         public string Name { get; set; }
         public string ModelXml { get; set; }
         public string Description { get; set; }
+        public string ShortDescription { get; set; }
         public bool IsAutomation { get; set; }
         public bool HasPublication { get; set; }
         public bool HasRevocation { get; set; }
@@ -122,6 +123,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public string ShortDescription { get; set; }
         public bool IsAutomation { get; set; }
     }
 
@@ -229,7 +231,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         };
     }
 
-    private static void UpdateFluxoDetails(int codigoWorkflow, string name, string description)
+    private static void UpdateFluxoDetails(int codigoWorkflow, string name, string description, string shortDescription)
     {
         OrderedDictionary listaParametrosDados = new OrderedDictionary();
         listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
@@ -240,17 +242,18 @@ public partial class BpmnEditor : System.Web.UI.Page
         string sqlFluxo = string.Format(@"
             UPDATE f
                SET f.NomeFluxo = '{2}',
-                   f.DescricaoBPMN = '{3}'
+                   f.DescricaoBPMN = '{3}',
+                   f.Descricao = '{4}'
               FROM [{0}].[{1}].Fluxos f INNER JOIN
                    [{0}].[{1}].Workflows w ON w.CodigoFluxo = f.CodigoFluxo
-             WHERE w.CodigoWorkflow = {4};
-        ", db, own, EscapeSql(name), EscapeSql(description), codigoWorkflow);
+             WHERE w.CodigoWorkflow = {5};
+        ", db, own, EscapeSql(name), EscapeSql(description), EscapeSql(shortDescription), codigoWorkflow);
 
         int afetadosFluxo = 0;
         cd.execSQL(sqlFluxo, ref afetadosFluxo);
     }
 
-    private static void UpdateFluxoDetailsByFluxo(int codigoFluxo, string name, string description)
+    private static void UpdateFluxoDetailsByFluxo(int codigoFluxo, string name, string description, string shortDescription)
     {
         OrderedDictionary listaParametrosDados = new OrderedDictionary();
         listaParametrosDados["RemoteIPUsuario"] = HttpContext.Current.Session["RemoteIPUsuario"] + "";
@@ -261,9 +264,10 @@ public partial class BpmnEditor : System.Web.UI.Page
         string sqlFluxo = string.Format(@"
             UPDATE [{0}].[{1}].Fluxos
                SET NomeFluxo = '{2}',
-                   DescricaoBPMN = '{3}'
-             WHERE CodigoFluxo = {4};
-        ", db, own, EscapeSql(name), EscapeSql(description), codigoFluxo);
+                   DescricaoBPMN = '{3}',
+                   Descricao = '{4}'
+             WHERE CodigoFluxo = {5};
+        ", db, own, EscapeSql(name), EscapeSql(description), EscapeSql(shortDescription), codigoFluxo);
 
         int afetadosFluxo = 0;
         cd.execSQL(sqlFluxo, ref afetadosFluxo);
@@ -553,6 +557,7 @@ public partial class BpmnEditor : System.Web.UI.Page
             SELECT w.CodigoWorkflow,
                    f.NomeFluxo,
                    f.DescricaoBPMN,
+                   f.Descricao,
                    f.IndicaAutomacao,
                    w.DataPublicacao,
                    w.DataRevogacao
@@ -574,6 +579,7 @@ public partial class BpmnEditor : System.Web.UI.Page
             Name = Convert.ToString(r["NomeFluxo"]),
             ModelXml = null,
             Description = Convert.ToString(r["DescricaoBPMN"]),
+            ShortDescription = Convert.ToString(r["Descricao"]),
             IsAutomation = Convert.ToString(r["IndicaAutomacao"]) == "S",
             HasPublication = HasDateValue(r["DataPublicacao"]),
             HasRevocation = HasDateValue(r["DataRevogacao"])
@@ -597,6 +603,7 @@ public partial class BpmnEditor : System.Web.UI.Page
             SELECT f.CodigoFluxo,
                    f.NomeFluxo,
                    f.DescricaoBPMN,
+                   f.Descricao,
                    f.IndicaAutomacao
               FROM [{0}].[{1}].Fluxos f
              WHERE f.CodigoFluxo = {2};
@@ -613,34 +620,37 @@ public partial class BpmnEditor : System.Web.UI.Page
             Id = Convert.ToInt32(r["CodigoFluxo"]),
             Name = Convert.ToString(r["NomeFluxo"]),
             Description = Convert.ToString(r["DescricaoBPMN"]),
+            ShortDescription = Convert.ToString(r["Descricao"]),
             IsAutomation = Convert.ToString(r["IndicaAutomacao"]) == "S"
         };
     }
 
     [WebMethod(EnableSession = true)]
-    public static int CreateModel(string name, string modelXml, string description)
+    public static int CreateModel(string name, string modelXml, string description, string shortDescription)
     {
         name = (name ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
+        shortDescription = (shortDescription ?? "").Trim();
 
         //ValidateBpmnXml(modelXml);
 
         var codigoFluxo = CreateFluxo(name, false);
         var codigoWorkflow = CreateWorkflow(codigoFluxo, modelXml);
-        UpdateFluxoDetails(codigoWorkflow, name, description);
+        UpdateFluxoDetails(codigoWorkflow, name, description, shortDescription);
         return codigoWorkflow;
     }
 
     [WebMethod(EnableSession = true)]
-    public static int CreateWorkflowForFlow(int codigoFluxo, string name, string modelXml, string description)
+    public static int CreateWorkflowForFlow(int codigoFluxo, string name, string modelXml, string description, string shortDescription)
     {
         if (codigoFluxo <= 0) throw new Exception("Fluxo inválido.");
         name = (name ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
+        shortDescription = (shortDescription ?? "").Trim();
 
         //ValidateBpmnXml(modelXml);
 
@@ -649,19 +659,20 @@ public partial class BpmnEditor : System.Web.UI.Page
         if (flowMeta.IsAutomation)
             throw new Exception("Fluxo automatizado não permite criação de nova versão.");
 
-        UpdateFluxoDetailsByFluxo(codigoFluxo, name, description);
+        UpdateFluxoDetailsByFluxo(codigoFluxo, name, description, shortDescription);
         var codigoWorkflow = CreateWorkflowForFlow(codigoFluxo, modelXml);
         return codigoWorkflow;
     }
 
     [WebMethod(EnableSession = true)]
-    public static int SaveModel(int id, string name, string modelXml, string description)
+    public static int SaveModel(int id, string name, string modelXml, string description, string shortDescription)
     {
         if (id <= 0) throw new Exception("Id inválido.");
         name = (name ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
+        shortDescription = (shortDescription ?? "").Trim();
 
         var meta = GetWorkflowMeta(id);
         if (meta == null) throw new Exception("Workflow não encontrado.");
@@ -674,7 +685,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
         var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-        UpdateFluxoDetails(id, name, description);
+        UpdateFluxoDetails(id, name, description, shortDescription);
 
         if (meta.IsAutomation && meta.HasPublication && !meta.HasRevocation)
         {
@@ -725,13 +736,14 @@ public partial class BpmnEditor : System.Web.UI.Page
     }
 
     [WebMethod(EnableSession = true)]
-    public static void PublishModel(int id, string name, string modelXml, string description)
+    public static void PublishModel(int id, string name, string modelXml, string description, string shortDescription)
     {
         if (id <= 0) throw new Exception("Id inválido.");
         name = (name ?? "").Trim();
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("Nome inválido.");
         if (string.IsNullOrWhiteSpace(modelXml)) throw new Exception("XML inválido.");
         description = (description ?? "").Trim();
+        shortDescription = (shortDescription ?? "").Trim();
 
         var meta = GetWorkflowMeta(id);
         if (meta == null) throw new Exception("Workflow não encontrado.");
@@ -746,7 +758,7 @@ public partial class BpmnEditor : System.Web.UI.Page
         listaParametrosDados["NomeUsuario"] = HttpContext.Current.Session["NomeUsuario"] + "";
         var cd = CdadosUtil.GetCdados(listaParametrosDados);
 
-        UpdateFluxoDetails(id, name, description);
+        UpdateFluxoDetails(id, name, description, shortDescription);
 
         var db = cd.getDbName();
         var own = cd.getDbOwner();
