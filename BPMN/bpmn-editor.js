@@ -821,6 +821,21 @@
             const sidebarMode = ref("edit");
             const sidebarCollapsed = ref(false);
             const maximizar = ref(Boolean(window.maximizar));
+            const setLayoutMinHeight = (isMaximized) => {
+                document.documentElement.style.setProperty(
+                    "--bpmn-layout-min-height",
+                    isMaximized ? "calc(100vh - 80px)" : "calc(100vh - 140px)"
+                );
+            };
+            const maximizeBPMN = (isMaximized) => {
+                maximizar.value = Boolean(isMaximized);
+                window.maximizar = maximizar.value;
+                setLayoutMinHeight(maximizar.value);
+            };
+            const toggleMaximizeBPMN = () => maximizeBPMN(!maximizar.value);
+            window.maximizeBPMN = maximizeBPMN;
+            setLayoutMinHeight(maximizar.value);
+
             const pageStyle = computed(() => ({
                 height: maximizar.value ? "calc(100% - 40px)" : "calc(100% - 180px)"
             }));
@@ -2399,6 +2414,7 @@
 
                 try { if (window.__BPMN_DISPOSE_POPUP_POS_FIX__) window.__BPMN_DISPOSE_POPUP_POS_FIX__(); } catch (e) { }
                 try { delete window.__BPMN_DISPOSE_POPUP_POS_FIX__; } catch (e) { }
+                try { delete window.maximizeBPMN; } catch (e) { }
             });
 
             return {
@@ -2432,6 +2448,8 @@
                 subtitleText,
                 showTopbarActions,
                 pageStyle,
+                maximizar,
+                toggleMaximizeBPMN,
                 selectedIds,
                 infoEditor,
                 infoViewer,
