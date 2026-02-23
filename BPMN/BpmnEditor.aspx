@@ -89,14 +89,14 @@
           <label class="field">
             <span>Nome</span>
             <div class="field-row">
-              <input class="input" v-model="modelName" :disabled="!canEditName" />
+              <input class="input flow-name-input" v-model="modelName" :disabled="!canEditName" />
             </div>
           </label>
 
           <label class="field">
             <span>Descrição curta</span>
             <textarea
-              class="input"
+              class="input short-description-input"
               rows="3"
               v-model="shortDescription"
               :disabled="isReadOnly"
