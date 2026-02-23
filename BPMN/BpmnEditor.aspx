@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/Bpmn/bpmn-editor.css" />
+  <link rel="stylesheet" href="/Bpmn/bpmn-editor.css?v=<%= DateTime.UtcNow.Ticks %>" />
   <script src="../scripts/jquery-3.7.1.min.js"></script>
   <script type="text/javascript">
 
@@ -358,8 +358,8 @@
     </div>
   </div>
   <!-- Bundle local com bpmn-js + create-append-anything (gerado via npm/esbuild) -->
-  <script src="/Bpmn/bpmn-bundle.js"></script>
-<script src="./vue.global.prod.js"></script>
+  <script src="/Bpmn/bpmn-bundle.js?v=<%= DateTime.UtcNow.Ticks %>"></script>
+<script src="./vue.global.prod.js?v=<%= DateTime.UtcNow.Ticks %>"></script>
   <!-- Cache-buster para garantir que o browser carregue a última versão do JS -->
   <script src="/Bpmn/bpmn-editor.js?v=<%= DateTime.UtcNow.Ticks %>"></script>
 </form>
